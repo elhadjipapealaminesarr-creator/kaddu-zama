@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}{{ poll['title'] }} — Kaddu{% endblock %}
+{% block content %}
+<div class="card pad-lg">
+  <span class="pill pill-green">&#128274; Vote confidentiel</span>
+  <h1 style="font-size:1.4rem;margin-top:14px">{{ poll['title'] }}</h1>
+  <p style="font-weight:600;margin-bottom:18px">{{ poll['question'] }}</p>
+
+  {% if closed %}
+    <div class="flash" style="background:#fbf0dc;color:#8f5a11;border-color:#eeddb8">
+      Ce vote est clôturé. Merci !</div>
+    <a href="{{ url_for('resultat', poll_id=poll['id']) }}" class="btn btn-primary">Voir le résultat</a>
+  {% elif already %}
+    <div class="seal-lock">
+      <svg width="46" height="46" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <circle cx="24" cy="24" r="22" fill="#E4EFEA"/>
+        <path d="M15 24.5l6 6 12-13" stroke="#0E5A4A" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <p class="center" style="font-weight:600">Vous avez déjà voté sur cet appareil.</p>
+    <p class="center muted small">Votre bulletin est scellé. Merci de votre participation.</p>
+  {% else %}
+    <form method="post">
+      {% for o in options %}
+      <label class="choice">
+        <input type="radio" name="choice" value="{{ loop.index0 }}">
+        <span class="box"><span class="dot"></span>{{ o }}</span>
+      </label>
+      {% endfor %}
+      <div style="margin-top:18px"></div>
+      <button type="submit" class="btn btn-primary">Sceller mon vote &#128274;</button>
+      <p class="center muted small" style="margin-top:12px">
+        Votre choix sera chiffré avant d'être enregistré. Personne ne pourra le lire.</p>
+    </form>
+  {% endif %}
+</div>
+{% endblock %}

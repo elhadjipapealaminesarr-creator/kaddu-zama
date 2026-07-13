@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Vote créé — Kaddu{% endblock %}
+{% block content %}
+<div class="card pad-lg center">
+  <span class="pill pill-green">&#10004; Vote créé</span>
+  <h1 style="font-size:1.5rem;margin-top:14px">{{ poll['title'] }}</h1>
+  <p class="muted" style="margin-top:-4px">{{ poll['question'] }}</p>
+
+  <div class="qr" id="qr" style="margin-top:6px"></div>
+  <p class="small muted" style="margin-top:10px">Faites scanner ce code, ou partagez le lien ci-dessous.</p>
+
+  <div class="copybox">
+    <input type="text" id="voteurl" value="{{ vote_url }}" readonly>
+    <button type="button" onclick="cp('voteurl',this)">Copier</button>
+  </div>
+</div>
+
+{% if admin_url %}
+<div class="card">
+  <h2 style="font-size:1.1rem">&#128273; Votre lien privé d'organisateur</h2>
+  <p class="muted small">Gardez ce lien pour vous. Il permet de <b>suivre la participation</b> et de
+  <b>clore le vote</b> pour révéler le résultat. Ne le partagez pas avec les votants.</p>
+  <div class="copybox">
+    <input type="text" id="adminurl" value="{{ admin_url }}" readonly>
+    <button type="button" onclick="cp('adminurl',this)">Copier</button>
+  </div>
+  <a href="{{ admin_url }}" class="btn btn-gold" style="margin-top:8px">Ouvrir mon tableau de bord</a>
+</div>
+{% endif %}
+
+<a href="{{ url_for('index') }}" class="btn btn-ghost">Terminé</a>
+{% endblock %}
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+new QRCode(document.getElementById('qr'),{text:"{{ vote_url }}",width:168,height:168,
+  colorDark:"#0E5A4A",colorLight:"#ffffff"});
+function cp(id,btn){
+  const el=document.getElementById(id);el.select();el.setSelectionRange(0,9999);
+  navigator.clipboard.writeText(el.value).then(()=>{const t=btn.textContent;btn.textContent="Copié ✓";
+    setTimeout(()=>btn.textContent=t,1400);});
+}
+</script>
+{% endblock %}

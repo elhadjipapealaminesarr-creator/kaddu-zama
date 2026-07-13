@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Oups — Kaddu{% endblock %}
+{% block content %}
+<div class="card pad-lg center">
+  <h1 style="font-size:2.4rem;color:var(--terra)">{{ code }}</h1>
+  <p class="muted">{{ msg }}</p>
+  <a href="{{ url_for('index') }}" class="btn btn-ghost" style="margin-top:10px">Retour à l'accueil</a>
+</div>
+{% endblock %}

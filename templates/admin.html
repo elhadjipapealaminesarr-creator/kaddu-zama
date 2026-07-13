@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Tableau de bord — {{ poll['title'] }}{% endblock %}
+{% block content %}
+<div class="card pad-lg">
+  <span class="pill pill-gold">&#128273; Organisateur</span>
+  <h1 style="font-size:1.4rem;margin-top:14px">{{ poll['title'] }}</h1>
+  <p class="muted" style="margin-top:-4px">{{ poll['question'] }}</p>
+
+  <div style="display:flex;gap:12px;text-align:center;margin:18px 0">
+    <div style="flex:1;background:var(--primary-soft);border-radius:var(--r-sm);padding:16px 8px">
+      <div style="font-family:'Sora';font-size:1.9rem;font-weight:700;color:var(--primary-d)">{{ participants }}</div>
+      <div class="small muted">vote(s) reçu(s)</div>
+    </div>
+    <div style="flex:1;background:{% if poll['closed'] %}#fbf0dc{% else %}#eef7f3{% endif %};border-radius:var(--r-sm);padding:16px 8px">
+      <div style="font-family:'Sora';font-size:1.1rem;font-weight:700;margin-top:8px;color:{% if poll['closed'] %}#8f5a11{% else %}var(--primary-d){% endif %}">
+        {% if poll['closed'] %}Clôturé{% else %}Ouvert{% endif %}</div>
+      <div class="small muted">{% if poll['closed'] %}résultat visible{% else %}en cours{% endif %}</div>
+    </div>
+  </div>
+
+  <label class="fld">Lien à partager aux votants</label>
+  <div class="copybox">
+    <input type="text" id="vurl" value="{{ vote_url }}" readonly>
+    <button type="button" onclick="cp('vurl',this)">Copier</button>
+  </div>
+
+  {% if not poll['closed'] %}
+  <form method="post" action="{{ url_for('clore', poll_id=poll['id']) }}"
+        onsubmit="return confirm('Clore le vote et révéler le résultat ? Cette action est définitive.');">
+    <input type="hidden" name="t" value="{{ token }}">
+    <button type="submit" class="btn btn-gold" style="margin-top:8px">Clore le vote et révéler le résultat</button>
+  </form>
+  <p class="muted small center" style="margin-top:10px">Tant que le vote est ouvert, même vous ne
+  voyez aucun résultat — seulement le <b>nombre</b> de votants.</p>
+  {% else %}
+  <a href="{{ url_for('resultat', poll_id=poll['id']) }}" class="btn btn-primary" style="margin-top:8px">Voir le résultat</a>
+  {% endif %}
+</div>
+<a href="{{ url_for('index') }}" class="btn btn-ghost">Accueil</a>
+{% endblock %}
+{% block scripts %}
+<script>
+function cp(id,btn){const el=document.getElementById(id);el.select();el.setSelectionRange(0,9999);
+  navigator.clipboard.writeText(el.value).then(()=>{const t=btn.textContent;btn.textContent="Copié ✓";
+  setTimeout(()=>btn.textContent=t,1400);});}
+</script>
+{% endblock %}

@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Vote enregistré — Kaddu{% endblock %}
+{% block content %}
+<div class="card pad-lg center">
+  <div class="seal-lock">
+    <svg width="70" height="70" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M24 3l4.4 3 5.3-.7 2.3 4.8 4.8 2.3-.7 5.3L44 24l-3 4.4.7 5.3-4.8 2.3-2.3 4.8-5.3-.7L24 45l-4.4-3-5.3.7-2.3-4.8L7.2 33.7 8 28.4 5 24l3-4.4L7.3 14.3l4.8-2.3 2.3-4.8 5.3.7L24 3z" fill="#0E5A4A"/>
+      <path d="M16 24.3l5.4 5.4L33 18" stroke="#E4A24C" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </div>
+  <h1 style="font-size:1.5rem">Votre vote est scellé &#128274;</h1>
+  <p class="muted">Il a été chiffré et enregistré. Personne — pas même l'organisateur — ne peut
+  savoir ce que vous avez choisi.</p>
+  <div style="margin-top:8px">
+    <span class="pill pill-green">&#10004; Bulletin chiffré</span>
+    <span class="pill pill-gold" style="margin-left:6px">Anonyme</span>
+  </div>
+  <a href="{{ url_for('resultat', poll_id=poll['id']) }}" class="btn btn-ghost" style="margin-top:20px">Voir la page du résultat</a>
+</div>
+{% endblock %}

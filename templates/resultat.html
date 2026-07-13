@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Résultat — {{ poll['title'] }}{% endblock %}
+{% block content %}
+<div class="card pad-lg">
+  <h1 style="font-size:1.4rem">{{ poll['title'] }}</h1>
+  <p style="font-weight:600;margin-bottom:14px">{{ poll['question'] }}</p>
+
+  {% if not ready %}
+    <div class="flash" style="background:#E4EFEA;color:#0A4638;border-color:#c6ddd3">
+      &#128274; Vote en cours. Le résultat s'affichera après la clôture par l'organisateur.</div>
+    <p class="muted center" style="margin-top:10px">
+      <b>{{ participants }}</b> personne(s) ont déjà voté.<br>
+      <span class="small">Les totaux restent chiffrés jusqu'à la clôture — le secret est préservé même pendant le vote.</span></p>
+  {% else %}
+    {% if total == 0 %}
+      <p class="muted center">Aucun vote n'a été enregistré.</p>
+    {% else %}
+      <p class="muted small" style="margin-top:-6px">Décompte final sur <b>{{ total }}</b> vote(s).</p>
+      {% for r in rows_sorted %}
+      <div class="bar {% if r['label'] == win and r['n'] > 0 %}win{% endif %}">
+        <div class="head"><span>{{ r['label'] }}{% if r['label'] == win %} &nbsp;&#9733;{% endif %}</span>
+          <span class="cnt">{{ r['n'] }} · {{ r['pct'] }}%</span></div>
+        <div class="track"><div class="fill" style="width:{{ r['pct'] }}%"></div></div>
+      </div>
+      {% endfor %}
+      {% if win %}
+      <p class="center" style="margin-top:14px;font-weight:600;color:var(--gold-d)">
+        &#9733; {{ win }} l'emporte</p>
+      {% endif %}
+    {% endif %}
+    <div class="divider">preuve de confidentialité</div>
+    <p class="muted small center">Ces totaux ont été obtenus en additionnant les bulletins
+    <b>chiffrés</b>, puis en déchiffrant uniquement la somme. Aucun vote individuel n'a été lu.</p>
+  {% endif %}
+</div>
+<a href="{{ url_for('index') }}" class="btn btn-ghost">Accueil</a>
+{% endblock %}

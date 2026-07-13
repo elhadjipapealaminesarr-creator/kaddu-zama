@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Créer un vote — Kaddu{% endblock %}
+{% block content %}
+<a href="{{ url_for('index') }}" class="back">&#8592; Retour</a>
+<div class="card pad-lg">
+  <h1 style="font-size:1.5rem">Créer un vote</h1>
+  <p class="muted small" style="margin-top:-4px">Une clé de chiffrement unique sera générée pour ce vote.</p>
+  <form method="post">
+    <label class="fld" for="title">Titre du vote</label>
+    <input type="text" id="title" name="title" value="{{ title }}"
+           placeholder="Ex. Assemblée de l'amicale 2026" required>
+
+    <label class="fld" for="question">Question posée</label>
+    <input type="text" id="question" name="question" value="{{ question }}"
+           placeholder="Ex. Qui élire au poste de président ?" required>
+
+    <label class="fld">Les choix</label>
+    <div id="opts">
+      {% for o in options %}
+      <div class="opt-row">
+        <input type="text" name="option" value="{{ o }}" placeholder="Choix {{ loop.index }}">
+        <button type="button" class="opt-del" onclick="delOpt(this)" aria-label="Supprimer">&times;</button>
+      </div>
+      {% endfor %}
+    </div>
+    <button type="button" class="addopt" onclick="addOpt()">&#43; Ajouter un choix</button>
+
+    <div style="margin-top:22px"></div>
+    <button type="submit" class="btn btn-primary">Générer le vote &#128274;</button>
+  </form>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+function addOpt(){
+  const box=document.getElementById('opts');
+  if(box.querySelectorAll('.opt-row').length>=8) return;
+  const row=document.createElement('div');row.className='opt-row';
+  row.innerHTML='<input type="text" name="option" placeholder="Autre choix">'+
+    '<button type="button" class="opt-del" onclick="delOpt(this)" aria-label="Supprimer">&times;</button>';
+  box.appendChild(row);row.querySelector('input').focus();
+}
+function delOpt(b){
+  const box=document.getElementById('opts');
+  if(box.querySelectorAll('.opt-row').length<=2) return;
+  b.parentElement.remove();
+}
+</script>
+{% endblock %}

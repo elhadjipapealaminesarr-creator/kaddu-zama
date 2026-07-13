@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="hero">
+  <span class="kicker">&#128274; Personne ne voit votre vote — pas même l'organisateur</span>
+  <h1>Votez en confiance,<br>en toute confidentialité</h1>
+  <p class="lead">Kaddu permet aux associations, coopératives, tontines, syndicats et amicales
+  d'organiser des votes vraiment secrets — et dont le résultat reste vérifiable par tous.</p>
+</section>
+
+<div class="card pad-lg">
+  <a href="{{ url_for('creer') }}" class="btn btn-primary">&#10133;&nbsp; Créer un vote</a>
+  <a href="{{ url_for('rejoindre') }}" class="btn btn-ghost">J'ai un code pour voter</a>
+  <button id="installBtn" class="btn btn-gold" style="display:none">&#128241;&nbsp; Installer l'application</button>
+</div>
+
+<div class="card">
+  <h2>Comment ça marche</h2>
+  <ul class="steps">
+    <li><span class="n">1</span><div><div class="t">Vous créez le vote</div>
+      <div class="d">Une question, des choix, et un lien à partager à vos membres.</div></div></li>
+    <li><span class="n">2</span><div><div class="t">Chacun vote en secret</div>
+      <div class="d">Le bulletin est <b>chiffré sur-le-champ</b> : illisible pour tout le monde.</div></div></li>
+    <li><span class="n">3</span><div><div class="t">Le résultat s'affiche, vérifiable</div>
+      <div class="d">Le total est calculé sur les bulletins chiffrés. Aucun vote individuel n'est dévoilé.</div></div></li>
+  </ul>
+</div>
+
+<div class="card">
+  <div class="seal-lock">
+    <svg width="54" height="54" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <circle cx="24" cy="24" r="22" fill="#E4EFEA"/>
+      <path d="M18 22v-3a6 6 0 0112 0v3" stroke="#0E5A4A" stroke-width="2.4" stroke-linecap="round"/>
+      <rect x="15" y="22" width="18" height="14" rx="3.5" fill="#0E5A4A"/>
+      <circle cx="24" cy="28.5" r="2.2" fill="#E4A24C"/>
+      <rect x="23" y="29.5" width="2" height="4" rx="1" fill="#E4A24C"/>
+    </svg>
+  </div>
+  <h2 class="center">Le secret garanti par les mathématiques</h2>
+  <p class="muted center small">Kaddu utilise le <b>chiffrement homomorphe</b> : on peut additionner
+  des votes chiffrés sans jamais les déchiffrer. Kaddu — édition Zama utilise directement la technologie FHE de Zama (Concrete).
+  Ni le serveur, ni l'organisateur, ni un pirate ne peut lire un bulletin.</p>
+  <div class="center" style="margin-top:12px">
+    <span class="pill pill-green">&#128274; Bulletins chiffrés</span>
+    <span class="pill pill-gold" style="margin-left:6px">&#9878; Résultat vérifiable</span>
+  </div>
+</div>
+
+<p class="center muted small">Fait pour l'Afrique francophone — simple, sur téléphone, sans compte.</p>
+{% endblock %}

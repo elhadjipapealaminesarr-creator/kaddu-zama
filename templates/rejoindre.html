@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Rejoindre un vote — Kaddu{% endblock %}
+{% block content %}
+<a href="{{ url_for('index') }}" class="back">&#8592; Retour</a>
+<div class="card pad-lg">
+  <h1 style="font-size:1.5rem">Rejoindre un vote</h1>
+  <p class="muted small" style="margin-top:-4px">Collez le lien reçu, ou saisissez le code du vote.</p>
+  <form method="post">
+    <label class="fld" for="code">Lien ou code</label>
+    <input type="text" id="code" name="code" placeholder="ex. https://…/v/aB3xY  ou  aB3xY" required>
+    <div style="margin-top:18px"></div>
+    <button type="submit" class="btn btn-primary">Continuer</button>
+  </form>
+</div>
+{% endblock %}
