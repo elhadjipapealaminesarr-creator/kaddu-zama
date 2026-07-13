@@ -1,0 +1,268 @@
+"""
+Kaddu — édition Zama. Vote confidentiel propulsé par le VRAI chiffrement FHE de Zama
+(bibliothèque Concrete). Chaque bulletin est chiffré ; le décompte est calculé sur les
+bulletins chiffrés (addition homomorphe FHE) et seul le total est déchiffré. Personne —
+ni le serveur, ni l'organisateur — ne voit un vote individuel.
+"""
+import os
+import json
+import time
+import secrets
+import sqlite3
+from contextlib import closing
+
+from flask import (
+    Flask, request, redirect, url_for, render_template,
+    make_response, abort, flash, send_from_directory
+)
+
+import fhe_engine as fhe   # compile + génère les clés FHE au démarrage
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_PATH = os.environ.get("KADDU_DB", os.path.join(BASE_DIR, "kaddu_zama.db"))
+
+app = Flask(__name__)
+app.secret_key = os.environ.get("APP_SECRET", secrets.token_hex(16))
+app.jinja_env.globals["ANNEE"] = time.strftime("%Y")
+app.jinja_env.globals["ZAMA"] = True
+
+
+def db():
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+
+def init_db():
+    with closing(db()) as conn, conn:
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS polls (
+                id          TEXT PRIMARY KEY,
+                admin_token TEXT NOT NULL,
+                title       TEXT NOT NULL,
+                question    TEXT NOT NULL,
+                options     TEXT NOT NULL,
+                created_at  INTEGER NOT NULL,
+                closed      INTEGER NOT NULL DEFAULT 0,
+                results     TEXT
+            )
+        """)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS ballots (
+                poll_id    TEXT NOT NULL,
+                voter      INTEGER NOT NULL,
+                option_idx INTEGER NOT NULL,
+                blob       BLOB NOT NULL
+            )
+        """)
+        conn.execute("CREATE INDEX IF NOT EXISTS ix_ballots ON ballots(poll_id, option_idx, voter)")
+
+
+init_db()
+
+
+def get_poll(poll_id):
+    with closing(db()) as conn:
+        return conn.execute("SELECT * FROM polls WHERE id = ?", (poll_id,)).fetchone()
+
+
+def voter_count(poll_id):
+    with closing(db()) as conn:
+        r = conn.execute("SELECT COALESCE(MAX(voter)+1, 0) n FROM ballots WHERE poll_id = ?",
+                         (poll_id,)).fetchone()
+    return r["n"]
+
+
+def base_url():
+    return request.url_root.rstrip("/")
+
+
+@app.route("/ping")
+def ping():
+    return "ok", 200
+
+
+@app.route("/sw.js")
+def service_worker():
+    resp = make_response(send_from_directory(os.path.join(BASE_DIR, "static"), "sw.js"))
+    resp.headers["Content-Type"] = "application/javascript"
+    resp.headers["Service-Worker-Allowed"] = "/"
+    resp.headers["Cache-Control"] = "no-cache"
+    return resp
+
+
+@app.route("/")
+def index():
+    return render_template("index.html")
+
+
+@app.route("/creer", methods=["GET", "POST"])
+def creer():
+    if request.method == "POST":
+        title = (request.form.get("title") or "").strip()
+        question = (request.form.get("question") or "").strip()
+        options = [o.strip() for o in request.form.getlist("option") if o.strip()]
+        if not title or not question or len(options) < 2:
+            flash("Donne un titre, une question et au moins 2 choix.")
+            return render_template("creer.html", title=title, question=question,
+                                   options=options or ["", ""])
+        options = options[:8]
+        poll_id = secrets.token_urlsafe(5).replace("-", "a").replace("_", "b")
+        admin_token = secrets.token_urlsafe(16)
+        with closing(db()) as conn, conn:
+            conn.execute("INSERT INTO polls (id, admin_token, title, question, options, "
+                         "created_at, closed) VALUES (?,?,?,?,?,?,0)",
+                         (poll_id, admin_token, title, question, json.dumps(options),
+                          int(time.time())))
+        return redirect(url_for("partage", poll_id=poll_id, t=admin_token))
+    return render_template("creer.html", title="", question="", options=["", ""])
+
+
+@app.route("/partage/<poll_id>")
+def partage(poll_id):
+    poll = get_poll(poll_id)
+    if not poll:
+        abort(404)
+    admin_token = request.args.get("t", "")
+    show_admin = admin_token == poll["admin_token"]
+    vote_url = f"{base_url()}{url_for('voter', poll_id=poll_id)}"
+    admin_url = (f"{base_url()}{url_for('admin', poll_id=poll_id, t=poll['admin_token'])}"
+                 if show_admin else "")
+    return render_template("partage.html", poll=poll, vote_url=vote_url, admin_url=admin_url)
+
+
+@app.route("/v/<poll_id>", methods=["GET", "POST"])
+def voter(poll_id):
+    poll = get_poll(poll_id)
+    if not poll:
+        abort(404)
+    options = json.loads(poll["options"])
+    already = request.cookies.get(f"kv_{poll_id}") == "1"
+    full = voter_count(poll_id) >= fhe.capacity()
+
+    if poll["closed"]:
+        return render_template("voter.html", poll=poll, options=options,
+                               closed=True, already=already)
+
+    if request.method == "POST":
+        if already:
+            return redirect(url_for("merci", poll_id=poll_id))
+        if full:
+            flash("Ce vote a atteint sa capacité maximale.")
+            return render_template("voter.html", poll=poll, options=options,
+                                   closed=False, already=False)
+        try:
+            choice = int(request.form.get("choice", "-1"))
+        except ValueError:
+            choice = -1
+        if choice < 0 or choice >= len(options):
+            flash("Choisis une option pour voter.")
+            return render_template("voter.html", poll=poll, options=options,
+                                   closed=False, already=False)
+        n = voter_count(poll_id)
+        rows = [(poll_id, n, m, fhe.encrypt_ballot(n, 1 if m == choice else 0))
+                for m in range(len(options))]
+        with closing(db()) as conn, conn:
+            conn.executemany("INSERT INTO ballots (poll_id, voter, option_idx, blob) "
+                             "VALUES (?,?,?,?)", rows)
+        resp = make_response(redirect(url_for("merci", poll_id=poll_id)))
+        resp.set_cookie(f"kv_{poll_id}", "1", max_age=60*60*24*365, samesite="Lax")
+        return resp
+
+    return render_template("voter.html", poll=poll, options=options,
+                           closed=False, already=already, full=full)
+
+
+@app.route("/v/<poll_id>/merci")
+def merci(poll_id):
+    poll = get_poll(poll_id)
+    if not poll:
+        abort(404)
+    return render_template("merci.html", poll=poll)
+
+
+@app.route("/r/<poll_id>")
+def resultat(poll_id):
+    poll = get_poll(poll_id)
+    if not poll:
+        abort(404)
+    options = json.loads(poll["options"])
+    if not poll["closed"]:
+        return render_template("resultat.html", poll=poll, options=options,
+                               ready=False, participants=voter_count(poll_id))
+    results = json.loads(poll["results"] or "[]")
+    total = sum(results) if results else 0
+    rows = []
+    for i, opt in enumerate(options):
+        n = results[i] if i < len(results) else 0
+        pct = round(n / total * 100) if total else 0
+        rows.append({"label": opt, "n": n, "pct": pct})
+    rows_sorted = sorted(rows, key=lambda r: r["n"], reverse=True)
+    win = rows_sorted[0]["label"] if rows_sorted and total else None
+    return render_template("resultat.html", poll=poll, options=options, ready=True,
+                           rows=rows, rows_sorted=rows_sorted, total=total, win=win)
+
+
+@app.route("/admin/<poll_id>")
+def admin(poll_id):
+    poll = get_poll(poll_id)
+    if not poll:
+        abort(404)
+    if request.args.get("t", "") != poll["admin_token"]:
+        abort(403)
+    options = json.loads(poll["options"])
+    vote_url = f"{base_url()}{url_for('voter', poll_id=poll_id)}"
+    return render_template("admin.html", poll=poll, options=options,
+                           participants=voter_count(poll_id), vote_url=vote_url,
+                           token=poll["admin_token"])
+
+
+@app.route("/admin/<poll_id>/clore", methods=["POST"])
+def clore(poll_id):
+    poll = get_poll(poll_id)
+    if not poll:
+        abort(404)
+    if request.form.get("t", "") != poll["admin_token"]:
+        abort(403)
+    options = json.loads(poll["options"])
+    results = []
+    with closing(db()) as conn:
+        for m in range(len(options)):
+            blobs = [r["blob"] for r in conn.execute(
+                "SELECT blob FROM ballots WHERE poll_id=? AND option_idx=? ORDER BY voter",
+                (poll_id, m)).fetchall()]
+            results.append(fhe.tally(blobs) if blobs else 0)
+    with closing(db()) as conn, conn:
+        conn.execute("UPDATE polls SET closed=1, results=? WHERE id=?",
+                     (json.dumps(results), poll_id))
+    return redirect(url_for("resultat", poll_id=poll_id))
+
+
+@app.route("/rejoindre", methods=["GET", "POST"])
+def rejoindre():
+    if request.method == "POST":
+        code = (request.form.get("code") or "").strip()
+        if "/v/" in code:
+            code = code.rsplit("/v/", 1)[-1].split("/")[0].split("?")[0]
+        elif "/" in code:
+            code = code.rstrip("/").rsplit("/", 1)[-1]
+        if code and get_poll(code):
+            return redirect(url_for("voter", poll_id=code))
+        flash("Code introuvable. Vérifie et réessaie.")
+    return render_template("rejoindre.html")
+
+
+@app.errorhandler(404)
+def not_found(e):
+    return render_template("erreur.html", code=404,
+                           msg="Ce vote n'existe pas ou a été supprimé."), 404
+
+
+@app.errorhandler(403)
+def forbidden(e):
+    return render_template("erreur.html", code=403,
+                           msg="Accès réservé à l'organisateur du vote."), 403
+
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", "7860")), debug=False)

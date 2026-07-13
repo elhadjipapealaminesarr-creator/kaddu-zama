@@ -1,0 +1,5 @@
+# Dépendances installées via le Dockerfile (concrete-python sans PyTorch).
+# Ce fichier est indicatif — le build réel utilise le Dockerfile.
+flask>=3.0
+gunicorn>=21.2
+concrete-python==2.11.0

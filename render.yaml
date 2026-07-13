@@ -1,0 +1,10 @@
+# Déploiement Render en mode Docker (édition Zama).
+services:
+  - type: web
+    name: kaddu-zama
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: APP_SECRET
+        generateValue: true
