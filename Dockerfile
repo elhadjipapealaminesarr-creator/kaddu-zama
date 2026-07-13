@@ -2,6 +2,12 @@ FROM python:3.10-slim
 
 WORKDIR /app
 
+# Concrete (Zama) compile son circuit FHE au démarrage et a besoin de l'éditeur de
+# liens `ld` + d'un compilateur. On installe les outils de build indispensables.
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends build-essential && \
+    rm -rf /var/lib/apt/lists/*
+
 # Faux module "torch" : Concrete l'importe pour un module de convolution qu'on n'utilise
 # pas — on évite ainsi ~1 Go de dépendances (PyTorch + CUDA).
 RUN mkdir -p /stub/torch && \
