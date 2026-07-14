@@ -27,10 +27,51 @@ app.jinja_env.globals["ANNEE"] = time.strftime("%Y")
 app.jinja_env.globals["ZAMA"] = True
 
 
+# Base durable : PostgreSQL (Neon) si DATABASE_URL est défini, sinon SQLite en local.
+DATABASE_URL = os.environ.get("DATABASE_URL")
+IS_PG = bool(DATABASE_URL)
+BLOB_TYPE = "BYTEA" if IS_PG else "BLOB"
+
+if IS_PG:
+    import psycopg
+    from psycopg.rows import dict_row
+
+
+class _Conn:
+    """Adaptateur : même interface (execute / with / close) pour SQLite et Postgres."""
+    def __init__(self, raw):
+        self._raw = raw
+
+    def _q(self, sql):
+        return sql.replace("?", "%s") if IS_PG else sql
+
+    def execute(self, sql, params=()):
+        cur = self._raw.cursor()
+        cur.execute(self._q(sql), params)
+        return cur
+
+    def executemany(self, sql, seq):
+        cur = self._raw.cursor()
+        cur.executemany(self._q(sql), seq)
+        return cur
+
+    def __enter__(self):
+        self._raw.__enter__()
+        return self
+
+    def __exit__(self, *a):
+        return self._raw.__exit__(*a)
+
+    def close(self):
+        self._raw.close()
+
+
 def db():
+    if IS_PG:
+        return _Conn(psycopg.connect(DATABASE_URL, row_factory=dict_row))
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
-    return conn
+    return _Conn(conn)
 
 
 def init_db():
@@ -47,12 +88,12 @@ def init_db():
                 results     TEXT
             )
         """)
-        conn.execute("""
+        conn.execute(f"""
             CREATE TABLE IF NOT EXISTS ballots (
                 poll_id    TEXT NOT NULL,
                 voter      INTEGER NOT NULL,
                 option_idx INTEGER NOT NULL,
-                blob       BLOB NOT NULL
+                blob       {BLOB_TYPE} NOT NULL
             )
         """)
         conn.execute("CREATE INDEX IF NOT EXISTS ix_ballots ON ballots(poll_id, option_idx, voter)")
@@ -275,7 +316,7 @@ def clore(poll_id):
     results = []
     with closing(db()) as conn:
         for m in range(len(options)):
-            blobs = [r["blob"] for r in conn.execute(
+            blobs = [bytes(r["blob"]) for r in conn.execute(
                 "SELECT blob FROM ballots WHERE poll_id=? AND option_idx=? ORDER BY voter",
                 (poll_id, m)).fetchall()]
             results.append(fhe.tally(blobs) if blobs else 0)

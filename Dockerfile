@@ -19,7 +19,7 @@ ENV PYTHONPATH=/stub \
     PYTHONUNBUFFERED=1
 
 # Flask + le vrai moteur FHE de Zama (Concrete), sans PyTorch.
-RUN pip install --no-cache-dir flask gunicorn && \
+RUN pip install --no-cache-dir flask gunicorn "psycopg[binary]" && \
     pip install --no-cache-dir --no-deps concrete-python==2.11.0 && \
     pip install --no-cache-dir numpy scipy networkx z3-solver jsonpickle importlib_resources
 
