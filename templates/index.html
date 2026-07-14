@@ -1,49 +1,325 @@
-{% extends "base.html" %}
-{% block content %}
-<section class="hero">
-  <span class="kicker">&#128274; Personne ne voit votre vote — pas même l'organisateur</span>
-  <h1>Votez en confiance,<br>en toute confidentialité</h1>
-  <p class="lead">Kaddu permet aux associations, coopératives, tontines, syndicats et amicales
-  d'organiser des votes vraiment secrets — et dont le résultat reste vérifiable par tous.</p>
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0E5A4A">
+<title>Kaddu — La confidentialité au service des communautés</title>
+<meta name="description" content="Kaddu : votes secrets, tontines inviolables et décisions collectives protégées par le chiffrement FHE de Zama. Pour les associations, coopératives, tontines et syndicats.">
+<link rel="manifest" href="/static/manifest.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#16261F; --green:#0E5A4A; --green-d:#0A4638; --green-2:#12705B;
+  --gold:#E4A24C; --gold-d:#B87A28; --terra:#C75B39;
+  --cream:#FBF7F0; --card:#FFFFFF; --muted:#5E6B64; --line:#ECE3D6;
+  --soft:#E4EFEA; --gold-soft:#FBF0DC; --terra-soft:#F7E9E2;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',system-ui,sans-serif;color:var(--ink);background:var(--cream);line-height:1.65;-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:'Sora',sans-serif;line-height:1.12;letter-spacing:-.02em}
+a{text-decoration:none;color:inherit}
+.wrap{max-width:1120px;margin:0 auto;padding:0 22px}
+.btn{display:inline-flex;align-items:center;gap:10px;font-family:'Inter';font-weight:600;font-size:1rem;
+  padding:15px 26px;border-radius:14px;border:1.5px solid transparent;cursor:pointer;transition:.18s;white-space:nowrap}
+.btn-gold{background:var(--gold);color:#3a2606;box-shadow:0 10px 26px rgba(228,162,76,.32)}
+.btn-gold:hover{background:#d9942f;transform:translateY(-2px)}
+.btn-light{background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.35)}
+.btn-light:hover{background:rgba(255,255,255,.2)}
+.btn-green{background:var(--green);color:#fff;box-shadow:0 10px 26px rgba(14,90,74,.28)}
+.btn-green:hover{background:var(--green-d);transform:translateY(-2px)}
+.btn-ghost{background:#fff;color:var(--ink);border-color:var(--line)}
+.btn-ghost:hover{border-color:#d9cdb8}
+.pill{display:inline-flex;align-items:center;gap:8px;font-weight:600;font-size:.82rem;padding:7px 15px;border-radius:999px}
+
+/* NAV */
+nav{position:sticky;top:0;z-index:50;background:rgba(251,247,240,.85);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+nav .wrap{display:flex;align-items:center;justify-content:space-between;height:66px}
+.brand{display:flex;align-items:center;gap:11px;font-family:'Sora';font-weight:700;font-size:1.3rem}
+.brand b{color:var(--green)}
+.nav-links{display:flex;gap:28px;align-items:center}
+.nav-links a{font-weight:500;color:var(--muted);font-size:.95rem}
+.nav-links a:hover{color:var(--ink)}
+@media(max-width:760px){.nav-links a:not(.btn){display:none}}
+
+/* HERO */
+.hero{position:relative;background:var(--green);color:#fff;overflow:hidden}
+.hero::before{content:"";position:absolute;inset:0;opacity:.14;
+  background-image:repeating-linear-gradient(135deg,#fff 0 2px,transparent 2px 26px),
+    repeating-linear-gradient(45deg,var(--gold) 0 2px,transparent 2px 40px);}
+.hero .wrap{position:relative;padding:78px 22px 92px;text-align:center}
+.hero .kick{display:inline-flex;align-items:center;gap:9px;background:rgba(255,255,255,.12);
+  border:1px solid rgba(255,255,255,.25);padding:8px 16px;border-radius:999px;font-weight:600;font-size:.85rem;margin-bottom:26px}
+.hero h1{font-size:clamp(2.1rem,5.4vw,3.6rem);font-weight:800;max-width:900px;margin:0 auto 22px}
+.hero h1 .hl{color:var(--gold)}
+.hero p.lead{font-size:clamp(1.05rem,2.2vw,1.28rem);color:#DCEAE4;max-width:640px;margin:0 auto 34px}
+.hero .cta{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+.seal{width:46px;height:46px;flex:none}
+.trust{display:flex;gap:26px;justify-content:center;flex-wrap:wrap;margin-top:40px;color:#BFD6CD;font-size:.9rem;font-weight:500}
+.trust span{display:inline-flex;align-items:center;gap:8px}
+.wave{display:block;width:100%;height:40px}
+
+/* SECTION */
+section{padding:76px 0}
+.eyebrow{color:var(--gold-d);font-weight:700;font-size:.82rem;letter-spacing:.08em;text-transform:uppercase;margin-bottom:12px}
+.h2{font-size:clamp(1.7rem,3.6vw,2.5rem);font-weight:700;max-width:640px}
+.sub{color:var(--muted);font-size:1.08rem;max-width:620px;margin-top:14px}
+.center{text-align:center}.center .h2,.center .sub{margin-left:auto;margin-right:auto}
+
+/* MODULES */
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:22px;margin-top:46px}
+.mod{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:28px;transition:.2s;position:relative;overflow:hidden}
+.mod:hover{transform:translateY(-4px);box-shadow:0 22px 44px rgba(22,38,31,.09)}
+.mod .ic{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;margin-bottom:18px}
+.mod h3{font-size:1.28rem;font-weight:600;margin-bottom:8px}
+.mod p{color:var(--muted);font-size:.98rem;margin-bottom:16px}
+.status{font-size:.74rem;font-weight:700;padding:5px 11px;border-radius:999px;position:absolute;top:22px;right:22px}
+.st-live{background:var(--soft);color:var(--green-d)}
+.st-soon{background:var(--gold-soft);color:var(--gold-d)}
+.mod .go{font-weight:600;color:var(--green);font-size:.95rem;display:inline-flex;gap:6px;align-items:center}
+
+/* HOW */
+.how{background:#fff;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:26px;margin-top:46px}
+.step .n{width:44px;height:44px;border-radius:13px;background:var(--soft);color:var(--green-d);
+  font-family:'Sora';font-weight:700;font-size:1.15rem;display:flex;align-items:center;justify-content:center;margin-bottom:16px}
+.step h3{font-size:1.15rem;font-weight:600;margin-bottom:6px}
+.step p{color:var(--muted);font-size:.97rem}
+
+/* ZAMA */
+.zama{background:var(--green-d);color:#fff;border-radius:26px;padding:52px;display:grid;grid-template-columns:1.2fr 1fr;gap:40px;align-items:center}
+@media(max-width:820px){.zama{grid-template-columns:1fr;padding:36px;text-align:center}}
+.zama h2{font-size:clamp(1.6rem,3.4vw,2.2rem);font-weight:700;margin-bottom:16px}
+.zama p{color:#CFE0D9;font-size:1.05rem;margin-bottom:14px}
+.zama .badges{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+@media(max-width:820px){.zama .badges{justify-content:center}}
+.lockbig{display:flex;justify-content:center}
+
+/* CTA */
+.final{text-align:center}
+.final .box{background:var(--card);border:1px solid var(--line);border-radius:24px;padding:52px 30px;box-shadow:0 20px 50px rgba(22,38,31,.07)}
+.final h2{font-size:clamp(1.7rem,3.6vw,2.4rem);font-weight:700;margin-bottom:14px}
+.final p{color:var(--muted);font-size:1.08rem;max-width:520px;margin:0 auto 28px}
+
+footer{background:var(--ink);color:#B9C6C0;padding:44px 0;font-size:.92rem}
+footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;align-items:center}
+footer .brand{color:#fff}footer .brand b{color:var(--gold)}
+footer a{color:#B9C6C0}footer a:hover{color:#fff}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <a href="/" class="brand">
+      <svg class="seal" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:32px;height:32px">
+        <path d="M24 2l4.6 3.1 5.5-.7 2.4 5 5 2.4-.7 5.5L48 24l-3.1 4.6.7 5.5-5 2.4-2.4 5-5.5-.7L24 46l-4.6-3.1-5.5.7-2.4-5-5-2.4.7-5.5L0 24l3.1-4.6-.7-5.5 5-2.4 2.4-5 5.5.7L24 2z" fill="#0E5A4A"/>
+        <circle cx="24" cy="24" r="15" fill="#0A4638" stroke="#E4A24C" stroke-width="1.5"/>
+        <path d="M20 23v-2.2a4 4 0 018 0V23" stroke="#E4A24C" stroke-width="2" stroke-linecap="round"/>
+        <rect x="18" y="23" width="12" height="9" rx="2.2" fill="#E4A24C"/><circle cx="24" cy="27.2" r="1.5" fill="#0A4638"/>
+      </svg>
+      <span><b>Kaddu</b></span>
+    </a>
+    <div class="nav-links">
+      <a href="#modules">Nos solutions</a>
+      <a href="#comment">Comment ça marche</a>
+      <a href="#zama">Sécurité</a>
+      <a href="{{ url_for('creer') }}" class="btn btn-green" style="padding:10px 20px">Ouvrir Kaddu</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <span class="kick">&#128274; Protégé par le chiffrement FHE de Zama</span>
+    <h1>La confidentialité au service des <span class="hl">communautés</span></h1>
+    <p class="lead">Votes secrets, tontines inviolables et décisions collectives — où personne,
+    pas même l'organisateur, ne peut voir vos choix. Pensé pour les associations, coopératives,
+    tontines et syndicats d'Afrique francophone.</p>
+    <div class="cta">
+      <a href="{{ url_for('creer') }}" class="btn btn-gold">&#10133;&nbsp; Créer un vote gratuit</a>
+      <a href="{{ url_for('rejoindre') }}" class="btn btn-light">J'ai un code pour voter</a>
+    </div>
+    <div class="trust">
+      <span>&#10004; Gratuit et sans compte</span>
+      <span>&#128241; S'installe comme une app</span>
+      <span>&#9878; Résultat vérifiable</span>
+    </div>
+  </div>
+  <svg class="wave" viewBox="0 0 1440 40" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg"><path d="M0 40 L0 20 Q360 0 720 20 T1440 20 L1440 40 Z" fill="#FBF7F0"/></svg>
+</header>
+
+<section id="modules">
+  <div class="wrap center">
+    <div class="eyebrow">Une plateforme, plusieurs usages</div>
+    <h2 class="h2">Tout ce qui demande confiance et discrétion</h2>
+    <p class="sub">Un seul moteur de chiffrement, plusieurs solutions concrètes pour vos communautés.</p>
+    <div class="grid" style="text-align:left">
+
+      <div class="mod">
+        <span class="status st-live">&#9679; En ligne</span>
+        <div class="ic" style="background:var(--soft)"><span style="font-size:24px">&#128499;&#65039;</span></div>
+        <h3>Vote confidentiel</h3>
+        <p>Élections de bureau, décisions d'assemblée, sondages internes. Chaque bulletin est chiffré ;
+        le résultat est public et vérifiable, les votes restent secrets.</p>
+        <a href="{{ url_for('creer') }}" class="go">Utiliser maintenant &#8594;</a>
+      </div>
+
+      <div class="mod">
+        <span class="status st-soon">Bientôt</span>
+        <div class="ic" style="background:var(--gold-soft)"><span style="font-size:24px">&#129534;</span></div>
+        <h3>Tontine inviolable</h3>
+        <p>Gérer les participants, les tours et les cotisations proprement, sans tricherie possible —
+        les montants restent confidentiels, la transparence est garantie.</p>
+        <span class="go" style="color:var(--muted)">En préparation</span>
+      </div>
+
+      <div class="mod">
+        <span class="status st-soon">Bientôt</span>
+        <div class="ic" style="background:var(--terra-soft)"><span style="font-size:24px">&#128273;</span></div>
+        <h3>Appels d'offres scellés</h3>
+        <p>Des offres déposées sous enveloppe chiffrée : le gagnant est déterminé sans jamais
+        révéler les propositions des autres. L'anti-corruption par les mathématiques.</p>
+        <span class="go" style="color:var(--muted)">En préparation</span>
+      </div>
+
+      <div class="mod">
+        <span class="status st-soon">Bientôt</span>
+        <div class="ic" style="background:var(--soft)"><span style="font-size:24px">&#129309;</span></div>
+        <h3>Mise en commun protégée</h3>
+        <p>Regrouper des données sensibles d'un groupe (budgets, chiffres) pour obtenir un total
+        ou une moyenne — sans que personne n'expose ses chiffres individuels.</p>
+        <span class="go" style="color:var(--muted)">En préparation</span>
+      </div>
+
+      <div class="mod">
+        <span class="status st-soon">Bientôt</span>
+        <div class="ic" style="background:var(--gold-soft)"><span style="font-size:24px">&#128176;</span></div>
+        <h3>Comparateur privé</h3>
+        <p>Comparer des salaires ou des prix au sein d'un groupe et savoir « où je me situe »,
+        sans que quiconque voie les chiffres de l'autre.</p>
+        <span class="go" style="color:var(--muted)">En préparation</span>
+      </div>
+
+      <div class="mod" style="background:linear-gradient(135deg,#0E5A4A,#0A4638);color:#fff;border:none">
+        <div class="ic" style="background:rgba(255,255,255,.14)"><span style="font-size:24px">&#10024;</span></div>
+        <h3 style="color:#fff">Une idée pour ta communauté ?</h3>
+        <p style="color:#CFE0D9">Le moteur Kaddu peut protéger presque toute décision collective.
+        Dis-nous ton besoin, on le construit.</p>
+        <a href="{{ url_for('creer') }}" class="go" style="color:var(--gold)">Commencer &#8594;</a>
+      </div>
+
+    </div>
+  </div>
 </section>
 
-<div class="card pad-lg">
-  <a href="{{ url_for('creer') }}" class="btn btn-primary">&#10133;&nbsp; Créer un vote</a>
-  <a href="{{ url_for('rejoindre') }}" class="btn btn-ghost">J'ai un code pour voter</a>
-  <button id="installBtn" class="btn btn-gold" style="display:none">&#128241;&nbsp; Installer l'application</button>
-</div>
-
-<div class="card">
-  <h2>Comment ça marche</h2>
-  <ul class="steps">
-    <li><span class="n">1</span><div><div class="t">Vous créez le vote</div>
-      <div class="d">Une question, des choix, et un lien à partager à vos membres.</div></div></li>
-    <li><span class="n">2</span><div><div class="t">Chacun vote en secret</div>
-      <div class="d">Le bulletin est <b>chiffré sur-le-champ</b> : illisible pour tout le monde.</div></div></li>
-    <li><span class="n">3</span><div><div class="t">Le résultat s'affiche, vérifiable</div>
-      <div class="d">Le total est calculé sur les bulletins chiffrés. Aucun vote individuel n'est dévoilé.</div></div></li>
-  </ul>
-</div>
-
-<div class="card">
-  <div class="seal-lock">
-    <svg width="54" height="54" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <circle cx="24" cy="24" r="22" fill="#E4EFEA"/>
-      <path d="M18 22v-3a6 6 0 0112 0v3" stroke="#0E5A4A" stroke-width="2.4" stroke-linecap="round"/>
-      <rect x="15" y="22" width="18" height="14" rx="3.5" fill="#0E5A4A"/>
-      <circle cx="24" cy="28.5" r="2.2" fill="#E4A24C"/>
-      <rect x="23" y="29.5" width="2" height="4" rx="1" fill="#E4A24C"/>
-    </svg>
+<section id="comment" class="how">
+  <div class="wrap center">
+    <div class="eyebrow">Simple pour tous</div>
+    <h2 class="h2">Trois étapes, aucune compétence technique</h2>
+    <div class="steps" style="text-align:left">
+      <div class="step"><div class="n">1</div><h3>Vous créez</h3>
+        <p>Une question, des choix, et un lien + QR code à partager à vos membres sur WhatsApp.</p></div>
+      <div class="step"><div class="n">2</div><h3>Chacun participe en secret</h3>
+        <p>Le choix est chiffré sur-le-champ. Ni le serveur, ni l'organisateur ne peut le lire.</p></div>
+      <div class="step"><div class="n">3</div><h3>Le résultat, vérifiable</h3>
+        <p>Le total est calculé sur les données chiffrées. Aucune réponse individuelle n'est dévoilée.</p></div>
+    </div>
   </div>
-  <h2 class="center">Le secret garanti par les mathématiques</h2>
-  <p class="muted center small">Kaddu utilise le <b>chiffrement homomorphe</b> : on peut additionner
-  des votes chiffrés sans jamais les déchiffrer. Kaddu — édition Zama utilise directement la technologie FHE de Zama (Concrete).
-  Ni le serveur, ni l'organisateur, ni un pirate ne peut lire un bulletin.</p>
-  <div class="center" style="margin-top:12px">
-    <span class="pill pill-green">&#128274; Bulletins chiffrés</span>
-    <span class="pill pill-gold" style="margin-left:6px">&#9878; Résultat vérifiable</span>
-  </div>
-</div>
+</section>
 
-<p class="center muted small">Fait pour l'Afrique francophone — simple, sur téléphone, sans compte.</p>
-{% endblock %}
+<section id="zama">
+  <div class="wrap">
+    <div class="zama">
+      <div>
+        <div class="eyebrow" style="color:var(--gold)">La technologie</div>
+        <h2>Le secret garanti par les mathématiques, pas par la confiance</h2>
+        <p>Kaddu s'appuie sur le <b>chiffrement entièrement homomorphe (FHE)</b> de Zama : on calcule
+        directement sur des données chiffrées, sans jamais les déchiffrer.</p>
+        <p>Concrètement : vos bulletins voyagent et sont comptés <b>sous scellé</b>. Seul le résultat
+        final est révélé — jamais les réponses individuelles.</p>
+        <div class="badges">
+          <span class="pill" style="background:rgba(255,255,255,.12);color:#fff">&#128274; Chiffrement de bout en bout</span>
+          <span class="pill" style="background:rgba(228,162,76,.2);color:var(--gold)">&#9878; Résultat vérifiable</span>
+        </div>
+      </div>
+      <div class="lockbig">
+        <svg width="150" height="150" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle cx="24" cy="24" r="23" fill="rgba(255,255,255,.06)"/>
+          <path d="M17 22v-3.5a7 7 0 0114 0V22" stroke="#E4A24C" stroke-width="2.6" stroke-linecap="round"/>
+          <rect x="13" y="22" width="22" height="16" rx="4" fill="#E4A24C"/>
+          <circle cx="24" cy="29" r="2.6" fill="#0A4638"/><rect x="22.7" y="30" width="2.6" height="5" rx="1.3" fill="#0A4638"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="pourquoi">
+  <div class="wrap center">
+    <div class="eyebrow">Pourquoi Kaddu</div>
+    <h2 class="h2">Fait pour la confiance, pensé pour ici</h2>
+    <div class="grid" style="text-align:left">
+      <div class="mod"><div class="ic" style="background:var(--soft)"><span style="font-size:24px">&#128274;</span></div>
+        <h3>Vraiment secret</h3><p>Chaque réponse est chiffrée. Ni l'organisateur, ni le serveur, ni un pirate ne peut voir un choix individuel.</p></div>
+      <div class="mod"><div class="ic" style="background:var(--gold-soft)"><span style="font-size:24px">&#127873;</span></div>
+        <h3>Gratuit et sans compte</h3><p>Rien à payer, rien à installer pour voter. On partage un lien, chacun participe en un clic.</p></div>
+      <div class="mod"><div class="ic" style="background:var(--terra-soft)"><span style="font-size:24px">&#128241;</span></div>
+        <h3>Pensé pour le téléphone</h3><p>Léger, rapide sur petit forfait, et installable comme une vraie application sur Android et iPhone.</p></div>
+      <div class="mod"><div class="ic" style="background:var(--soft)"><span style="font-size:24px">&#9878;&#65039;</span></div>
+        <h3>Résultat vérifiable</h3><p>Le décompte est calculé sur les données chiffrées, puis publié. La transparence sans sacrifier le secret.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="how" id="faq">
+  <div class="wrap">
+    <div class="center"><div class="eyebrow">Questions fréquentes</div>
+      <h2 class="h2" style="margin:0 auto">Vos questions, nos réponses</h2></div>
+    <div style="max-width:760px;margin:44px auto 0;display:flex;flex-direction:column;gap:12px">
+      <details style="background:var(--cream);border:1px solid var(--line);border-radius:14px;padding:18px 22px">
+        <summary style="font-family:'Sora';font-weight:600;cursor:pointer;font-size:1.05rem">L'organisateur peut-il voir mon vote ?</summary>
+        <p style="color:var(--muted);margin-top:10px">Non. Votre bulletin est chiffré sur-le-champ. Même la personne qui a créé le vote ne voit que le résultat final, jamais les choix individuels.</p></details>
+      <details style="background:var(--cream);border:1px solid var(--line);border-radius:14px;padding:18px 22px">
+        <summary style="font-family:'Sora';font-weight:600;cursor:pointer;font-size:1.05rem">Faut-il installer une application ?</summary>
+        <p style="color:var(--muted);margin-top:10px">Non. Un simple lien (ou un QR code) suffit pour voter. Si vous le souhaitez, vous pouvez tout de même « installer » Kaddu sur votre écran d'accueil.</p></details>
+      <details style="background:var(--cream);border:1px solid var(--line);border-radius:14px;padding:18px 22px">
+        <summary style="font-family:'Sora';font-weight:600;cursor:pointer;font-size:1.05rem">Est-ce que c'est payant ?</summary>
+        <p style="color:var(--muted);margin-top:10px">Non, c'est gratuit. Kaddu est pensé pour être accessible à toutes les communautés.</p></details>
+      <details style="background:var(--cream);border:1px solid var(--line);border-radius:14px;padding:18px 22px">
+        <summary style="font-family:'Sora';font-weight:600;cursor:pointer;font-size:1.05rem">Est-ce vraiment sécurisé ?</summary>
+        <p style="color:var(--muted);margin-top:10px">Oui. Kaddu s'appuie sur le chiffrement homomorphe (FHE) de Zama : on calcule sur des données chiffrées sans jamais les déchiffrer. Le secret est garanti par les mathématiques.</p></details>
+      <details style="background:var(--cream);border:1px solid var(--line);border-radius:14px;padding:18px 22px">
+        <summary style="font-family:'Sora';font-weight:600;cursor:pointer;font-size:1.05rem">Pour qui est fait Kaddu ?</summary>
+        <p style="color:var(--muted);margin-top:10px">Pour les associations, coopératives, tontines, syndicats, amicales, bureaux d'étudiants — partout où l'on prend des décisions à plusieurs et où la confiance compte.</p></details>
+    </div>
+  </div>
+</section>
+
+<section class="final">
+  <div class="wrap">
+    <div class="box">
+      <h2>Prêt à organiser un vote vraiment secret ?</h2>
+      <p>Gratuit, sans compte, prêt en une minute. Partagez le lien, vos membres votent, le résultat s'affiche.</p>
+      <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap">
+        <a href="{{ url_for('creer') }}" class="btn btn-gold">&#10133;&nbsp; Créer mon premier vote</a>
+        <a href="{{ url_for('rejoindre') }}" class="btn btn-ghost">J'ai un code pour voter</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="brand" style="font-size:1.15rem"><b>Kaddu</b></div>
+    <div style="max-width:420px">La confidentialité au service des communautés — associations, coopératives,
+    tontines, syndicats, amicales. Propulsé par le chiffrement FHE de Zama.</div>
+    <div style="display:flex;gap:20px"><a href="{{ url_for('creer') }}">L'application</a><a href="#modules">Solutions</a><a href="#zama">Sécurité</a></div>
+  </div>
+</footer>
+
+</body>
+</html>
