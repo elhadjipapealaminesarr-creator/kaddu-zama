@@ -431,6 +431,11 @@ def gen_tokens(poll_id):
     return redirect(url_for("admin", poll_id=poll_id, t=poll["admin_token"]))
 
 
+@app.route("/guide")
+def guide():
+    return render_template("guide.html")
+
+
 @app.route("/mentions-legales")
 def mentions():
     return render_template("mentions.html")
