@@ -56,6 +56,14 @@ def init_db():
             )
         """)
         conn.execute("CREATE INDEX IF NOT EXISTS ix_ballots ON ballots(poll_id, option_idx, voter)")
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS tokens (
+                poll_id TEXT NOT NULL,
+                token   TEXT NOT NULL,
+                used    INTEGER NOT NULL DEFAULT 0
+            )
+        """)
+        conn.execute("CREATE INDEX IF NOT EXISTS ix_tokens ON tokens(poll_id, token)")
 
 
 init_db()
@@ -71,6 +79,22 @@ def voter_count(poll_id):
         r = conn.execute("SELECT COALESCE(MAX(voter)+1, 0) n FROM ballots WHERE poll_id = ?",
                          (poll_id,)).fetchone()
     return r["n"]
+
+
+def has_tokens(poll_id):
+    """Le vote est 'restreint' dès qu'au moins un jeton membre existe."""
+    with closing(db()) as conn:
+        r = conn.execute("SELECT COUNT(*) c FROM tokens WHERE poll_id = ?", (poll_id,)).fetchone()
+    return r["c"] > 0
+
+
+def token_ok(poll_id, tok):
+    if not tok:
+        return False
+    with closing(db()) as conn:
+        r = conn.execute("SELECT used FROM tokens WHERE poll_id = ? AND token = ?",
+                         (poll_id, tok)).fetchone()
+    return r is not None and r["used"] == 0
 
 
 def base_url():
@@ -137,40 +161,59 @@ def voter(poll_id):
     if not poll:
         abort(404)
     options = json.loads(poll["options"])
+    restricted = has_tokens(poll_id)
+    tok = (request.values.get("k") or "").strip()
     already = request.cookies.get(f"kv_{poll_id}") == "1"
     full = voter_count(poll_id) >= fhe.capacity()
 
+    def page(**kw):
+        base = dict(poll=poll, options=options, closed=False, already=already,
+                    full=full, restricted=restricted, token=tok, token_bad=False)
+        base.update(kw)
+        return render_template("voter.html", **base)
+
     if poll["closed"]:
-        return render_template("voter.html", poll=poll, options=options,
-                               closed=True, already=already)
+        return render_template("voter.html", poll=poll, options=options, closed=True,
+                               already=already, restricted=restricted, token=tok, token_bad=False)
+
+    # Mode restreint : un lien membre valide et non utilisé est obligatoire.
+    if restricted:
+        already = False
+        if not token_ok(poll_id, tok):
+            return page(token_bad=True)
 
     if request.method == "POST":
-        if already:
+        if not restricted and already:
             return redirect(url_for("merci", poll_id=poll_id))
         if full:
             flash("Ce vote a atteint sa capacité maximale.")
-            return render_template("voter.html", poll=poll, options=options,
-                                   closed=False, already=False)
+            return page()
         try:
             choice = int(request.form.get("choice", "-1"))
         except ValueError:
             choice = -1
         if choice < 0 or choice >= len(options):
             flash("Choisis une option pour voter.")
-            return render_template("voter.html", poll=poll, options=options,
-                                   closed=False, already=False)
+            return page()
         n = voter_count(poll_id)
         rows = [(poll_id, n, m, fhe.encrypt_ballot(n, 1 if m == choice else 0))
                 for m in range(len(options))]
         with closing(db()) as conn, conn:
+            if restricted:
+                cur = conn.execute(
+                    "UPDATE tokens SET used = 1 WHERE poll_id = ? AND token = ? AND used = 0",
+                    (poll_id, tok))
+                if cur.rowcount == 0:
+                    flash("Ce lien a déjà servi à voter.")
+                    return page(token_bad=True)
             conn.executemany("INSERT INTO ballots (poll_id, voter, option_idx, blob) "
                              "VALUES (?,?,?,?)", rows)
         resp = make_response(redirect(url_for("merci", poll_id=poll_id)))
-        resp.set_cookie(f"kv_{poll_id}", "1", max_age=60*60*24*365, samesite="Lax")
+        if not restricted:
+            resp.set_cookie(f"kv_{poll_id}", "1", max_age=60*60*24*365, samesite="Lax")
         return resp
 
-    return render_template("voter.html", poll=poll, options=options,
-                           closed=False, already=already, full=full)
+    return page()
 
 
 @app.route("/v/<poll_id>/merci")
@@ -212,9 +255,13 @@ def admin(poll_id):
         abort(403)
     options = json.loads(poll["options"])
     vote_url = f"{base_url()}{url_for('voter', poll_id=poll_id)}"
+    with closing(db()) as conn:
+        toks = conn.execute("SELECT token, used FROM tokens WHERE poll_id = ? ORDER BY rowid",
+                            (poll_id,)).fetchall()
     return render_template("admin.html", poll=poll, options=options,
                            participants=voter_count(poll_id), vote_url=vote_url,
-                           token=poll["admin_token"])
+                           token=poll["admin_token"],
+                           tokens=[dict(t) for t in toks], capacity=fhe.capacity())
 
 
 @app.route("/admin/<poll_id>/clore", methods=["POST"])
@@ -236,6 +283,30 @@ def clore(poll_id):
         conn.execute("UPDATE polls SET closed=1, results=? WHERE id=?",
                      (json.dumps(results), poll_id))
     return redirect(url_for("resultat", poll_id=poll_id))
+
+
+@app.route("/admin/<poll_id>/liens", methods=["POST"])
+def gen_tokens(poll_id):
+    """Génère des liens de vote nominatifs : 1 par membre, 1 seul vote chacun."""
+    poll = get_poll(poll_id)
+    if not poll:
+        abort(404)
+    if request.form.get("t", "") != poll["admin_token"]:
+        abort(403)
+    try:
+        n = int(request.form.get("n", "0"))
+    except ValueError:
+        n = 0
+    with closing(db()) as conn:
+        existing = conn.execute("SELECT COUNT(*) c FROM tokens WHERE poll_id = ?",
+                                (poll_id,)).fetchone()["c"]
+    n = max(0, min(n, fhe.capacity() - existing))
+    if n:
+        with closing(db()) as conn, conn:
+            conn.executemany(
+                "INSERT INTO tokens (poll_id, token, used) VALUES (?,?,0)",
+                [(poll_id, secrets.token_urlsafe(6)) for _ in range(n)])
+    return redirect(url_for("admin", poll_id=poll_id, t=poll["admin_token"]))
 
 
 @app.route("/rejoindre", methods=["GET", "POST"])
