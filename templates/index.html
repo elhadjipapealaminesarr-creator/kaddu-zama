@@ -147,8 +147,8 @@ footer a{color:#B9C6C0}footer a:hover{color:#fff}
     </a>
     <div class="nav-links">
       <a href="#modules">Nos solutions</a>
+      <a href="{{ url_for('guide') }}">Comment ça marche</a>
       <a href="{{ url_for('communaute') }}">Communauté</a>
-      <a href="#zama">Sécurité</a>
       {% if me %}
         <a href="{{ url_for('communaute') }}">{{ me['display_name'] }}</a>
       {% else %}
@@ -378,6 +378,32 @@ footer a{color:#B9C6C0}footer a:hover{color:#fff}
     </div>
   </div>
 </footer>
+
+<div id="kadduIntro" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(6,40,31,.62);backdrop-filter:blur(3px);align-items:center;justify-content:center;padding:20px">
+  <div style="background:#fff;max-width:410px;width:100%;border-radius:22px;padding:26px;box-shadow:0 30px 70px rgba(0,0,0,.32)">
+    <div style="font-family:'Sora';font-weight:700;font-size:1.3rem;color:var(--ink)">Bienvenue sur Kaddu 👋</div>
+    <p style="color:var(--muted);font-size:.95rem;margin:8px 0 18px">Des votes vraiment secrets pour vos communautés. En 3 étapes :</p>
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div style="display:flex;gap:12px;align-items:flex-start">
+        <span style="flex:none;width:30px;height:30px;border-radius:9px;background:var(--soft);color:var(--green-d);font-family:'Sora';font-weight:700;display:flex;align-items:center;justify-content:center">1</span>
+        <div><b>Créez un vote</b><br><span style="color:var(--muted);font-size:.9rem">Une question, des choix. C'est tout.</span></div></div>
+      <div style="display:flex;gap:12px;align-items:flex-start">
+        <span style="flex:none;width:30px;height:30px;border-radius:9px;background:var(--soft);color:var(--green-d);font-family:'Sora';font-weight:700;display:flex;align-items:center;justify-content:center">2</span>
+        <div><b>Partagez le lien</b><br><span style="color:var(--muted);font-size:.9rem">Sur WhatsApp, en un clic (ou un QR code).</span></div></div>
+      <div style="display:flex;gap:12px;align-items:flex-start">
+        <span style="flex:none;width:30px;height:30px;border-radius:9px;background:var(--soft);color:var(--green-d);font-family:'Sora';font-weight:700;display:flex;align-items:center;justify-content:center">3</span>
+        <div><b>Chacun vote en secret</b><br><span style="color:var(--muted);font-size:.9rem">Le bulletin est chiffré. Seul le résultat s'affiche.</span></div></div>
+    </div>
+    <a href="{{ url_for('creer') }}" onclick="kadduSeen()" class="btn btn-gold" style="width:100%;justify-content:center;margin-top:20px">Créer un vote gratuit</a>
+    <button onclick="kadduCloseIntro()" class="btn btn-ghost" style="width:100%;justify-content:center;margin-top:10px;border:1px solid var(--line)">Explorer d'abord</button>
+    <a href="{{ url_for('guide') }}" onclick="kadduSeen()" style="display:block;text-align:center;color:var(--muted);font-size:.85rem;margin-top:12px">Voir le guide complet &#8594;</a>
+  </div>
+</div>
+<script>
+  function kadduSeen(){try{localStorage.setItem('kaddu_intro_seen','1');}catch(e){}}
+  function kadduCloseIntro(){kadduSeen();var m=document.getElementById('kadduIntro');if(m)m.style.display='none';}
+  (function(){try{if(!localStorage.getItem('kaddu_intro_seen')){var m=document.getElementById('kadduIntro');if(m)m.style.display='flex';}}catch(e){}})();
+</script>
 
 </body>
 </html>

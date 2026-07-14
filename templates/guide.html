@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}Comment ça marche — Kaddu{% endblock %}
+{% block content %}
+<a href="{{ url_for('index') }}" class="back">&#8592; Accueil</a>
+
+<div class="hero">
+  <span class="kicker">&#10067; Guide</span>
+  <h1>Comment ça marche</h1>
+  <p class="lead">Kaddu en une minute : créez un vote, partagez le lien, chacun vote en secret,
+  le résultat s'affiche. Aucune compétence technique.</p>
+</div>
+
+<div class="card" style="padding:14px">
+  <img src="/static/demo.gif" alt="Démonstration animée : créer un vote, partager, voter, résultat"
+       style="display:block;width:100%;max-width:360px;margin:0 auto;border-radius:12px">
+  <p class="center muted small" style="margin-top:10px">Le parcours complet, en images.</p>
+</div>
+
+<div class="card">
+  <span class="pill pill-gold">&#128273; Organisateur</span>
+  <h2 style="margin-top:12px">Vous lancez le vote</h2>
+  <ul class="steps">
+    <li><span class="n">1</span><div><div class="t">Créez le vote</div>
+      <div class="d">Cliquez « Créer un vote », écrivez le titre, la question et les choix.</div></div></li>
+    <li><span class="n">2</span><div><div class="t">Partagez le lien</div>
+      <div class="d">Kaddu vous donne un lien (et un QR code). Envoyez-le sur WhatsApp à vos membres.</div></div></li>
+    <li><span class="n">3</span><div><div class="t">Clôturez et révélez</div>
+      <div class="d">Quand chacun a voté, cliquez « Clore le vote » : le résultat apparaît, vérifiable par tous.</div></div></li>
+  </ul>
+  <p class="muted small">Astuce : pour un scrutin sérieux, générez un <b>lien unique par membre</b>
+  (dans le tableau de bord) — chacun ne pourra voter qu'une seule fois.</p>
+</div>
+
+<div class="card">
+  <span class="pill pill-green">&#128499;&#65039; Votant</span>
+  <h2 style="margin-top:12px">Vous participez en secret</h2>
+  <ul class="steps">
+    <li><span class="n">1</span><div><div class="t">Ouvrez le lien</div>
+      <div class="d">Cliquez le lien reçu, ou scannez le QR code. Rien à installer, aucun compte requis.</div></div></li>
+    <li><span class="n">2</span><div><div class="t">Choisissez et scellez</div>
+      <div class="d">Sélectionnez votre réponse, puis « Sceller mon vote ». Votre choix est chiffré aussitôt.</div></div></li>
+    <li><span class="n">3</span><div><div class="t">C'est terminé</div>
+      <div class="d">Votre bulletin est invisible — même pour l'organisateur. Vous verrez seulement le résultat final.</div></div></li>
+  </ul>
+</div>
+
+<div class="card">
+  <div class="seal-lock">
+    <svg width="50" height="50" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <circle cx="24" cy="24" r="22" fill="#E4EFEA"/>
+      <path d="M18 22v-3a6 6 0 0112 0v3" stroke="#0E5A4A" stroke-width="2.4" stroke-linecap="round"/>
+      <rect x="15" y="22" width="18" height="14" rx="3.5" fill="#0E5A4A"/>
+      <circle cx="24" cy="28.5" r="2.2" fill="#E4A24C"/><rect x="23" y="29.5" width="2" height="4" rx="1" fill="#E4A24C"/>
+    </svg>
+  </div>
+  <h2 class="center">Pourquoi c'est vraiment secret</h2>
+  <p class="muted small center">Votre choix est <b>chiffré</b> dès que vous cliquez. Kaddu additionne
+  les votes <b>sans jamais les ouvrir</b>, grâce au chiffrement FHE de Zama. Ni l'organisateur,
+  ni le serveur, ni un pirate ne peut lire un bulletin — seul le total final est révélé.</p>
+</div>
+
+<div class="card">
+  <h2>Questions fréquentes</h2>
+  <div style="display:flex;flex-direction:column;gap:8px;margin-top:6px">
+    <details style="border:1px solid var(--line);border-radius:12px;padding:12px 14px">
+      <summary style="font-weight:600;cursor:pointer">L'organisateur peut-il voir mon vote ?</summary>
+      <p class="muted small" style="margin-top:8px">Non. Le bulletin est chiffré sur-le-champ ; l'organisateur ne voit que le résultat final.</p></details>
+    <details style="border:1px solid var(--line);border-radius:12px;padding:12px 14px">
+      <summary style="font-weight:600;cursor:pointer">Faut-il un compte pour voter ?</summary>
+      <p class="muted small" style="margin-top:8px">Non. Un simple lien suffit. Le compte sert seulement à la communauté (commenter, proposer des idées).</p></details>
+    <details style="border:1px solid var(--line);border-radius:12px;padding:12px 14px">
+      <summary style="font-weight:600;cursor:pointer">Est-ce gratuit ?</summary>
+      <p class="muted small" style="margin-top:8px">Oui, entièrement gratuit.</p></details>
+    <details style="border:1px solid var(--line);border-radius:12px;padding:12px 14px">
+      <summary style="font-weight:600;cursor:pointer">Peut-on voter deux fois ?</summary>
+      <p class="muted small" style="margin-top:8px">Avec les liens membres uniques, non : chaque lien ne vote qu'une fois. C'est recommandé pour les scrutins importants.</p></details>
+  </div>
+</div>
+
+<a href="{{ url_for('creer') }}" class="btn btn-primary">&#10133; Créer mon premier vote</a>
+<a href="{{ url_for('communaute') }}" class="btn btn-ghost">Voir la communauté</a>
+{% endblock %}
