@@ -18,11 +18,37 @@
     </div>
   </div>
 
-  <label class="fld">Lien à partager aux votants</label>
+  <label class="fld">Lien général à partager aux votants</label>
   <div class="copybox">
     <input type="text" id="vurl" value="{{ vote_url }}" readonly>
     <button type="button" onclick="cp('vurl',this)">Copier</button>
   </div>
+
+  <label class="fld" style="margin-top:18px">&#128100; Limiter à vos membres (1 vote chacun)</label>
+  {% if tokens %}
+    <p class="muted small">{{ tokens|length }} lien(s) personnel(s). Envoyez-en <b>un différent</b>
+    à chaque membre : chaque lien ne vote qu'<b>une seule fois</b>.</p>
+    <div style="max-height:230px;overflow:auto;border:1px solid var(--line);border-radius:var(--r-sm);padding:8px;margin:8px 0">
+      {% for tk in tokens %}
+      <div class="copybox" style="margin:5px 0">
+        <input type="text" id="tk{{ loop.index }}" readonly value="{{ vote_url }}?k={{ tk['token'] }}"
+               style="{% if tk['used'] %}color:var(--muted);text-decoration:line-through{% endif %}">
+        <button type="button" onclick="cp('tk{{ loop.index }}',this)">{% if tk['used'] %}&#10004; voté{% else %}Copier{% endif %}</button>
+      </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="muted small">Par défaut, toute personne avec le lien général peut voter. Pour un scrutin
+    sérieux, génère un <b>lien unique par membre</b> : chacun ne pourra voter qu'une fois.</p>
+  {% endif %}
+  {% if not poll['closed'] and (tokens|length) < capacity %}
+  <form method="post" action="{{ url_for('gen_tokens', poll_id=poll['id']) }}" style="display:flex;gap:8px;margin-top:8px">
+    <input type="hidden" name="t" value="{{ token }}">
+    <input type="number" name="n" min="1" max="{{ capacity - (tokens|length) }}" value="10" placeholder="Combien ?">
+    <button type="submit" class="btn btn-ghost" style="width:auto;white-space:nowrap">Générer</button>
+  </form>
+  <p class="muted small" style="margin-top:6px">Maximum {{ capacity }} votants au total pour ce vote.</p>
+  {% endif %}
 
   {% if not poll['closed'] %}
   <form method="post" action="{{ url_for('clore', poll_id=poll['id']) }}"

@@ -19,8 +19,13 @@
     </div>
     <p class="center" style="font-weight:600">Vous avez déjà voté sur cet appareil.</p>
     <p class="center muted small">Votre bulletin est scellé. Merci de votre participation.</p>
+  {% elif token_bad %}
+    <div class="flash" style="background:#fbf0dc;color:#8f5a11;border-color:#eeddb8">
+      Ce vote est réservé aux membres. Utilisez le <b>lien personnel</b> qui vous a été envoyé —
+      il ne fonctionne qu'une seule fois. S'il ne marche pas, c'est qu'il a <b>déjà servi à voter</b>.</div>
   {% else %}
     <form method="post">
+      {% if restricted %}<input type="hidden" name="k" value="{{ token }}">{% endif %}
       {% for o in options %}
       <label class="choice">
         <input type="radio" name="choice" value="{{ loop.index0 }}">
