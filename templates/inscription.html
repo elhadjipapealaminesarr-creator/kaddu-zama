@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Créer un compte — Kaddu{% endblock %}
+{% block content %}
+<a href="{{ url_for('communaute') }}" class="back">&#8592; Communauté</a>
+<div class="card pad-lg">
+  <span class="pill pill-green">&#128100; Nouveau compte</span>
+  <h1 style="font-size:1.4rem;margin-top:14px">Rejoindre la communauté</h1>
+  <p class="muted small">Un compte permet de participer à la place publique, de commenter et de
+  proposer des idées. Gratuit, et votre vote reste toujours secret.</p>
+  <form method="post">
+    <label class="fld" for="name">Nom affiché</label>
+    <input type="text" id="name" name="name" value="{{ name }}" placeholder="Ex. Awa D." required>
+    <label class="fld" for="email">E-mail</label>
+    <input type="text" id="email" name="email" value="{{ email }}" placeholder="vous@exemple.com" required>
+    <label class="fld" for="password">Mot de passe</label>
+    <input type="password" id="password" name="password" placeholder="6 caractères minimum" required>
+    <div style="margin-top:20px"></div>
+    <button type="submit" class="btn btn-primary">Créer mon compte</button>
+  </form>
+  <p class="center muted small" style="margin-top:14px">Déjà inscrit ?
+    <a href="{{ url_for('connexion') }}">Se connecter</a></p>
+</div>
+{% endblock %}

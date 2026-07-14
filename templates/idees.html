@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Mur d'idées — Kaddu{% endblock %}
+{% block content %}
+<div class="hero">
+  <span class="kicker">&#128161; Mur d'idées</span>
+  <h1>Proposez, votez, faites remonter</h1>
+  <p class="lead">Une idée pour votre communauté ou pour Kaddu ? Partagez-la. Les mieux notées remontent.</p>
+</div>
+
+{% if me %}
+<div class="card">
+  <form method="post">
+    <label class="fld" for="title">Votre idée</label>
+    <input type="text" id="title" name="title" maxlength="140" placeholder="Ex. Une tontine numérique pour notre coopérative" required>
+    <label class="fld" for="body">Détails (facultatif)</label>
+    <textarea id="body" name="body" maxlength="1000" placeholder="Expliquez en quelques mots…"></textarea>
+    <div style="margin-top:16px"></div>
+    <button type="submit" class="btn btn-primary">Publier l'idée</button>
+  </form>
+</div>
+{% else %}
+<div class="card center">
+  <p class="muted small">Connectez-vous pour proposer une idée et voter.</p>
+  <a href="{{ url_for('connexion', next=url_for('idees')) }}" class="btn btn-primary">Se connecter</a>
+  <a href="{{ url_for('inscription', next=url_for('idees')) }}" class="btn btn-ghost">Créer un compte</a>
+</div>
+{% endif %}
+
+{% for it in ideas %}
+<div class="card" style="display:flex;gap:14px;align-items:flex-start">
+  <div style="flex:none;text-align:center;min-width:58px">
+    <form method="post" action="{{ url_for('idea_vote', idea_id=it['id']) }}" style="margin:0">
+      <input type="hidden" name="v" value="1">
+      <button type="submit" class="opt-del" style="width:44px;height:34px;color:var(--primary-d)" aria-label="Pour">&#9650;</button>
+    </form>
+    <div style="font-family:'Sora';font-weight:700;font-size:1.15rem;margin:4px 0;color:var(--primary-d)">{{ it['score'] }}</div>
+    <form method="post" action="{{ url_for('idea_vote', idea_id=it['id']) }}" style="margin:0">
+      <input type="hidden" name="v" value="-1">
+      <button type="submit" class="opt-del" style="width:44px;height:34px" aria-label="Contre">&#9660;</button>
+    </form>
+  </div>
+  <div style="flex:1">
+    <div style="font-family:'Sora';font-weight:600">{{ it['title'] }}</div>
+    {% if it['body'] %}<p class="muted small" style="margin:6px 0 0">{{ it['body'] }}</p>{% endif %}
+    <div class="muted small" style="margin-top:8px">par {{ it['name'] }} · {{ it['created_at']|dateh }} · {{ it['nvotes'] }} vote(s)</div>
+  </div>
+</div>
+{% else %}
+<div class="card center"><p class="muted small">Aucune idée pour l'instant. Lancez la première !</p></div>
+{% endfor %}
+
+<a href="{{ url_for('communaute') }}" class="btn btn-ghost">Retour à la communauté</a>
+{% endblock %}

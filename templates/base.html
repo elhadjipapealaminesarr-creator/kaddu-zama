@@ -70,7 +70,7 @@ main{padding:8px 0 40px}
 .small{font-size:.85rem}
 .center{text-align:center}
 label.fld{display:block;font-weight:600;font-size:.92rem;margin:16px 0 6px}
-input[type=text],input[type=search],textarea{
+input[type=text],input[type=search],input[type=email],input[type=password],textarea{
   width:100%;font-family:'Inter';font-size:1rem;color:var(--ink);
   background:#fff;border:1px solid var(--line);border-radius:var(--r-sm);
   padding:13px 14px;outline:none;transition:border .15s, box-shadow .15s}
@@ -151,6 +151,16 @@ footer .lock{color:var(--primary)}
     </svg>
     <span class="name"><b>Kaddu</b></span>
   </a>
+  <nav style="display:flex;gap:15px;justify-content:center;margin-top:9px;font-size:.9rem;flex-wrap:wrap">
+    <a href="{{ url_for('communaute') }}" style="color:var(--muted);font-weight:500">Communauté</a>
+    <a href="{{ url_for('idees') }}" style="color:var(--muted);font-weight:500">Idées</a>
+    {% if me %}
+      <a href="{{ url_for('creer') }}" style="color:var(--muted);font-weight:500">Créer</a>
+      <a href="{{ url_for('deconnexion') }}" style="color:var(--muted);font-weight:500">{{ me['display_name'] }} · Sortir</a>
+    {% else %}
+      <a href="{{ url_for('connexion') }}" style="color:var(--muted);font-weight:500">Connexion</a>
+    {% endif %}
+  </nav>
 </header>
 <main>
   <div class="wrap">
@@ -163,7 +173,12 @@ footer .lock{color:var(--primary)}
 <footer>
   <span class="lock">&#128274;</span> Vos votes sont chiffrés de bout en bout.<br>
   <a href="{{ url_for('creer') }}" style="color:var(--primary-d);font-weight:600">Créé avec Kaddu — créez votre propre vote &#8594;</a><br>
-  <span style="opacity:.8">édition Zama · propulsé par le chiffrement FHE de Zama · {{ ANNEE }}</span>
+  <span style="opacity:.8">édition Zama · propulsé par le chiffrement FHE de Zama · {{ ANNEE }}</span><br>
+  <span style="opacity:.8">
+    <a href="{{ url_for('mentions') }}" style="color:var(--muted)">Mentions légales</a> ·
+    <a href="{{ url_for('confidentialite') }}" style="color:var(--muted)">Confidentialité</a> ·
+    <a href="mailto:elhadjipapealaminesarr@gmail.com" style="color:var(--muted)">Contact</a>
+  </span>
 </footer>
 {% block scripts %}{% endblock %}
 <script>

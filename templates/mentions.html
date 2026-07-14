@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Mentions légales — Kaddu{% endblock %}
+{% block content %}
+<a href="{{ url_for('index') }}" class="back">&#8592; Accueil</a>
+<div class="card pad-lg">
+  <h1 style="font-size:1.5rem">Mentions légales</h1>
+  <p class="muted small">Dernière mise à jour : {{ ANNEE }}</p>
+
+  <h2 style="margin-top:20px">Éditeur du site</h2>
+  <p>Le service <b>Kaddu</b> est édité par Pape Alamine Sarr, à Dakar (Sénégal).<br>
+  Contact : <a href="mailto:elhadjipapealaminesarr@gmail.com">elhadjipapealaminesarr@gmail.com</a></p>
+  <p class="muted small">Si Kaddu est porté par une association ou une structure, remplacez cette
+  section par sa dénomination, son adresse et, le cas échéant, son numéro d'enregistrement.</p>
+
+  <h2 style="margin-top:20px">Responsable de la publication</h2>
+  <p>Pape Alamine Sarr.</p>
+
+  <h2 style="margin-top:20px">Hébergement</h2>
+  <p>L'application est hébergée par <b>Render Services, Inc.</b> (render.com) et sa base de
+  données par <b>Neon, Inc.</b> (neon.tech). Les serveurs applicatifs sont situés aux
+  États-Unis (région Oregon).</p>
+
+  <h2 style="margin-top:20px">Propriété intellectuelle</h2>
+  <p>Le nom « Kaddu », l'identité visuelle et le contenu du site sont la propriété de leur
+  éditeur. Le chiffrement entièrement homomorphe (FHE) est fourni par la technologie
+  <b>Zama</b> (bibliothèque Concrete), selon ses propres licences.</p>
+
+  <h2 style="margin-top:20px">Responsabilité</h2>
+  <p>Kaddu est fourni « en l'état », sans garantie de disponibilité continue. L'éditeur
+  s'efforce d'assurer l'exactitude des informations mais ne saurait être tenu responsable
+  d'un usage qui en serait fait par les organisateurs de votes.</p>
+
+  <p class="muted small" style="margin-top:18px">Ce document est un modèle de base. Pour un usage
+  officiel, faites-le adapter à votre situation et à la réglementation applicable.</p>
+</div>
+<a href="{{ url_for('confidentialite') }}" class="btn btn-ghost">Politique de confidentialité</a>
+{% endblock %}

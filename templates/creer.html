@@ -25,7 +25,15 @@
     </div>
     <button type="button" class="addopt" onclick="addOpt()">&#43; Ajouter un choix</button>
 
-    <div style="margin-top:22px"></div>
+    <label class="choice" style="margin-top:18px">
+      <input type="checkbox" name="public" value="1">
+      <span class="box"><span class="dot"></span>
+        <span>Rendre ce vote <b>public</b><br>
+          <span class="muted small">Il apparaîtra sur la place publique. Les votes restent secrets.</span>
+        </span></span>
+    </label>
+
+    <div style="margin-top:14px"></div>
     <button type="submit" class="btn btn-primary">Générer le vote &#128274;</button>
   </form>
 </div>

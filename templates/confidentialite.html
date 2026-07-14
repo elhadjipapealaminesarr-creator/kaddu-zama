@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Confidentialité — Kaddu{% endblock %}
+{% block content %}
+<a href="{{ url_for('index') }}" class="back">&#8592; Accueil</a>
+<div class="card pad-lg">
+  <h1 style="font-size:1.5rem">Politique de confidentialité</h1>
+  <p class="muted small">Dernière mise à jour : {{ ANNEE }}</p>
+
+  <p>Kaddu est conçu autour d'un principe simple : <b>collecter le strict minimum</b>. Il n'y a
+  ni compte à créer, ni profil, ni publicité, ni traçage à des fins commerciales.</p>
+
+  <h2 style="margin-top:20px">Le secret de votre vote</h2>
+  <p>Chaque bulletin est <b>chiffré sur votre appareil ou sur le serveur avant enregistrement</b>,
+  grâce au chiffrement entièrement homomorphe (FHE) de Zama. Le décompte est calculé sur des
+  données chiffrées : ni le serveur, ni l'organisateur, ni l'éditeur ne peut lire un vote
+  individuel. Seul le <b>résultat total</b> est révélé, une fois le vote clôturé.</p>
+
+  <h2 style="margin-top:20px">Données traitées</h2>
+  <p>Pour faire fonctionner un vote, Kaddu conserve : le <b>titre, la question et les choix</b>
+  que vous saisissez ; les <b>bulletins chiffrés</b> ; et, si vous activez les liens membres,
+  des <b>jetons anonymes</b> (aucune identité n'y est associée). Un petit <b>cookie technique</b>
+  est déposé sur l'appareil du votant pour éviter le double vote — il ne contient aucune donnée
+  personnelle. Comme tout site, l'hébergeur peut conserver des <b>journaux techniques</b>
+  temporaires (adresse IP, horodatage) à des fins de sécurité.</p>
+
+  <h2 style="margin-top:20px">Ce que Kaddu ne fait pas</h2>
+  <p>Pas de demande de nom, d'e-mail ou de téléphone pour voter. Pas de revente de données.
+  Pas de cookies publicitaires ni de pisteurs tiers.</p>
+
+  <h2 style="margin-top:20px">Conservation</h2>
+  <p>Les données d'un vote sont conservées le temps de son organisation. Vous pouvez demander la
+  suppression d'un vote que vous avez créé en nous écrivant.</p>
+
+  <h2 style="margin-top:20px">Sous-traitants techniques</h2>
+  <p>L'application et sa base de données sont hébergées par Render et Neon (voir les
+  <a href="{{ url_for('mentions') }}">mentions légales</a>), qui agissent uniquement comme
+  prestataires d'hébergement.</p>
+
+  <h2 style="margin-top:20px">Vos droits &amp; contact</h2>
+  <p>Vous pouvez demander l'accès, la rectification ou la suppression des données vous concernant
+  en écrivant à <a href="mailto:elhadjipapealaminesarr@gmail.com">elhadjipapealaminesarr@gmail.com</a>.</p>
+
+  <p class="muted small" style="margin-top:18px">Ce document est un modèle de base. Pour un usage
+  officiel, faites-le adapter à votre situation et à la réglementation applicable.</p>
+</div>
+<a href="{{ url_for('mentions') }}" class="btn btn-ghost">Mentions légales</a>
+{% endblock %}

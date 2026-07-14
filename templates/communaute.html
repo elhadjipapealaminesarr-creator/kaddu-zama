@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Place publique — Kaddu{% endblock %}
+{% block content %}
+<div class="hero">
+  <span class="kicker">&#127760; Place publique</span>
+  <h1>La communauté Kaddu</h1>
+  <p class="lead">Découvrez les votes ouverts au public, participez et échangez.</p>
+</div>
+
+<div class="card" style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
+  <a href="{{ url_for('creer') }}" class="btn btn-primary" style="width:auto;flex:1;min-width:150px">&#10133; Créer un vote</a>
+  <a href="{{ url_for('idees') }}" class="btn btn-gold" style="width:auto;flex:1;min-width:150px">&#128161; Mur d'idées</a>
+</div>
+
+{% if polls %}
+  {% for p in polls %}
+  <a href="{{ url_for('voter', poll_id=p['id']) }}" class="card" style="display:block;text-decoration:none;color:inherit">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+      <div>
+        <div style="font-family:'Sora';font-weight:600;font-size:1.08rem">{{ p['title'] }}</div>
+        <div class="muted small" style="margin-top:2px">{{ p['question'] }}</div>
+      </div>
+      <span class="pill {% if p['closed'] %}pill-gold{% else %}pill-green{% endif %}" style="flex:none">
+        {% if p['closed'] %}Clôturé{% else %}Ouvert{% endif %}</span>
+    </div>
+    <div class="muted small" style="margin-top:10px">&#128499;&#65039; {{ p['n'] }} vote(s) · {{ p['created_at']|dateh }}</div>
+  </a>
+  {% endfor %}
+{% else %}
+  <div class="card center">
+    <div class="seal-lock">
+      <svg width="46" height="46" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <circle cx="24" cy="24" r="22" fill="#E4EFEA"/>
+        <path d="M24 14v14M17 21l7-7 7 7" stroke="#0E5A4A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <p style="font-weight:600">Aucun vote public pour l'instant.</p>
+    <p class="muted small">Soyez le premier : créez un vote et cochez « Rendre public » pour qu'il apparaisse ici.</p>
+  </div>
+{% endif %}
+
+<a href="{{ url_for('index') }}" class="btn btn-ghost">Accueil</a>
+{% endblock %}

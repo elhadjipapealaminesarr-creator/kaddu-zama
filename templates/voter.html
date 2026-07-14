@@ -39,4 +39,28 @@
     </form>
   {% endif %}
 </div>
+
+<div class="card" id="discussion">
+  <h2 style="font-size:1.15rem">&#128172; Discussion</h2>
+  {% if comments %}
+    {% for c in comments %}
+    <div style="padding:10px 0;border-top:1px solid var(--line-2)">
+      <div class="small"><b>{{ c['name'] }}</b> <span class="muted">· {{ c['created_at']|dateh }}</span></div>
+      <div style="margin-top:3px">{{ c['body'] }}</div>
+    </div>
+    {% endfor %}
+  {% else %}
+    <p class="muted small">Aucun commentaire. Lancez la discussion !</p>
+  {% endif %}
+  {% if me %}
+  <form method="post" action="{{ url_for('commenter', poll_id=poll['id']) }}" style="margin-top:12px">
+    <textarea name="body" maxlength="1000" placeholder="Votre commentaire…" required></textarea>
+    <button type="submit" class="btn btn-primary" style="margin-top:10px">Commenter</button>
+  </form>
+  {% else %}
+  <p class="muted small" style="margin-top:12px">
+    <a href="{{ url_for('connexion', next=url_for('voter', poll_id=poll['id'])) }}">Connectez-vous</a>
+    pour rejoindre la discussion.</p>
+  {% endif %}
+</div>
 {% endblock %}
