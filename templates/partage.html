@@ -13,6 +13,9 @@
     <input type="text" id="voteurl" value="{{ vote_url }}" readonly>
     <button type="button" onclick="cp('voteurl',this)">Copier</button>
   </div>
+  <a href="https://wa.me/?text={{ ('Participez au vote « ' ~ poll['title'] ~ ' » sur Kaddu — un vote 100% secret : ' ~ vote_url) | urlencode }}"
+     target="_blank" rel="noopener" class="btn" style="background:#25D366;color:#0b3d25;margin-top:8px">
+     &#128241;&nbsp; Partager sur WhatsApp</a>
 </div>
 
 {% if admin_url %}

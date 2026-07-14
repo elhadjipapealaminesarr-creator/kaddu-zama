@@ -162,7 +162,8 @@ footer .lock{color:var(--primary)}
 </main>
 <footer>
   <span class="lock">&#128274;</span> Vos votes sont chiffrés de bout en bout.<br>
-  Kaddu — édition Zama · propulsé par le chiffrement FHE de Zama · {{ ANNEE }}
+  <a href="{{ url_for('creer') }}" style="color:var(--primary-d);font-weight:600">Créé avec Kaddu — créez votre propre vote &#8594;</a><br>
+  <span style="opacity:.8">édition Zama · propulsé par le chiffrement FHE de Zama · {{ ANNEE }}</span>
 </footer>
 {% block scripts %}{% endblock %}
 <script>
