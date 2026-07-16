@@ -378,7 +378,7 @@ def admin(poll_id):
     options = json.loads(poll["options"])
     vote_url = f"{base_url()}{url_for('voter', poll_id=poll_id)}"
     with closing(db()) as conn:
-        toks = conn.execute("SELECT token, used FROM tokens WHERE poll_id = ? ORDER BY rowid",
+        toks = conn.execute("SELECT token, used FROM tokens WHERE poll_id = ? ORDER BY token",
                             (poll_id,)).fetchall()
     return render_template("admin.html", poll=poll, options=options,
                            participants=voter_count(poll_id), vote_url=vote_url,
