@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}{{ t['name'] }} — Tontine Kaddu{% endblock %}
+{% block content %}
+<a href="{{ url_for('tontines') }}" class="back">&#8592; Mes tontines</a>
+
+<div class="hero">
+  <span class="kicker">&#129309; Tontine</span>
+  <h1>{{ t['name'] }}</h1>
+  <p class="lead">{{ t['member_count'] }} membres{% if t['amount'] %} &middot; {{ t['amount'] }} FCFA/tour{% endif %}{% if t['frequency'] %} &middot; {{ t['frequency'] }}{% endif %}</p>
+</div>
+
+<div class="card center">
+  {% if t['closed'] %}
+    <span class="pill pill-gold">Tontine termin&eacute;e &mdash; tous les tours sont pass&eacute;s &#9989;</span>
+  {% else %}
+    <div style="font-family:'Sora';font-size:1.15rem">Tour {{ cycle }} / {{ t['member_count'] }}</div>
+    {% if beneficiary %}<div class="muted">B&eacute;n&eacute;ficiaire de ce tour : <b>{{ beneficiary['name'] }}</b></div>{% endif %}
+  {% endif %}
+  <div class="small" style="margin-top:10px">
+    {% if integrity %}
+      <span class="pill pill-green">&#128274; Registre int&egrave;gre</span>
+    {% else %}
+      <span class="pill" style="background:#c0392b;color:#fff">&#9888;&#65039; Registre alt&eacute;r&eacute; !</span>
+    {% endif %}
+  </div>
+  {% if fingerprint %}<div class="muted small" style="margin-top:6px;word-break:break-all">Empreinte du registre : {{ fingerprint[:24] }}&hellip;</div>{% endif %}
+</div>
+
+<div class="card">
+  <h2 style="font-family:'Sora';font-size:1.2rem">Membres &amp; cotisations{% if not t['closed'] %} (tour {{ cycle }}){% endif %}</h2>
+  {% for m in members %}
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.07)">
+    <div>
+      <b>{{ m['position'] }}. {{ m['name'] }}</b>
+      {% if m['is_beneficiary'] %}<span class="pill pill-gold" style="margin-left:6px">re&ccedil;oit ce tour</span>{% endif %}
+    </div>
+    <div>
+      {% if m['paid'] %}
+        <span class="pill pill-green">cotis&eacute; &#9989;</span>
+      {% elif is_owner and not t['closed'] %}
+        <form method="post" action="{{ url_for('tontine_payer', tid=t['id']) }}" style="margin:0">
+          <input type="hidden" name="member_id" value="{{ m['id'] }}">
+          <button class="btn" style="width:auto;padding:5px 12px" type="submit">Marquer cotis&eacute;</button>
+        </form>
+      {% else %}
+        <span class="muted small">en attente</span>
+      {% endif %}
+    </div>
+  </div>
+  {% endfor %}
+
+  {% if is_owner and not t['closed'] %}
+  <form method="post" action="{{ url_for('tontine_cycle', tid=t['id']) }}" style="margin-top:16px">
+    <button class="btn btn-primary" type="submit"{% if not all_paid %} onclick="return confirm('Tous les membres n\'ont pas encore cotis&eacute;. Passer au tour suivant quand m&ecirc;me ?')"{% endif %}>
+      {% if all_paid %}Clore ce tour &amp; passer au suivant{% else %}Passer au tour suivant{% endif %}
+    </button>
+  </form>
+  {% elif not is_owner %}
+  <p class="muted small" style="margin-top:12px">Seul l'organisateur peut marquer les cotisations et clore les tours.</p>
+  {% endif %}
+</div>
+
+{% if ledger %}
+<div class="card">
+  <h2 style="font-family:'Sora';font-size:1.2rem">Registre (append-only)</h2>
+  <p class="muted small">Chaque &eacute;criture est scell&eacute;e par une empreinte li&eacute;e &agrave; la pr&eacute;c&eacute;dente. Impossible de modifier le pass&eacute; sans casser la cha&icirc;ne.</p>
+  {% for e in ledger %}
+  <div class="small" style="padding:7px 0;border-bottom:1px solid rgba(255,255,255,.07)">
+    Tour {{ e['cycle'] }} &middot; {% if e['kind'] == 'contribution' %}cotisation{% else %}versement au b&eacute;n&eacute;ficiaire{% endif %}
+    &middot; {{ e['created_at']|dateh }}
+    &middot; <span class="muted" style="word-break:break-all">{{ e['hash'][:16] }}&hellip;</span>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

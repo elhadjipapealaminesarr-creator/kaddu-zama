@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Tontines — Kaddu{% endblock %}
+{% block content %}
+<div class="hero">
+  <span class="kicker">&#129309; Tontine inviolable</span>
+  <h1>Tes tontines</h1>
+  <p class="lead">Un <b>registre infalsifiable</b> : cotisations, ordre des b&eacute;n&eacute;ficiaires et preuves &mdash; chaque &eacute;criture est scell&eacute;e par une empreinte li&eacute;e &agrave; la pr&eacute;c&eacute;dente.</p>
+</div>
+
+{% if not me %}
+  <div class="card center">
+    <p>Connecte-toi pour cr&eacute;er et g&eacute;rer une tontine.</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:8px">
+      <a href="{{ url_for('connexion', next=url_for('tontines')) }}" class="btn btn-primary" style="width:auto">Se connecter</a>
+      <a href="{{ url_for('inscription', next=url_for('tontines')) }}" class="btn" style="width:auto">Cr&eacute;er un compte</a>
+    </div>
+  </div>
+{% else %}
+  {% if tontines %}
+    {% for t in tontines %}
+    <a href="{{ url_for('tontine', tid=t['id']) }}" class="card" style="display:block;text-decoration:none;color:inherit">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+        <div>
+          <div style="font-family:'Sora';font-weight:600;font-size:1.08rem">{{ t['name'] }}</div>
+          <div class="muted small" style="margin-top:2px">{{ t['member_count'] }} membres{% if t['amount'] %} &middot; {{ t['amount'] }} FCFA{% endif %}{% if t['frequency'] %} &middot; {{ t['frequency'] }}{% endif %}</div>
+        </div>
+        <span class="pill {% if t['closed'] %}pill-gold{% else %}pill-green{% endif %}" style="flex:none">
+          {% if t['closed'] %}Termin&eacute;e{% else %}Tour {{ t['current_cycle'] }}{% endif %}</span>
+      </div>
+    </a>
+    {% endfor %}
+  {% endif %}
+
+  <div class="card pad-lg">
+    <h2 style="font-family:'Sora';font-size:1.25rem">&#10133; Nouvelle tontine</h2>
+    <form method="post">
+      <label class="fld" for="name">Nom de la tontine</label>
+      <input type="text" id="name" name="name" value="{{ name }}" placeholder="Ex. Tontine des mamans de Grand-Yoff" required>
+
+      <label class="fld" for="amount">Montant par tour (FCFA, optionnel)</label>
+      <input type="number" id="amount" name="amount" min="0" value="{{ amount }}" placeholder="Ex. 10000">
+
+      <label class="fld" for="frequency">Fr&eacute;quence (optionnel)</label>
+      <input type="text" id="frequency" name="frequency" value="{{ frequency }}" placeholder="Ex. chaque mois">
+
+      <label class="fld" for="members">Membres &mdash; un par ligne, dans l'ordre des b&eacute;n&eacute;ficiaires</label>
+      <textarea id="members" name="members" rows="6" placeholder="Awa&#10;Modou&#10;Fatou">{{ members }}</textarea>
+
+      <div style="margin-top:14px"></div>
+      <button type="submit" class="btn btn-primary">Cr&eacute;er la tontine &#128274;</button>
+    </form>
+    <p class="muted small" style="margin-top:12px">&#128161; L'argent circule entre vous (mobile money, main &agrave; main). Kaddu tient seulement le <b>registre infalsifiable</b> : qui a cotis&eacute;, &agrave; qui le tour, et la preuve que rien n'a &eacute;t&eacute; modifi&eacute;.</p>
+  </div>
+{% endif %}
+{% endblock %}
