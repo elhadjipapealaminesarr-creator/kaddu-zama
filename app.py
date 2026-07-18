@@ -9,6 +9,7 @@ import json
 import time
 import secrets
 import sqlite3
+import hashlib
 from contextlib import closing
 
 from flask import (
@@ -149,6 +150,44 @@ def init_db():
                 PRIMARY KEY (idea_id, user_id)
             )
         """)
+
+        # --- Tontine inviolable (registre à chaîne d'empreintes) --------------
+        conn.execute(f"""
+            CREATE TABLE IF NOT EXISTS tontines (
+                id            {ID_PK},
+                owner_user_id INTEGER NOT NULL,
+                name          TEXT NOT NULL,
+                amount        INTEGER NOT NULL DEFAULT 0,
+                frequency     TEXT NOT NULL DEFAULT '',
+                member_count  INTEGER NOT NULL DEFAULT 0,
+                current_cycle INTEGER NOT NULL DEFAULT 1,
+                closed        INTEGER NOT NULL DEFAULT 0,
+                created_at    INTEGER NOT NULL
+            )
+        """)
+        conn.execute(f"""
+            CREATE TABLE IF NOT EXISTS tontine_members (
+                id         {ID_PK},
+                tontine_id INTEGER NOT NULL,
+                position   INTEGER NOT NULL,
+                name       TEXT NOT NULL
+            )
+        """)
+        conn.execute(f"""
+            CREATE TABLE IF NOT EXISTS tontine_ledger (
+                id         {ID_PK},
+                tontine_id INTEGER NOT NULL,
+                cycle      INTEGER NOT NULL,
+                member_id  INTEGER NOT NULL,
+                kind       TEXT NOT NULL,
+                created_at INTEGER NOT NULL,
+                prev_hash  TEXT NOT NULL DEFAULT '',
+                hash       TEXT NOT NULL DEFAULT ''
+            )
+        """)
+        conn.execute("CREATE INDEX IF NOT EXISTS ix_tmembers ON tontine_members(tontine_id, position)")
+        conn.execute("CREATE INDEX IF NOT EXISTS ix_tledger ON tontine_ledger(tontine_id, cycle)")
+
         # Migration douce : rendre un vote visible sur la place publique.
         for col, ddl in (("public", "INTEGER NOT NULL DEFAULT 0"),
                          ("owner_user_id", "INTEGER")):
@@ -587,6 +626,170 @@ def idea_vote(idea_id):
                 "ON CONFLICT (idea_id, user_id) DO UPDATE SET value = excluded.value",
                 (idea_id, me["id"], val))
     return redirect(url_for("idees"))
+
+
+# --- Tontine inviolable (registre à chaîne d'empreintes) ---------------------
+def _insert_returning_id(conn, sql, params):
+    if IS_PG:
+        row = conn.execute(sql + " RETURNING id", params).fetchone()
+        return row["id"]
+    return conn.execute(sql, params).lastrowid
+
+
+def _my_tontines(me):
+    if not me:
+        return []
+    with closing(db()) as conn:
+        rows = conn.execute("SELECT * FROM tontines WHERE owner_user_id = ? ORDER BY id DESC",
+                            (me["id"],)).fetchall()
+    return [dict(r) for r in rows]
+
+
+def _tontine(tid):
+    with closing(db()) as conn:
+        return conn.execute("SELECT * FROM tontines WHERE id = ?", (tid,)).fetchone()
+
+
+def _tontine_members(tid):
+    with closing(db()) as conn:
+        rows = conn.execute("SELECT * FROM tontine_members WHERE tontine_id = ? ORDER BY position",
+                            (tid,)).fetchall()
+    return [dict(r) for r in rows]
+
+
+def _tontine_ledger(tid):
+    with closing(db()) as conn:
+        rows = conn.execute("SELECT * FROM tontine_ledger WHERE tontine_id = ? ORDER BY id",
+                            (tid,)).fetchall()
+    return [dict(r) for r in rows]
+
+
+def _hash_row(prev, tid, cycle, member_id, kind, ts):
+    payload = "%s|%s|%s|%s|%s|%s" % (prev, tid, cycle, member_id, kind, ts)
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def _ledger_add(conn, tid, cycle, member_id, kind):
+    r = conn.execute("SELECT hash FROM tontine_ledger WHERE tontine_id = ? ORDER BY id DESC LIMIT 1",
+                     (tid,)).fetchone()
+    prev = r["hash"] if r else ""
+    ts = int(time.time())
+    h = _hash_row(prev, tid, cycle, member_id, kind, ts)
+    conn.execute("INSERT INTO tontine_ledger (tontine_id, cycle, member_id, kind, created_at, "
+                 "prev_hash, hash) VALUES (?,?,?,?,?,?,?)",
+                 (tid, cycle, member_id, kind, ts, prev, h))
+    return h
+
+
+def _ledger_ok(ledger, tid):
+    """Recalcule la chaîne d'empreintes : renvoie False si un enregistrement a été altéré."""
+    prev = ""
+    for e in ledger:
+        h = _hash_row(prev, tid, e["cycle"], e["member_id"], e["kind"], e["created_at"])
+        if h != e["hash"] or e["prev_hash"] != prev:
+            return False
+        prev = e["hash"]
+    return True
+
+
+@app.route("/tontines", methods=["GET", "POST"])
+def tontines():
+    me = current_user()
+    if request.method == "POST":
+        if not me:
+            return redirect(url_for("connexion", next=url_for("tontines")))
+        name = (request.form.get("name") or "").strip()[:120]
+        try:
+            amount = int(request.form.get("amount") or "0")
+        except ValueError:
+            amount = 0
+        frequency = (request.form.get("frequency") or "").strip()[:40]
+        members = [m.strip()[:60] for m in (request.form.get("members") or "").splitlines() if m.strip()]
+        if not name or len(members) < 2:
+            flash("Donne un nom et au moins 2 membres (un par ligne).")
+            return render_template("tontines.html", tontines=_my_tontines(me), name=name,
+                                   amount=amount, frequency=frequency, members="\n".join(members))
+        members = members[:60]
+        with closing(db()) as conn, conn:
+            tid = _insert_returning_id(conn,
+                "INSERT INTO tontines (owner_user_id, name, amount, frequency, member_count, "
+                "current_cycle, closed, created_at) VALUES (?,?,?,?,?,1,0,?)",
+                (me["id"], name, amount, frequency, len(members), int(time.time())))
+            for i, mname in enumerate(members, start=1):
+                conn.execute("INSERT INTO tontine_members (tontine_id, position, name) VALUES (?,?,?)",
+                             (tid, i, mname))
+        return redirect(url_for("tontine", tid=tid))
+    return render_template("tontines.html", tontines=_my_tontines(me),
+                           name="", amount="", frequency="", members="")
+
+
+@app.route("/tontine/<int:tid>")
+def tontine(tid):
+    t = _tontine(tid)
+    if not t:
+        abort(404)
+    t = dict(t)
+    members = _tontine_members(tid)
+    ledger = _tontine_ledger(tid)
+    me = current_user()
+    is_owner = bool(me and me["id"] == t["owner_user_id"])
+    cycle = t["current_cycle"]
+    paid_ids = set(e["member_id"] for e in ledger
+                   if e["kind"] == "contribution" and e["cycle"] == cycle)
+    for m in members:
+        m["paid"] = m["id"] in paid_ids
+        m["is_beneficiary"] = (m["position"] == cycle)
+    beneficiary = next((m for m in members if m["position"] == cycle), None)
+    all_paid = bool(members) and all(m["paid"] for m in members)
+    return render_template("tontine.html", t=t, members=members, ledger=ledger,
+                           is_owner=is_owner, cycle=cycle, beneficiary=beneficiary,
+                           all_paid=all_paid, integrity=_ledger_ok(ledger, tid),
+                           fingerprint=(ledger[-1]["hash"] if ledger else ""))
+
+
+@app.route("/tontine/<int:tid>/payer", methods=["POST"])
+def tontine_payer(tid):
+    t = _tontine(tid)
+    if not t:
+        abort(404)
+    me = current_user()
+    if not me or me["id"] != t["owner_user_id"]:
+        abort(403)
+    if t["closed"]:
+        return redirect(url_for("tontine", tid=tid))
+    try:
+        mid = int(request.form.get("member_id") or "0")
+    except ValueError:
+        mid = 0
+    cycle = t["current_cycle"]
+    with closing(db()) as conn, conn:
+        r = conn.execute("SELECT COUNT(*) c FROM tontine_ledger WHERE tontine_id=? AND cycle=? "
+                         "AND member_id=? AND kind='contribution'", (tid, cycle, mid)).fetchone()
+        if mid and r["c"] == 0:
+            _ledger_add(conn, tid, cycle, mid, "contribution")
+    return redirect(url_for("tontine", tid=tid))
+
+
+@app.route("/tontine/<int:tid>/cycle-suivant", methods=["POST"])
+def tontine_cycle(tid):
+    t = _tontine(tid)
+    if not t:
+        abort(404)
+    me = current_user()
+    if not me or me["id"] != t["owner_user_id"]:
+        abort(403)
+    if t["closed"]:
+        return redirect(url_for("tontine", tid=tid))
+    cycle = t["current_cycle"]
+    beneficiary = next((m for m in _tontine_members(tid) if m["position"] == cycle), None)
+    with closing(db()) as conn, conn:
+        if beneficiary:
+            _ledger_add(conn, tid, cycle, beneficiary["id"], "payout")
+        new_cycle = cycle + 1
+        closed = 1 if new_cycle > t["member_count"] else 0
+        conn.execute("UPDATE tontines SET current_cycle=?, closed=? WHERE id=?",
+                     (new_cycle, closed, tid))
+    return redirect(url_for("tontine", tid=tid))
 
 
 @app.errorhandler(404)
