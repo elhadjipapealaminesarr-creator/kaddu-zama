@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="{{ LANG }}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#0E5A4A">
-<title>Kaddu — La confidentialité au service des communautés</title>
+<title>Kaddu — {{ t('index.tagline', 'La confidentialité au service des communautés') }}</title>
 <meta name="description" content="Kaddu : votes secrets, tontines inviolables et décisions collectives protégées par le chiffrement FHE de Zama. Pour les associations, coopératives, tontines et syndicats.">
 <link rel="icon" type="image/png" sizes="32x32" href="/static/icons/favicon-32.png">
 <link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png">
@@ -16,7 +16,7 @@
 <meta property="og:image" content="https://kaddu-zama.onrender.com/static/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:locale" content="fr_FR">
+<meta property="og:locale" content="{{ 'en_US' if LANG == 'en' else 'fr_FR' }}">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Kaddu — La confidentialité au service des communautés">
 <meta name="twitter:description" content="Votes secrets et vérifiables, protégés par le chiffrement FHE de Zama.">
@@ -59,7 +59,10 @@ nav .wrap{display:flex;align-items:center;justify-content:space-between;height:6
 .nav-links{display:flex;gap:28px;align-items:center}
 .nav-links a{font-weight:500;color:var(--muted);font-size:.95rem}
 .nav-links a:hover{color:var(--ink)}
-@media(max-width:760px){.nav-links a:not(.btn){display:none}}
+.lang{display:inline-flex;gap:0;align-items:center;font-size:.85rem;font-weight:600;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.lang a{padding:5px 11px;color:var(--muted)}
+.lang a.on{background:var(--green);color:#fff}
+@media(max-width:760px){.nav-links a:not(.btn):not(.lang-item){display:none}.lang{display:inline-flex}}
 
 /* HERO */
 .hero{position:relative;background:#0A4638 url('/static/hero-bg.png') center/cover no-repeat;color:#fff;overflow:hidden}
@@ -146,34 +149,33 @@ footer a{color:#B9C6C0}footer a:hover{color:#fff}
       <span><b>Kaddu</b></span>
     </a>
     <div class="nav-links">
-      <a href="#modules">Nos solutions</a>
-      <a href="{{ url_for('guide') }}">Comment ça marche</a>
-      <a href="{{ url_for('communaute') }}">Communauté</a>
+      <a href="#modules">{{ t('nav.solutions', 'Nos solutions') }}</a>
+      <a href="{{ url_for('guide') }}">{{ t('nav.comment', 'Comment ça marche') }}</a>
+      <a href="{{ url_for('communaute') }}">{{ t('nav.communaute', 'Communauté') }}</a>
       {% if me %}
         <a href="{{ url_for('communaute') }}">{{ me['display_name'] }}</a>
       {% else %}
-        <a href="{{ url_for('connexion') }}">Connexion</a>
+        <a href="{{ url_for('connexion') }}">{{ t('nav.connexion', 'Connexion') }}</a>
       {% endif %}
-      <a href="{{ url_for('creer') }}" class="btn btn-green" style="padding:10px 20px">Ouvrir Kaddu</a>
+      <span class="lang lang-item"><a href="/lang/fr" class="{{ 'on' if LANG == 'fr' else '' }}">FR</a><a href="/lang/en" class="{{ 'on' if LANG == 'en' else '' }}">EN</a></span>
+      <a href="{{ url_for('creer') }}" class="btn btn-green" style="padding:10px 20px">{{ t('nav.ouvrir', 'Ouvrir Kaddu') }}</a>
     </div>
   </div>
 </nav>
 
 <header class="hero">
   <div class="wrap">
-    <span class="kick">&#128274; Protégé par le chiffrement FHE de Zama</span>
-    <h1>La confidentialité au service des <span class="hl">communautés</span></h1>
-    <p class="lead">Votes secrets, tontines inviolables et décisions collectives — où personne,
-    pas même l'organisateur, ne peut voir vos choix. Pensé pour les associations, coopératives,
-    tontines et syndicats d'Afrique francophone.</p>
+    <span class="kick">{{ t('hero.kick', '&#128274; Protégé par le chiffrement FHE de Zama') }}</span>
+    <h1>{{ t('hero.title_pre', 'La confidentialité au service des ') }}<span class="hl">{{ t('hero.title_hl', 'communautés') }}</span></h1>
+    <p class="lead">{{ t('hero.lead', "Votes secrets, tontines inviolables et décisions collectives — où personne, pas même l'organisateur, ne peut voir vos choix. Pensé pour les associations, coopératives, tontines et syndicats d'Afrique francophone.") }}</p>
     <div class="cta">
-      <a href="{{ url_for('creer') }}" class="btn btn-gold">&#10133;&nbsp; Créer un vote gratuit</a>
-      <a href="{{ url_for('rejoindre') }}" class="btn btn-light">J'ai un code pour voter</a>
+      <a href="{{ url_for('creer') }}" class="btn btn-gold">{{ t('hero.cta_create', '&#10133;&nbsp; Créer un vote gratuit') }}</a>
+      <a href="{{ url_for('rejoindre') }}" class="btn btn-light">{{ t('hero.cta_code', "J'ai un code pour voter") }}</a>
     </div>
     <div class="trust">
-      <span>&#10004; Gratuit et sans compte</span>
-      <span>&#128241; S'installe comme une app</span>
-      <span>&#9878; Résultat vérifiable</span>
+      <span>{{ t('hero.trust1', '&#10004; Gratuit et sans compte') }}</span>
+      <span>{{ t('hero.trust2', "&#128241; S'installe comme une app") }}</span>
+      <span>{{ t('hero.trust3', '&#9878; Résultat vérifiable') }}</span>
     </div>
   </div>
   <svg class="wave" viewBox="0 0 1440 40" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg"><path d="M0 40 L0 20 Q360 0 720 20 T1440 20 L1440 40 Z" fill="#FBF7F0"/></svg>
@@ -181,62 +183,56 @@ footer a{color:#B9C6C0}footer a:hover{color:#fff}
 
 <section id="modules">
   <div class="wrap center">
-    <div class="eyebrow">Une plateforme, plusieurs usages</div>
-    <h2 class="h2">Tout ce qui demande confiance et discrétion</h2>
-    <p class="sub">Un seul moteur de chiffrement, plusieurs solutions concrètes pour vos communautés.</p>
+    <div class="eyebrow">{{ t('mod.eyebrow', 'Une plateforme, plusieurs usages') }}</div>
+    <h2 class="h2">{{ t('mod.h2', 'Tout ce qui demande confiance et discrétion') }}</h2>
+    <p class="sub">{{ t('mod.sub', 'Un seul moteur de chiffrement, plusieurs solutions concrètes pour vos communautés.') }}</p>
     <div class="grid" style="text-align:left">
 
       <div class="mod">
-        <span class="status st-live">&#9679; En ligne</span>
+        <span class="status st-live">{{ t('mod.live', '&#9679; En ligne') }}</span>
         <div class="ic" style="background:var(--soft)"><span style="font-size:24px">&#128499;&#65039;</span></div>
-        <h3>Vote confidentiel</h3>
-        <p>Élections de bureau, décisions d'assemblée, sondages internes. Chaque bulletin est chiffré ;
-        le résultat est public et vérifiable, les votes restent secrets.</p>
-        <a href="{{ url_for('creer') }}" class="go">Utiliser maintenant &#8594;</a>
+        <h3>{{ t('mod.vote.h3', 'Vote confidentiel') }}</h3>
+        <p>{{ t('mod.vote.p', "Élections de bureau, décisions d'assemblée, sondages internes. Chaque bulletin est chiffré ; le résultat est public et vérifiable, les votes restent secrets.") }}</p>
+        <a href="{{ url_for('creer') }}" class="go">{{ t('mod.vote.go', 'Utiliser maintenant &#8594;') }}</a>
       </div>
 
       <a class="mod" href="{{ url_for('tontines') }}" style="text-decoration:none;color:inherit">
-        <span class="status st-live">Nouveau</span>
+        <span class="status st-live">{{ t('mod.new', 'Nouveau') }}</span>
         <div class="ic" style="background:var(--gold-soft)"><span style="font-size:24px">&#129534;</span></div>
-        <h3>Tontine inviolable</h3>
-        <p>Gérer les participants, les tours et les cotisations proprement, sans tricherie possible —
-        registre infalsifiable (chaîne d'empreintes), l'argent circule hors de l'app.</p>
-        <span class="go" style="color:var(--primary-d);font-weight:600">Ouvrir &#8594;</span>
+        <h3>{{ t('mod.tontine.h3', 'Tontine inviolable') }}</h3>
+        <p>{{ t('mod.tontine.p', "Gérer les participants, les tours et les cotisations proprement, sans tricherie possible — registre infalsifiable (chaîne d'empreintes), l'argent circule hors de l'app.") }}</p>
+        <span class="go" style="color:var(--primary-d);font-weight:600">{{ t('mod.open', 'Ouvrir &#8594;') }}</span>
       </a>
 
       <a class="mod" href="{{ url_for('offres') }}" style="text-decoration:none;color:inherit">
-        <span class="status st-live">Nouveau</span>
+        <span class="status st-live">{{ t('mod.new', 'Nouveau') }}</span>
         <div class="ic" style="background:var(--terra-soft)"><span style="font-size:24px">&#128273;</span></div>
-        <h3>Appels d'offres scellés</h3>
-        <p>Chaque offre est scellée à la soumission (engagement-révélation) : personne ne voit
-        les montants avant l'ouverture. L'anti-corruption par les mathématiques.</p>
-        <span class="go" style="color:var(--primary-d);font-weight:600">Ouvrir &#8594;</span>
+        <h3>{{ t('mod.offres.h3', "Appels d'offres scellés") }}</h3>
+        <p>{{ t('mod.offres.p', "Chaque offre est scellée à la soumission (engagement-révélation) : personne ne voit les montants avant l'ouverture. L'anti-corruption par les mathématiques.") }}</p>
+        <span class="go" style="color:var(--primary-d);font-weight:600">{{ t('mod.open', 'Ouvrir &#8594;') }}</span>
       </a>
 
       <div class="mod">
-        <span class="status st-soon">Bientôt</span>
+        <span class="status st-soon">{{ t('mod.soon', 'Bientôt') }}</span>
         <div class="ic" style="background:var(--soft)"><span style="font-size:24px">&#129309;</span></div>
-        <h3>Mise en commun protégée</h3>
-        <p>Regrouper des données sensibles d'un groupe (budgets, chiffres) pour obtenir un total
-        ou une moyenne — sans que personne n'expose ses chiffres individuels.</p>
-        <span class="go" style="color:var(--muted)">En préparation</span>
+        <h3>{{ t('mod.pool.h3', 'Mise en commun protégée') }}</h3>
+        <p>{{ t('mod.pool.p', "Regrouper des données sensibles d'un groupe (budgets, chiffres) pour obtenir un total ou une moyenne — sans que personne n'expose ses chiffres individuels.") }}</p>
+        <span class="go" style="color:var(--muted)">{{ t('mod.prep', 'En préparation') }}</span>
       </div>
 
       <div class="mod">
-        <span class="status st-soon">Bientôt</span>
+        <span class="status st-soon">{{ t('mod.soon', 'Bientôt') }}</span>
         <div class="ic" style="background:var(--gold-soft)"><span style="font-size:24px">&#128176;</span></div>
-        <h3>Comparateur privé</h3>
-        <p>Comparer des salaires ou des prix au sein d'un groupe et savoir « où je me situe »,
-        sans que quiconque voie les chiffres de l'autre.</p>
-        <span class="go" style="color:var(--muted)">En préparation</span>
+        <h3>{{ t('mod.compare.h3', 'Comparateur privé') }}</h3>
+        <p>{{ t('mod.compare.p', "Comparer des salaires ou des prix au sein d'un groupe et savoir « où je me situe », sans que quiconque voie les chiffres de l'autre.") }}</p>
+        <span class="go" style="color:var(--muted)">{{ t('mod.prep', 'En préparation') }}</span>
       </div>
 
       <div class="mod" style="background:linear-gradient(135deg,#0E5A4A,#0A4638);color:#fff;border:none">
         <div class="ic" style="background:rgba(255,255,255,.14)"><span style="font-size:24px">&#10024;</span></div>
-        <h3 style="color:#fff">Une idée pour ta communauté ?</h3>
-        <p style="color:#CFE0D9">Propose-la sur le mur d'idées : la communauté vote,
-        les meilleures remontent.</p>
-        <a href="{{ url_for('idees') }}" class="go" style="color:var(--gold)">Ouvrir le mur d'idées &#8594;</a>
+        <h3 style="color:#fff">{{ t('mod.idea.h3', 'Une idée pour ta communauté ?') }}</h3>
+        <p style="color:#CFE0D9">{{ t('mod.idea.p', 'Propose-la sur le mur d\'idées : la communauté vote, les meilleures remontent.') }}</p>
+        <a href="{{ url_for('idees') }}" class="go" style="color:var(--gold)">{{ t('mod.idea.go', "Ouvrir le mur d'idées &#8594;") }}</a>
       </div>
 
     </div>
@@ -245,15 +241,15 @@ footer a{color:#B9C6C0}footer a:hover{color:#fff}
 
 <section id="comment" class="how">
   <div class="wrap center">
-    <div class="eyebrow">Simple pour tous</div>
-    <h2 class="h2">Trois étapes, aucune compétence technique</h2>
+    <div class="eyebrow">{{ t('how.eyebrow', 'Simple pour tous') }}</div>
+    <h2 class="h2">{{ t('how.h2', 'Trois étapes, aucune compétence technique') }}</h2>
     <div class="steps" style="text-align:left">
-      <div class="step"><div class="n">1</div><h3>Vous créez</h3>
-        <p>Une question, des choix, et un lien + QR code à partager à vos membres sur WhatsApp.</p></div>
-      <div class="step"><div class="n">2</div><h3>Chacun participe en secret</h3>
-        <p>Le choix est chiffré sur-le-champ. Ni le serveur, ni l'organisateur ne peut le lire.</p></div>
-      <div class="step"><div class="n">3</div><h3>Le résultat, vérifiable</h3>
-        <p>Le total est calculé sur les données chiffrées. Aucune réponse individuelle n'est dévoilée.</p></div>
+      <div class="step"><div class="n">1</div><h3>{{ t('how.s1.h3', 'Vous créez') }}</h3>
+        <p>{{ t('how.s1.p', 'Une question, des choix, et un lien + QR code à partager à vos membres sur WhatsApp.') }}</p></div>
+      <div class="step"><div class="n">2</div><h3>{{ t('how.s2.h3', 'Chacun participe en secret') }}</h3>
+        <p>{{ t('how.s2.p', "Le choix est chiffré sur-le-champ. Ni le serveur, ni l'organisateur ne peut le lire.") }}</p></div>
+      <div class="step"><div class="n">3</div><h3>{{ t('how.s3.h3', 'Le résultat, vérifiable') }}</h3>
+        <p>{{ t('how.s3.p', 'Le total est calculé sur les données chiffrées. Aucune réponse individuelle n\'est dévoilée.') }}</p></div>
     </div>
   </div>
 </section>
@@ -264,7 +260,7 @@ footer a{color:#B9C6C0}footer a:hover{color:#fff}
   <div style="position:absolute;left:0;right:0;bottom:0;padding:26px 22px;text-align:center;
        background:linear-gradient(0deg,rgba(6,40,31,.85),transparent);color:#fff">
     <div style="font-family:'Sora';font-weight:700;font-size:clamp(1.1rem,2.6vw,1.6rem)">
-      Des communautés unies, chaque voix protégée.</div>
+      {{ t('img.caption', 'Des communautés unies, chaque voix protégée.') }}</div>
   </div>
 </section>
 
@@ -272,15 +268,13 @@ footer a{color:#B9C6C0}footer a:hover{color:#fff}
   <div class="wrap">
     <div class="zama">
       <div>
-        <div class="eyebrow" style="color:var(--gold)">La technologie</div>
-        <h2>Le secret garanti par les mathématiques, pas par la confiance</h2>
-        <p>Kaddu s'appuie sur le <b>chiffrement entièrement homomorphe (FHE)</b> de Zama : on calcule
-        directement sur des données chiffrées, sans jamais les déchiffrer.</p>
-        <p>Concrètement : vos bulletins voyagent et sont comptés <b>sous scellé</b>. Seul le résultat
-        final est révélé — jamais les réponses individuelles.</p>
+        <div class="eyebrow" style="color:var(--gold)">{{ t('zama.eyebrow', 'La technologie') }}</div>
+        <h2>{{ t('zama.h2', 'Le secret garanti par les mathématiques, pas par la confiance') }}</h2>
+        <p>{{ t('zama.p1', "Kaddu s'appuie sur le <b>chiffrement entièrement homomorphe (FHE)</b> de Zama : on calcule directement sur des données chiffrées, sans jamais les déchiffrer.") }}</p>
+        <p>{{ t('zama.p2', 'Concrètement : vos bulletins voyagent et sont comptés <b>sous scellé</b>. Seul le résultat final est révélé — jamais les réponses individuelles.') }}</p>
         <div class="badges">
-          <span class="pill" style="background:rgba(255,255,255,.12);color:#fff">&#128274; Chiffrement de bout en bout</span>
-          <span class="pill" style="background:rgba(228,162,76,.2);color:var(--gold)">&#9878; Résultat vérifiable</span>
+          <span class="pill" style="background:rgba(255,255,255,.12);color:#fff">{{ t('zama.badge1', '&#128274; Chiffrement de bout en bout') }}</span>
+          <span class="pill" style="background:rgba(228,162,76,.2);color:var(--gold)">{{ t('zama.badge2', '&#9878; Résultat vérifiable') }}</span>
         </div>
       </div>
       <div class="lockbig">
@@ -297,41 +291,41 @@ footer a{color:#B9C6C0}footer a:hover{color:#fff}
 
 <section id="pourquoi">
   <div class="wrap center">
-    <div class="eyebrow">Pourquoi Kaddu</div>
-    <h2 class="h2">Fait pour la confiance, pensé pour ici</h2>
+    <div class="eyebrow">{{ t('why.eyebrow', 'Pourquoi Kaddu') }}</div>
+    <h2 class="h2">{{ t('why.h2', 'Fait pour la confiance, pensé pour ici') }}</h2>
     <div class="grid" style="text-align:left">
       <div class="mod"><div class="ic" style="background:var(--soft)"><span style="font-size:24px">&#128274;</span></div>
-        <h3>Vraiment secret</h3><p>Chaque réponse est chiffrée. Ni l'organisateur, ni le serveur, ni un pirate ne peut voir un choix individuel.</p></div>
+        <h3>{{ t('why.secret.h3', 'Vraiment secret') }}</h3><p>{{ t('why.secret.p', "Chaque réponse est chiffrée. Ni l'organisateur, ni le serveur, ni un pirate ne peut voir un choix individuel.") }}</p></div>
       <div class="mod"><div class="ic" style="background:var(--gold-soft)"><span style="font-size:24px">&#127873;</span></div>
-        <h3>Gratuit et sans compte</h3><p>Rien à payer, rien à installer pour voter. On partage un lien, chacun participe en un clic.</p></div>
+        <h3>{{ t('why.free.h3', 'Gratuit et sans compte') }}</h3><p>{{ t('why.free.p', 'Rien à payer, rien à installer pour voter. On partage un lien, chacun participe en un clic.') }}</p></div>
       <div class="mod"><div class="ic" style="background:var(--terra-soft)"><span style="font-size:24px">&#128241;</span></div>
-        <h3>Pensé pour le téléphone</h3><p>Léger, rapide sur petit forfait, et installable comme une vraie application sur Android et iPhone.</p></div>
+        <h3>{{ t('why.phone.h3', 'Pensé pour le téléphone') }}</h3><p>{{ t('why.phone.p', 'Léger, rapide sur petit forfait, et installable comme une vraie application sur Android et iPhone.') }}</p></div>
       <div class="mod"><div class="ic" style="background:var(--soft)"><span style="font-size:24px">&#9878;&#65039;</span></div>
-        <h3>Résultat vérifiable</h3><p>Le décompte est calculé sur les données chiffrées, puis publié. La transparence sans sacrifier le secret.</p></div>
+        <h3>{{ t('why.verif.h3', 'Résultat vérifiable') }}</h3><p>{{ t('why.verif.p', 'Le décompte est calculé sur les données chiffrées, puis publié. La transparence sans sacrifier le secret.') }}</p></div>
     </div>
   </div>
 </section>
 
 <section class="how" id="faq">
   <div class="wrap">
-    <div class="center"><div class="eyebrow">Questions fréquentes</div>
-      <h2 class="h2" style="margin:0 auto">Vos questions, nos réponses</h2></div>
+    <div class="center"><div class="eyebrow">{{ t('faq.eyebrow', 'Questions fréquentes') }}</div>
+      <h2 class="h2" style="margin:0 auto">{{ t('faq.h2', 'Vos questions, nos réponses') }}</h2></div>
     <div style="max-width:760px;margin:44px auto 0;display:flex;flex-direction:column;gap:12px">
       <details style="background:var(--cream);border:1px solid var(--line);border-radius:14px;padding:18px 22px">
-        <summary style="font-family:'Sora';font-weight:600;cursor:pointer;font-size:1.05rem">L'organisateur peut-il voir mon vote ?</summary>
-        <p style="color:var(--muted);margin-top:10px">Non. Votre bulletin est chiffré sur-le-champ. Même la personne qui a créé le vote ne voit que le résultat final, jamais les choix individuels.</p></details>
+        <summary style="font-family:'Sora';font-weight:600;cursor:pointer;font-size:1.05rem">{{ t('faq.q1', "L'organisateur peut-il voir mon vote ?") }}</summary>
+        <p style="color:var(--muted);margin-top:10px">{{ t('faq.a1', 'Non. Votre bulletin est chiffré sur-le-champ. Même la personne qui a créé le vote ne voit que le résultat final, jamais les choix individuels.') }}</p></details>
       <details style="background:var(--cream);border:1px solid var(--line);border-radius:14px;padding:18px 22px">
-        <summary style="font-family:'Sora';font-weight:600;cursor:pointer;font-size:1.05rem">Faut-il installer une application ?</summary>
-        <p style="color:var(--muted);margin-top:10px">Non. Un simple lien (ou un QR code) suffit pour voter. Si vous le souhaitez, vous pouvez tout de même « installer » Kaddu sur votre écran d'accueil.</p></details>
+        <summary style="font-family:'Sora';font-weight:600;cursor:pointer;font-size:1.05rem">{{ t('faq.q2', 'Faut-il installer une application ?') }}</summary>
+        <p style="color:var(--muted);margin-top:10px">{{ t('faq.a2', "Non. Un simple lien (ou un QR code) suffit pour voter. Si vous le souhaitez, vous pouvez tout de même « installer » Kaddu sur votre écran d'accueil.") }}</p></details>
       <details style="background:var(--cream);border:1px solid var(--line);border-radius:14px;padding:18px 22px">
-        <summary style="font-family:'Sora';font-weight:600;cursor:pointer;font-size:1.05rem">Est-ce que c'est payant ?</summary>
-        <p style="color:var(--muted);margin-top:10px">Non, c'est gratuit. Kaddu est pensé pour être accessible à toutes les communautés.</p></details>
+        <summary style="font-family:'Sora';font-weight:600;cursor:pointer;font-size:1.05rem">{{ t('faq.q3', 'Est-ce que c\'est payant ?') }}</summary>
+        <p style="color:var(--muted);margin-top:10px">{{ t('faq.a3', 'Non, c\'est gratuit. Kaddu est pensé pour être accessible à toutes les communautés.') }}</p></details>
       <details style="background:var(--cream);border:1px solid var(--line);border-radius:14px;padding:18px 22px">
-        <summary style="font-family:'Sora';font-weight:600;cursor:pointer;font-size:1.05rem">Est-ce vraiment sécurisé ?</summary>
-        <p style="color:var(--muted);margin-top:10px">Oui. Kaddu s'appuie sur le chiffrement homomorphe (FHE) de Zama : on calcule sur des données chiffrées sans jamais les déchiffrer. Le secret est garanti par les mathématiques.</p></details>
+        <summary style="font-family:'Sora';font-weight:600;cursor:pointer;font-size:1.05rem">{{ t('faq.q4', 'Est-ce vraiment sécurisé ?') }}</summary>
+        <p style="color:var(--muted);margin-top:10px">{{ t('faq.a4', 'Oui. Kaddu s\'appuie sur le chiffrement homomorphe (FHE) de Zama : on calcule sur des données chiffrées sans jamais les déchiffrer. Le secret est garanti par les mathématiques.') }}</p></details>
       <details style="background:var(--cream);border:1px solid var(--line);border-radius:14px;padding:18px 22px">
-        <summary style="font-family:'Sora';font-weight:600;cursor:pointer;font-size:1.05rem">Pour qui est fait Kaddu ?</summary>
-        <p style="color:var(--muted);margin-top:10px">Pour les associations, coopératives, tontines, syndicats, amicales, bureaux d'étudiants — partout où l'on prend des décisions à plusieurs et où la confiance compte.</p></details>
+        <summary style="font-family:'Sora';font-weight:600;cursor:pointer;font-size:1.05rem">{{ t('faq.q5', 'Pour qui est fait Kaddu ?') }}</summary>
+        <p style="color:var(--muted);margin-top:10px">{{ t('faq.a5', "Pour les associations, coopératives, tontines, syndicats, amicales, bureaux d'étudiants — partout où l'on prend des décisions à plusieurs et où la confiance compte.") }}</p></details>
     </div>
   </div>
 </section>
@@ -339,11 +333,11 @@ footer a{color:#B9C6C0}footer a:hover{color:#fff}
 <section class="final">
   <div class="wrap">
     <div class="box">
-      <h2>Prêt à organiser un vote vraiment secret ?</h2>
-      <p>Gratuit, sans compte, prêt en une minute. Partagez le lien, vos membres votent, le résultat s'affiche.</p>
+      <h2>{{ t('final.h2', 'Prêt à organiser un vote vraiment secret ?') }}</h2>
+      <p>{{ t('final.p', 'Gratuit, sans compte, prêt en une minute. Partagez le lien, vos membres votent, le résultat s\'affiche.') }}</p>
       <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap">
-        <a href="{{ url_for('creer') }}" class="btn btn-gold">&#10133;&nbsp; Créer mon premier vote</a>
-        <a href="{{ url_for('rejoindre') }}" class="btn btn-ghost">J'ai un code pour voter</a>
+        <a href="{{ url_for('creer') }}" class="btn btn-gold">{{ t('final.cta1', '&#10133;&nbsp; Créer mon premier vote') }}</a>
+        <a href="{{ url_for('rejoindre') }}" class="btn btn-ghost">{{ t('final.cta2', "J'ai un code pour voter") }}</a>
       </div>
     </div>
   </div>
@@ -354,26 +348,25 @@ footer a{color:#B9C6C0}footer a:hover{color:#fff}
     <div style="display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;align-items:flex-start">
       <div style="max-width:420px">
         <div class="brand" style="font-size:1.15rem;justify-content:flex-start;margin-bottom:8px"><b>Kaddu</b></div>
-        La confidentialité au service des communautés — associations, coopératives,
-        tontines, syndicats, amicales. Propulsé par le chiffrement FHE de Zama.
+        {{ t('foot.desc', 'La confidentialité au service des communautés — associations, coopératives, tontines, syndicats, amicales. Propulsé par le chiffrement FHE de Zama.') }}
       </div>
       <div style="display:flex;gap:40px;flex-wrap:wrap">
         <div style="display:flex;flex-direction:column;gap:10px">
-          <b style="color:#fff;font-family:'Sora'">Produit</b>
-          <a href="{{ url_for('creer') }}">Créer un vote</a>
-          <a href="{{ url_for('communaute') }}">Communauté</a>
-          <a href="{{ url_for('idees') }}">Mur d'idées</a>
+          <b style="color:#fff;font-family:'Sora'">{{ t('foot.produit', 'Produit') }}</b>
+          <a href="{{ url_for('creer') }}">{{ t('foot.creervote', 'Créer un vote') }}</a>
+          <a href="{{ url_for('communaute') }}">{{ t('nav.communaute', 'Communauté') }}</a>
+          <a href="{{ url_for('idees') }}">{{ t('foot.murIdees', 'Mur d\'idées') }}</a>
         </div>
         <div style="display:flex;flex-direction:column;gap:10px">
-          <b style="color:#fff;font-family:'Sora'">Informations</b>
-          <a href="{{ url_for('mentions') }}">Mentions légales</a>
-          <a href="{{ url_for('confidentialite') }}">Confidentialité</a>
-          <a href="mailto:elhadjipapealaminesarr@gmail.com">Nous contacter</a>
+          <b style="color:#fff;font-family:'Sora'">{{ t('foot.informations', 'Informations') }}</b>
+          <a href="{{ url_for('mentions') }}">{{ t('foot.mentions', 'Mentions légales') }}</a>
+          <a href="{{ url_for('confidentialite') }}">{{ t('foot.confidentialite', 'Confidentialité') }}</a>
+          <a href="mailto:elhadjipapealaminesarr@gmail.com">{{ t('foot.contactus', 'Nous contacter') }}</a>
         </div>
       </div>
     </div>
     <div style="border-top:1px solid rgba(255,255,255,.12);padding-top:16px;font-size:.85rem;opacity:.8">
-      © <span id="yr"></span> Kaddu · Fait pour l'Afrique francophone.
+      © <span id="yr"></span> {{ t('foot.copyright', 'Kaddu · Fait pour l\'Afrique francophone.') }}
       <script>document.getElementById('yr').textContent=new Date().getFullYear();</script>
     </div>
   </div>
@@ -381,22 +374,22 @@ footer a{color:#B9C6C0}footer a:hover{color:#fff}
 
 <div id="kadduIntro" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(6,40,31,.62);backdrop-filter:blur(3px);align-items:center;justify-content:center;padding:20px">
   <div style="background:#fff;max-width:410px;width:100%;border-radius:22px;padding:26px;box-shadow:0 30px 70px rgba(0,0,0,.32)">
-    <div style="font-family:'Sora';font-weight:700;font-size:1.3rem;color:var(--ink)">Bienvenue sur Kaddu 👋</div>
-    <p style="color:var(--muted);font-size:.95rem;margin:8px 0 18px">Des votes vraiment secrets pour vos communautés. En 3 étapes :</p>
+    <div style="font-family:'Sora';font-weight:700;font-size:1.3rem;color:var(--ink)">{{ t('intro.title', 'Bienvenue sur Kaddu 👋') }}</div>
+    <p style="color:var(--muted);font-size:.95rem;margin:8px 0 18px">{{ t('intro.sub', 'Des votes vraiment secrets pour vos communautés. En 3 étapes :') }}</p>
     <div style="display:flex;flex-direction:column;gap:14px">
       <div style="display:flex;gap:12px;align-items:flex-start">
         <span style="flex:none;width:30px;height:30px;border-radius:9px;background:var(--soft);color:var(--green-d);font-family:'Sora';font-weight:700;display:flex;align-items:center;justify-content:center">1</span>
-        <div><b>Créez un vote</b><br><span style="color:var(--muted);font-size:.9rem">Une question, des choix. C'est tout.</span></div></div>
+        <div><b>{{ t('intro.s1.t', 'Créez un vote') }}</b><br><span style="color:var(--muted);font-size:.9rem">{{ t('intro.s1.d', 'Une question, des choix. C\'est tout.') }}</span></div></div>
       <div style="display:flex;gap:12px;align-items:flex-start">
         <span style="flex:none;width:30px;height:30px;border-radius:9px;background:var(--soft);color:var(--green-d);font-family:'Sora';font-weight:700;display:flex;align-items:center;justify-content:center">2</span>
-        <div><b>Partagez le lien</b><br><span style="color:var(--muted);font-size:.9rem">Sur WhatsApp, en un clic (ou un QR code).</span></div></div>
+        <div><b>{{ t('intro.s2.t', 'Partagez le lien') }}</b><br><span style="color:var(--muted);font-size:.9rem">{{ t('intro.s2.d', 'Sur WhatsApp, en un clic (ou un QR code).') }}</span></div></div>
       <div style="display:flex;gap:12px;align-items:flex-start">
         <span style="flex:none;width:30px;height:30px;border-radius:9px;background:var(--soft);color:var(--green-d);font-family:'Sora';font-weight:700;display:flex;align-items:center;justify-content:center">3</span>
-        <div><b>Chacun vote en secret</b><br><span style="color:var(--muted);font-size:.9rem">Le bulletin est chiffré. Seul le résultat s'affiche.</span></div></div>
+        <div><b>{{ t('intro.s3.t', 'Chacun vote en secret') }}</b><br><span style="color:var(--muted);font-size:.9rem">{{ t('intro.s3.d', 'Le bulletin est chiffré. Seul le résultat s\'affiche.') }}</span></div></div>
     </div>
-    <a href="{{ url_for('creer') }}" onclick="kadduSeen()" class="btn btn-gold" style="width:100%;justify-content:center;margin-top:20px">Créer un vote gratuit</a>
-    <button onclick="kadduCloseIntro()" class="btn btn-ghost" style="width:100%;justify-content:center;margin-top:10px;border:1px solid var(--line)">Explorer d'abord</button>
-    <a href="{{ url_for('guide') }}" onclick="kadduSeen()" style="display:block;text-align:center;color:var(--muted);font-size:.85rem;margin-top:12px">Voir le guide complet &#8594;</a>
+    <a href="{{ url_for('creer') }}" onclick="kadduSeen()" class="btn btn-gold" style="width:100%;justify-content:center;margin-top:20px">{{ t('intro.cta', 'Créer un vote gratuit') }}</a>
+    <button onclick="kadduCloseIntro()" class="btn btn-ghost" style="width:100%;justify-content:center;margin-top:10px;border:1px solid var(--line)">{{ t('intro.explore', 'Explorer d\'abord') }}</button>
+    <a href="{{ url_for('guide') }}" onclick="kadduSeen()" style="display:block;text-align:center;color:var(--muted);font-size:.85rem;margin-top:12px">{{ t('intro.guide', 'Voir le guide complet &#8594;') }}</a>
   </div>
 </div>
 <script>
