@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}Ma tontine — {{ t['name'] }}{% endblock %}
+{% block content %}
+<div class="hero">
+  <span class="kicker">&#129309; {{ t['name'] }}</span>
+  <h1>Bonjour {{ mem['name'] }}</h1>
+  <p class="lead">{% if t['closed'] %}Cette tontine est termin&eacute;e.{% else %}Tour {{ cycle }} / {{ t['member_count'] }} &mdash; b&eacute;n&eacute;ficiaire : <b>{{ beneficiary['name'] if beneficiary else '&mdash;' }}</b>{% endif %}</p>
+</div>
+
+{% if not t['closed'] and req %}
+  <div class="card">
+    {% if req['kind'] == 'dissolve' %}
+    <h2 style="font-family:'Sora';font-size:1.15rem">&#128499;&#65039; Vote de dissolution</h2>
+    <p class="muted small">L'organisateur propose d'<b>arr&ecirc;ter la tontine</b>. Le groupe d&eacute;cide par un <b>vote secret</b> (l'organisateur ne vote pas).</p>
+    {% else %}
+    <h2 style="font-family:'Sora';font-size:1.15rem">&#128499;&#65039; Demande de tour en cours</h2>
+    <p class="muted small"><b>{{ req['requester_name'] }}</b> demande &agrave; prendre la cagnotte ce tour. Le groupe d&eacute;cide par un <b>vote secret</b> (l'organisateur ne vote pas).</p>
+    {% endif %}
+    {% if req['is_requester'] %}
+      <span class="pill pill-gold">C'est ta demande &mdash; en attente du vote des autres membres.</span>
+    {% elif req['can_vote'] %}
+      <div style="display:flex;gap:10px;margin-top:8px">
+        <form method="post" action="{{ url_for('tontine_voter_tour', tid=t['id'], token=token) }}" style="margin:0;flex:1">
+          <input type="hidden" name="choice" value="oui">
+          <button class="btn btn-primary" type="submit" style="width:100%">Oui, accorder</button>
+        </form>
+        <form method="post" action="{{ url_for('tontine_voter_tour', tid=t['id'], token=token) }}" style="margin:0;flex:1">
+          <input type="hidden" name="choice" value="non">
+          <button class="btn" type="submit" style="width:100%">Non</button>
+        </form>
+      </div>
+      <p class="muted small" style="margin-top:8px">Ton vote est <b>chiffr&eacute;</b> : personne ne saura ce que tu as choisi, seul le total sera r&eacute;v&eacute;l&eacute;.</p>
+    {% elif req['i_voted'] %}
+      <span class="pill pill-green">&#9989; Tu as vot&eacute; (secret)</span>
+    {% endif %}
+  </div>
+{% elif can_request %}
+  <div class="card center">
+    <p class="muted small">Besoin urgent ? Tu peux demander &agrave; prendre la cagnotte ce tour &mdash; les autres membres voteront (vote secret).</p>
+    <form method="post" action="{{ url_for('tontine_demander', tid=t['id'], token=token) }}" style="margin-top:6px">
+      <button class="btn btn-gold" type="submit">Demander &agrave; prendre ce tour</button>
+    </form>
+  </div>
+{% endif %}
+
+{% if not t['closed'] %}
+  {% if is_benef %}
+    <div class="card center"><span class="pill pill-gold">&#127881; C'est ton tour &mdash; tu re&ccedil;ois la cagnotte</span></div>
+    <div class="card">
+      <h2 style="font-family:'Sora';font-size:1.2rem">Confirme les cotisations re&ccedil;ues</h2>
+      <p class="muted small">Clique &laquo;&nbsp;J'ai re&ccedil;u&nbsp;&raquo; pour chaque membre qui t'a bien vers&eacute;. Une cotisation n'est <b>valid&eacute;e</b> que si le membre a confirm&eacute; &laquo;&nbsp;vers&eacute;&nbsp;&raquo; ET toi &laquo;&nbsp;re&ccedil;u&nbsp;&raquo;.</p>
+      {% for p in payers %}
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.07)">
+        <div><b>{{ p['name'] }}</b>
+          <div class="muted small">{% if p['member_paid'] %}a confirm&eacute; avoir vers&eacute; &#10003;{% else %}n'a pas encore confirm&eacute;{% endif %}</div>
+        </div>
+        <div>
+          {% if p['benef_received'] %}
+            <span class="pill pill-green">re&ccedil;u &#9989;</span>
+          {% else %}
+            <form method="post" action="{{ url_for('tontine_recu', tid=t['id'], token=token) }}" style="margin:0">
+              <input type="hidden" name="payer_id" value="{{ p['id'] }}">
+              <button class="btn" style="width:auto;padding:5px 12px" type="submit">J'ai re&ccedil;u</button>
+            </form>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="card center">
+      {% if my_paid %}
+        <span class="pill pill-green">&#9989; Tu as confirm&eacute; avoir vers&eacute; pour ce tour</span>
+        <p class="muted small" style="margin-top:8px">En attente de la confirmation du b&eacute;n&eacute;ficiaire pour valider d&eacute;finitivement.</p>
+      {% else %}
+        <p>As-tu vers&eacute; ta cotisation &agrave; <b>{{ beneficiary['name'] if beneficiary else 'le b&eacute;n&eacute;ficiaire' }}</b> pour ce tour ?</p>
+        <form method="post" action="{{ url_for('tontine_verse', tid=t['id'], token=token) }}" style="margin-top:10px">
+          <button class="btn btn-primary" type="submit">J'ai vers&eacute; ma cotisation &#128274;</button>
+        </form>
+        <p class="muted small" style="margin-top:8px">L'argent se verse hors de l'app (mobile money). Ici tu confirmes seulement.</p>
+      {% endif %}
+    </div>
+  {% endif %}
+{% else %}
+  <div class="card center"><span class="pill pill-gold">Tontine termin&eacute;e &mdash; merci !</span></div>
+{% endif %}
+
+{% if not t['closed'] %}
+<div class="card center">
+  <form method="post" action="{{ url_for('tontine_quitter', tid=t['id'], token=token) }}" onsubmit="return confirm('Quitter la tontine ? Ton r&egrave;glement (ce qui t\'est d&ucirc; ou ce que tu dois) sera calcul&eacute; et scell&eacute; dans le registre.')">
+    <button class="btn" type="submit" style="width:auto;background:#7a2e2e;color:#fff">Quitter la tontine</button>
+  </form>
+</div>
+{% endif %}
+
+<div class="center" style="margin-top:10px"><a href="{{ url_for('tontine', tid=t['id']) }}" class="muted">Voir le registre public &#8594;</a></div>
+{% endblock %}

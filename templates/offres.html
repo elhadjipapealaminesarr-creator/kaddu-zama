@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Appels d'offres scellés — Kaddu{% endblock %}
+{% block content %}
+<div class="hero">
+  <span class="kicker">&#128274; Appels d'offres scell&eacute;s</span>
+  <h1>Tes appels d'offres</h1>
+  <p class="lead">Anti-corruption : chaque offre est <b>scell&eacute;e</b> &agrave; la soumission (empreinte du montant + mot secret). Personne &mdash; pas m&ecirc;me l'organisateur &mdash; ne voit les montants avant l'ouverture.</p>
+</div>
+
+{% if not me %}
+  <div class="card center">
+    <p>Connecte-toi pour cr&eacute;er et g&eacute;rer un appel d'offres.</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:8px">
+      <a href="{{ url_for('connexion', next=url_for('offres')) }}" class="btn btn-primary" style="width:auto">Se connecter</a>
+      <a href="{{ url_for('inscription', next=url_for('offres')) }}" class="btn" style="width:auto">Cr&eacute;er un compte</a>
+    </div>
+  </div>
+{% else %}
+  {% if tenders %}
+    {% for t in tenders %}
+    <a href="{{ url_for('offre', tid=t['id']) }}" class="card" style="display:block;text-decoration:none;color:inherit">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+        <div>
+          <div style="font-family:'Sora';font-weight:600;font-size:1.08rem">{{ t['title'] }}</div>
+          <div class="muted small" style="margin-top:2px">{% if t['direction']=='high' %}mieux-disant (montant le plus haut){% else %}moins-disant (montant le plus bas){% endif %}</div>
+        </div>
+        <span class="pill {% if t['status']=='closed' %}pill-gold{% else %}pill-green{% endif %}" style="flex:none">
+          {% if t['status']=='closed' %}Ouvert (r&eacute;v&eacute;lation){% else %}Soumissions ouvertes{% endif %}</span>
+      </div>
+    </a>
+    {% endfor %}
+  {% endif %}
+
+  <div class="card pad-lg">
+    <h2 style="font-family:'Sora';font-size:1.25rem">&#10133; Nouvel appel d'offres</h2>
+    <form method="post">
+      <label class="fld" for="title">Intitul&eacute;</label>
+      <input type="text" id="title" name="title" value="{{ title }}" placeholder="Ex. Fourniture de 100 tables pour l'&eacute;cole" required>
+
+      <label class="fld" for="description">Description (optionnel)</label>
+      <textarea id="description" name="description" rows="3" placeholder="D&eacute;tails, crit&egrave;res, d&eacute;lai&hellip;">{{ description }}</textarea>
+
+      <label class="fld">Crit&egrave;re gagnant</label>
+      <label class="choice"><input type="radio" name="direction" value="low" checked>
+        <span class="box"><span class="dot"></span><span>Moins-disant &mdash; le montant le plus <b>bas</b> gagne</span></span></label>
+      <label class="choice"><input type="radio" name="direction" value="high">
+        <span class="box"><span class="dot"></span><span>Mieux-disant &mdash; le montant le plus <b>haut</b> gagne</span></span></label>
+
+      <div style="margin-top:14px"></div>
+      <button type="submit" class="btn btn-primary">Cr&eacute;er l'appel d'offres &#128274;</button>
+    </form>
+  </div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}{{ t['title'] }} — Appel d'offres Kaddu{% endblock %}
+{% block content %}
+<a href="{{ url_for('offres') }}" class="back">&#8592; Mes appels d'offres</a>
+
+<div class="hero">
+  <span class="kicker">&#128274; Appel d'offres scell&eacute;</span>
+  <h1>{{ t['title'] }}</h1>
+  {% if t['description'] %}<p class="lead">{{ t['description'] }}</p>{% endif %}
+  <p class="muted small">Crit&egrave;re : {% if t['direction']=='high' %}mieux-disant (montant le plus haut){% else %}moins-disant (montant le plus bas){% endif %}</p>
+</div>
+
+<div class="card center">
+  {% if t['status']=='closed' %}
+    <span class="pill pill-gold">Soumissions closes &mdash; phase de r&eacute;v&eacute;lation</span>
+  {% else %}
+    <span class="pill pill-green">Soumissions ouvertes</span>
+  {% endif %}
+  <div class="small" style="margin-top:10px">
+    {% if integrity %}<span class="pill pill-green">&#128274; Registre int&egrave;gre</span>
+    {% else %}<span class="pill" style="background:#c0392b;color:#fff">&#9888;&#65039; Registre alt&eacute;r&eacute; !</span>{% endif %}
+    <span class="muted small" style="margin-left:8px">{{ n_sealed }} offre(s) d&eacute;pos&eacute;e(s)</span>
+  </div>
+</div>
+
+{% if t['status']=='open' %}
+  <div class="card pad-lg">
+    <h2 style="font-family:'Sora';font-size:1.2rem">Soumettre une offre scell&eacute;e</h2>
+    <p class="muted small">Ton montant n'est <b>pas</b> enregistr&eacute; : seule une empreinte l'est. &#9888;&#65039; Note bien ton <b>montant</b> et ton <b>mot secret</b> &mdash; ils te serviront &agrave; r&eacute;v&eacute;ler apr&egrave;s la cl&ocirc;ture.</p>
+    <form method="post" action="{{ url_for('offre_soumettre', tid=t['id']) }}">
+      <label class="fld" for="name">Ton nom / ta soci&eacute;t&eacute;</label>
+      <input type="text" id="name" name="name" required placeholder="Ex. Entreprise Diallo">
+      <label class="fld" for="amount">Ton montant (FCFA, entier)</label>
+      <input type="number" id="amount" name="amount" min="0" required placeholder="Ex. 850000">
+      <label class="fld" for="secret">Mot secret (&agrave; garder)</label>
+      <input type="text" id="secret" name="secret" required placeholder="Ex. lion2026">
+      <div style="margin-top:14px"></div>
+      <button type="submit" class="btn btn-primary">Sceller mon offre &#128274;</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2 style="font-family:'Sora';font-size:1.2rem">Offres d&eacute;pos&eacute;es</h2>
+    {% for b in bids %}
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.07)">
+      <b>{{ b['bidder_name'] }}</b>
+      <span class="pill pill-green">scell&eacute;e &#128274;</span>
+    </div>
+    {% else %}
+      <p class="muted small">Aucune offre pour l'instant.</p>
+    {% endfor %}
+  </div>
+
+  {% if is_owner %}
+  <form method="post" action="{{ url_for('offre_clore', tid=t['id']) }}" class="center" style="margin-top:6px">
+    <button class="btn btn-gold" type="submit" onclick="return confirm('Clore les soumissions et ouvrir la r&eacute;v&eacute;lation ?')">Clore les soumissions</button>
+  </form>
+  {% endif %}
+
+{% else %}
+  <div class="card pad-lg">
+    <h2 style="font-family:'Sora';font-size:1.2rem">R&eacute;v&eacute;ler ton offre</h2>
+    <p class="muted small">Entre exactement le m&ecirc;me montant et mot secret qu'&agrave; la soumission. Le syst&egrave;me v&eacute;rifie l'empreinte : impossible de tricher.</p>
+    <form method="post" action="{{ url_for('offre_reveler', tid=t['id']) }}">
+      <label class="fld" for="rname">Ton nom / ta soci&eacute;t&eacute;</label>
+      <input type="text" id="rname" name="name" required placeholder="Ex. Entreprise Diallo">
+      <label class="fld" for="ramount">Ton montant (FCFA)</label>
+      <input type="number" id="ramount" name="amount" min="0" required>
+      <label class="fld" for="rsecret">Mot secret</label>
+      <input type="text" id="rsecret" name="secret" required>
+      <div style="margin-top:14px"></div>
+      <button type="submit" class="btn btn-primary">R&eacute;v&eacute;ler &amp; v&eacute;rifier</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2 style="font-family:'Sora';font-size:1.2rem">R&eacute;sultats</h2>
+    {% if results %}
+      {% for b in results %}
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.07)">
+        <div><b>{{ b['bidder_name'] }}</b>{% if loop.first %}<span class="pill pill-gold" style="margin-left:6px">gagnant</span>{% endif %}</div>
+        <div style="font-family:'Sora';font-weight:600">{{ b['amount'] }} FCFA</div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <p class="muted small">Aucune offre r&eacute;v&eacute;l&eacute;e pour l'instant. Les soumissionnaires doivent r&eacute;v&eacute;ler ci-dessus.</p>
+    {% endif %}
+    {% set unrev = bids | selectattr('revealed', 'equalto', 0) | list %}
+    {% if unrev %}<p class="muted small" style="margin-top:8px">En attente de r&eacute;v&eacute;lation : {% for b in unrev %}{{ b['bidder_name'] }}{% if not loop.last %}, {% endif %}{% endfor %}.</p>{% endif %}
+  </div>
+{% endif %}
+{% endblock %}

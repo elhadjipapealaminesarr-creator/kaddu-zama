@@ -46,6 +46,12 @@
       <label class="fld" for="members">Membres &mdash; un par ligne, dans l'ordre des b&eacute;n&eacute;ficiaires</label>
       <textarea id="members" name="members" rows="6" placeholder="Awa&#10;Modou&#10;Fatou">{{ members }}</textarea>
 
+      <label class="fld">Validation des cotisations</label>
+      <label class="choice"><input type="radio" name="mode" value="simple" checked>
+        <span class="box"><span class="dot"></span><span><b>Simple</b> &mdash; l'organisateur marque les cotisations (petite amicale de confiance)</span></span></label>
+      <label class="choice"><input type="radio" name="mode" value="p2p">
+        <span class="box"><span class="dot"></span><span><b>Double validation (P2P)</b> &mdash; le membre confirme &laquo;&nbsp;j'ai vers&eacute;&nbsp;&raquo; ET le b&eacute;n&eacute;ficiaire confirme &laquo;&nbsp;j'ai re&ccedil;u&nbsp;&raquo;. L'organisateur ne peut plus valider seul. Chaque membre re&ccedil;oit un lien priv&eacute;.</span></span></label>
+
       <div style="margin-top:14px"></div>
       <button type="submit" class="btn btn-primary">Cr&eacute;er la tontine &#128274;</button>
     </form>

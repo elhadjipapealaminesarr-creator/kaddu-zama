@@ -26,6 +26,40 @@
   {% if fingerprint %}<div class="muted small" style="margin-top:6px;word-break:break-all">Empreinte du registre : {{ fingerprint[:24] }}&hellip;</div>{% endif %}
 </div>
 
+{% if settle %}
+<div class="card">
+  <h2 style="font-family:'Sora';font-size:1.2rem">&#129534; R&egrave;glement final{% if dissolved %} &mdash; tontine dissoute{% endif %}</h2>
+  <p class="muted small">Net = re&ccedil;u &minus; cotis&eacute;. &Agrave; r&eacute;gler entre membres (hors app, mobile money). Scell&eacute; dans le registre.</p>
+  {% for s in settle %}
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.07)">
+    <div><b>{{ s['name'] }}</b>{% if not s['active'] %} <span class="muted small">(parti)</span>{% endif %}
+      <div class="muted small">cotis&eacute; {{ s['cotise'] }} &middot; re&ccedil;u {{ s['recu'] }} FCFA</div></div>
+    <div style="font-family:'Sora';font-weight:600;{% if s['net'] > 0 %}color:#e74c3c{% elif s['net'] < 0 %}color:#2ecc71{% endif %}">
+      {% if s['net'] > 0 %}doit {{ s['net'] }}{% elif s['net'] < 0 %}on lui doit {{ -s['net'] }}{% else %}&agrave; jour{% endif %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if not t['closed'] and req %}
+<div class="card">
+  {% if req['kind'] == 'dissolve' %}
+  <h2 style="font-family:'Sora';font-size:1.2rem">&#128499;&#65039; Vote de dissolution en cours</h2>
+  <p class="muted small">Proposition d'<b>arr&ecirc;ter la tontine</b>. Les membres votent en <b>secret</b> ; toi (organisateur) tu ne votes pas.</p>
+  {% else %}
+  <h2 style="font-family:'Sora';font-size:1.2rem">&#128499;&#65039; Demande de tour en cours</h2>
+  <p class="muted small"><b>{{ req['requester_name'] }}</b> demande &agrave; prendre la cagnotte ce tour. Les membres votent en <b>secret</b> ; toi (organisateur) tu ne votes pas.</p>
+  {% endif %}
+  <p class="muted small">{{ req['votes_cast'] }} vote(s) exprim&eacute;(s).</p>
+  {% if is_owner %}
+  <form method="post" action="{{ url_for('tontine_demande_clore', tid=t['id'], rid=req['id']) }}" style="margin-top:8px">
+    <button class="btn btn-gold" type="submit" onclick="return confirm('Clore le vote et d&eacute;pouiller (d&eacute;compte FHE) ?')">Clore le vote &amp; d&eacute;pouiller</button>
+  </form>
+  {% endif %}
+</div>
+{% endif %}
+
 <div class="card">
   <h2 style="font-family:'Sora';font-size:1.2rem">Membres &amp; cotisations{% if not t['closed'] %} (tour {{ cycle }}){% endif %}</h2>
   {% for m in members %}
@@ -35,8 +69,10 @@
       {% if m['is_beneficiary'] %}<span class="pill pill-gold" style="margin-left:6px">re&ccedil;oit ce tour</span>{% endif %}
     </div>
     <div>
-      {% if m['paid'] %}
-        <span class="pill pill-green">cotis&eacute; &#9989;</span>
+      {% if m['validated'] %}
+        <span class="pill pill-green">valid&eacute; &#9989;</span>
+      {% elif mode == 'p2p' %}
+        <span class="muted small">{% if m['member_paid'] %}membre &#10003;{% else %}membre &#8943;{% endif %} / {% if m['benef_received'] %}b&eacute;n&eacute;f &#10003;{% else %}b&eacute;n&eacute;f &#8943;{% endif %}</span>
       {% elif is_owner and not t['closed'] %}
         <form method="post" action="{{ url_for('tontine_payer', tid=t['id']) }}" style="margin:0">
           <input type="hidden" name="member_id" value="{{ m['id'] }}">
@@ -51,14 +87,45 @@
 
   {% if is_owner and not t['closed'] %}
   <form method="post" action="{{ url_for('tontine_cycle', tid=t['id']) }}" style="margin-top:16px">
-    <button class="btn btn-primary" type="submit"{% if not all_paid %} onclick="return confirm('Tous les membres n\'ont pas encore cotis&eacute;. Passer au tour suivant quand m&ecirc;me ?')"{% endif %}>
+    <button class="btn btn-primary" type="submit"{% if not all_paid %} onclick="return confirm('Tous les membres ne sont pas encore valid&eacute;s. Passer au tour suivant quand m&ecirc;me ?')"{% endif %}>
       {% if all_paid %}Clore ce tour &amp; passer au suivant{% else %}Passer au tour suivant{% endif %}
     </button>
   </form>
-  {% elif not is_owner %}
-  <p class="muted small" style="margin-top:12px">Seul l'organisateur peut marquer les cotisations et clore les tours.</p>
   {% endif %}
 </div>
+
+{% if is_owner and mode == 'p2p' %}
+<div class="card">
+  <h2 style="font-family:'Sora';font-size:1.2rem">&#128279; Liens priv&eacute;s des membres</h2>
+  <p class="muted small">Envoie &agrave; chaque membre <b>son</b> lien (par WhatsApp). Chacun confirme lui-m&ecirc;me ses cotisations &mdash; tu ne peux plus valider &agrave; sa place.</p>
+  {% for m in members %}
+  <div class="small" style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,.07);word-break:break-all">
+    <b>{{ m['name'] }}</b><br>
+    <span class="muted">{{ base }}{{ url_for('tontine_membre', tid=t['id'], token=m['member_token']) }}</span>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if is_owner and not t['closed'] %}
+<div class="card">
+  <h2 style="font-family:'Sora';font-size:1.2rem">&#9881;&#65039; G&eacute;rer</h2>
+  <p class="muted small">Retirer un membre calcule et scelle son r&egrave;glement (d&ucirc; / dette). L'arr&ecirc;t de la tontine passe par un vote des membres.</p>
+  {% for m in members %}
+  <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.07)">
+    <span>{{ m['position'] }}. {{ m['name'] }}</span>
+    <form method="post" action="{{ url_for('tontine_retirer', tid=t['id'], mid=m['id']) }}" onsubmit="return confirm('Retirer {{ m['name'] }} de la tontine ?')" style="margin:0">
+      <button class="btn" type="submit" style="width:auto;padding:4px 10px;background:#7a2e2e;color:#fff">Retirer</button>
+    </form>
+  </div>
+  {% endfor %}
+  {% if not req %}
+  <form method="post" action="{{ url_for('tontine_dissoudre', tid=t['id']) }}" onsubmit="return confirm('Proposer l\'arr&ecirc;t de la tontine ? Les membres voteront en secret.')" style="margin-top:14px">
+    <button class="btn btn-gold" type="submit">Proposer d'arr&ecirc;ter la tontine (vote des membres)</button>
+  </form>
+  {% endif %}
+</div>
+{% endif %}
 
 {% if ledger %}
 <div class="card">
@@ -66,7 +133,17 @@
   <p class="muted small">Chaque &eacute;criture est scell&eacute;e par une empreinte li&eacute;e &agrave; la pr&eacute;c&eacute;dente. Impossible de modifier le pass&eacute; sans casser la cha&icirc;ne.</p>
   {% for e in ledger %}
   <div class="small" style="padding:7px 0;border-bottom:1px solid rgba(255,255,255,.07)">
-    Tour {{ e['cycle'] }} &middot; {% if e['kind'] == 'contribution' %}cotisation{% else %}versement au b&eacute;n&eacute;ficiaire{% endif %}
+    Tour {{ e['cycle'] }} &middot;
+    {% if e['kind'] == 'contribution' %}cotisation
+    {% elif e['kind'] == 'member_paid' %}le membre a confirm&eacute; avoir vers&eacute;
+    {% elif e['kind'] == 'benef_received' %}le b&eacute;n&eacute;ficiaire a confirm&eacute; avoir re&ccedil;u
+    {% elif e['kind'] == 'payout' %}versement au b&eacute;n&eacute;ficiaire
+    {% elif e['kind'] == 'turn_granted' %}demande de tour ACCORD&Eacute;E
+    {% elif e['kind'] == 'turn_denied' %}demande de tour refus&eacute;e
+    {% elif e['kind'] == 'member_left' %}d&eacute;part d'un membre
+    {% elif e['kind'] == 'dissolved' %}TONTINE DISSOUTE (vote des membres)
+    {% elif e['kind'] == 'dissolve_denied' %}dissolution refus&eacute;e
+    {% else %}{{ e['kind'] }}{% endif %}
     &middot; {{ e['created_at']|dateh }}
     &middot; <span class="muted" style="word-break:break-all">{{ e['hash'][:16] }}&hellip;</span>
   </div>
