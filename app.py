@@ -225,12 +225,18 @@ class _Conn:
 
 def db():
     if IS_PG:
-        # connect_timeout : échec rapide si Neon est injoignable.
-        # statement_timeout : AUCUNE requête ne peut figer un worker (sinon gunicorn tue le
-        # worker sur timeout → réponse vide). Toute requête abandonne après 8 s.
-        return _Conn(psycopg.connect(
-            DATABASE_URL, row_factory=dict_row, connect_timeout=8,
-            options="-c statement_timeout=8000"))
+        # connect_timeout : échec rapide si la base est injoignable.
+        # NB : on NE passe PAS 'options=-c statement_timeout' au connect, car le pooler
+        # de Supabase (Supavisor) refuse ce paramètre de démarrage. On règle plutôt le
+        # timeout via une commande SET juste après la connexion (compatible partout).
+        raw = psycopg.connect(DATABASE_URL, row_factory=dict_row, connect_timeout=8)
+        try:
+            with raw.cursor() as _c:
+                _c.execute("SET statement_timeout = 8000")
+            raw.commit()
+        except Exception:
+            pass  # non bloquant : si SET échoue, on garde la connexion telle quelle
+        return _Conn(raw)
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return _Conn(conn)
