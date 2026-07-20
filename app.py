@@ -466,7 +466,12 @@ def get_user_by_email(email):
 
 
 def current_user():
-    return get_user(session.get("uid"))
+    # Résilient : si la base est momentanément indisponible (Neon endormi/injoignable),
+    # on renvoie None au lieu de faire planter TOUTE la page (même celles sans base).
+    try:
+        return get_user(session.get("uid"))
+    except Exception:
+        return None
 
 
 @app.context_processor
@@ -1521,6 +1526,22 @@ def offre_reveler(tid):
         conn.execute("UPDATE bids SET revealed=1, amount=? WHERE id=?", (amount, b["id"]))
     flash("Offre révélée et vérifiée.")
     return redirect(url_for("offre", tid=tid))
+
+
+@app.errorhandler(Exception)
+def handle_unexpected(e):
+    """Filet de sécurité : si une page échoue (ex. base indisponible), on affiche un
+    message propre au lieu d'un 500 brut. Les erreurs HTTP normales (404/403) passent."""
+    from werkzeug.exceptions import HTTPException
+    if isinstance(e, HTTPException):
+        return e
+    app.logger.exception("Erreur non gérée")
+    try:
+        return render_template(
+            "erreur.html", code=503,
+            msg="Service momentanément indisponible (base de données). Réessaie dans un instant."), 503
+    except Exception:
+        return "Service momentanément indisponible. Réessaie dans un instant.", 503
 
 
 @app.errorhandler(404)
