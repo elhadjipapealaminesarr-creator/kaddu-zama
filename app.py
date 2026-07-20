@@ -173,7 +173,9 @@ def inject_i18n():
             return Markup(default)
         return Markup(TRANSLATIONS.get(lang, {}).get(key, default))
 
-    return {"LANG": lang, "t": t}
+    # Exposé sous le nom "tr" (et pas "t") pour ne pas entrer en collision avec les
+    # variables "t" (objet tontine / appel d'offres) passées par certaines pages.
+    return {"LANG": lang, "tr": t}
 
 
 @app.route("/lang/<code>")
@@ -388,6 +390,13 @@ def init_db():
                 description   TEXT NOT NULL DEFAULT '',
                 direction     TEXT NOT NULL DEFAULT 'low',
                 status        TEXT NOT NULL DEFAULT 'open',
+                mode          TEXT NOT NULL DEFAULT 'reveal',
+                price_min     INTEGER NOT NULL DEFAULT 0,
+                price_step    INTEGER NOT NULL DEFAULT 0,
+                n_levels      INTEGER NOT NULL DEFAULT 0,
+                winning_level INTEGER,
+                winning_price INTEGER,
+                winner_name   TEXT,
                 created_at    INTEGER NOT NULL
             )
         """)
@@ -405,6 +414,15 @@ def init_db():
             )
         """)
         conn.execute("CREATE INDEX IF NOT EXISTS ix_bids ON bids(tender_id, id)")
+        # Offre chiffrée (enchère aveugle FHE) : 1 bit chiffré par palier de prix.
+        conn.execute(f"""
+            CREATE TABLE IF NOT EXISTS bid_levels (
+                bid_id INTEGER NOT NULL,
+                level  INTEGER NOT NULL,
+                blob   {BLOB_TYPE} NOT NULL
+            )
+        """)
+        conn.execute("CREATE INDEX IF NOT EXISTS ix_bid_levels ON bid_levels(bid_id, level)")
 
         # Migration douce : rendre un vote visible sur la place publique.
         for col, ddl in (("public", "INTEGER NOT NULL DEFAULT 0"),
@@ -417,7 +435,14 @@ def init_db():
         for table, col, ddl in (("tontines", "mode", "TEXT NOT NULL DEFAULT 'simple'"),
                                 ("tontine_members", "member_token", "TEXT NOT NULL DEFAULT ''"),
                                 ("tontine_members", "active", "INTEGER NOT NULL DEFAULT 1"),
-                                ("turn_requests", "kind", "TEXT NOT NULL DEFAULT 'turn'")):
+                                ("turn_requests", "kind", "TEXT NOT NULL DEFAULT 'turn'"),
+                                ("tenders", "mode", "TEXT NOT NULL DEFAULT 'reveal'"),
+                                ("tenders", "price_min", "INTEGER NOT NULL DEFAULT 0"),
+                                ("tenders", "price_step", "INTEGER NOT NULL DEFAULT 0"),
+                                ("tenders", "n_levels", "INTEGER NOT NULL DEFAULT 0"),
+                                ("tenders", "winning_level", "INTEGER"),
+                                ("tenders", "winning_price", "INTEGER"),
+                                ("tenders", "winner_name", "TEXT")):
             try:
                 with closing(db()) as c2, c2:
                     c2.execute(f"ALTER TABLE {table} ADD COLUMN {col} {ddl}")
@@ -1397,6 +1422,63 @@ def _my_tenders(me):
     return [dict(r) for r in rows]
 
 
+# --- Enchère aveugle FHE (les perdants ne révèlent jamais leur prix) ----------
+# Les prix sont découpés en paliers. Chaque offre est chiffrée en "thermomètre" :
+# pour chaque palier j, un bit chiffré = 1 si (mon prix <= prix du palier j), sinon 0.
+# À la clôture, on SOMME ces bits chiffrés par palier (moteur FHE de Kaddu). Le prix
+# gagnant est le plus petit palier dont la somme >= 1 — et on ne révèle QUE ce prix.
+# Les montants des perdants ne sont jamais déchiffrés.
+def _tender_levels(t):
+    """Liste des prix de la grille (du plus bas au plus haut)."""
+    return [t["price_min"] + j * t["price_step"] for j in range(t["n_levels"])]
+
+
+def _price_level(t, amount):
+    """Indice de palier d'un montant, ou None s'il n'est pas exactement sur la grille."""
+    if t["price_step"] <= 0 or amount < t["price_min"]:
+        return None
+    off = amount - t["price_min"]
+    if off % t["price_step"] != 0:
+        return None
+    lvl = off // t["price_step"]
+    return lvl if 0 <= lvl < t["n_levels"] else None
+
+
+def _fhe_bid_ids(tid):
+    with closing(db()) as conn:
+        rows = conn.execute("SELECT id FROM bids WHERE tender_id=? ORDER BY id", (tid,)).fetchall()
+    return [r["id"] for r in rows]
+
+
+def _level_blobs(bid_ids, level):
+    """Récupère le bit chiffré de chaque offre pour un palier donné."""
+    if not bid_ids:
+        return []
+    with closing(db()) as conn:
+        blobs = []
+        for bid_id in bid_ids:
+            r = conn.execute("SELECT blob FROM bid_levels WHERE bid_id=? AND level=?",
+                             (bid_id, level)).fetchone()
+            if r is not None:
+                blobs.append(bytes(r["blob"]))
+    return blobs
+
+
+def _compute_winning_level(t):
+    """Prix gagnant (moins-disant) SANS déchiffrer les offres perdantes.
+    On monte palier par palier depuis le plus bas ; dès qu'un palier a une somme
+    chiffrée >= 1, c'est le prix minimum proposé → on s'arrête (on ne va pas plus
+    haut, donc on ne révèle rien de la répartition des perdants)."""
+    bid_ids = _fhe_bid_ids(t["id"])
+    if not bid_ids:
+        return None
+    for j in range(t["n_levels"]):
+        count = fhe.tally(_level_blobs(bid_ids, j))
+        if count >= 1:
+            return j
+    return None
+
+
 def _bid_commitment(amount, secret):
     return hashlib.sha256(("%d|%s" % (int(amount), secret)).encode("utf-8")).hexdigest()
 
@@ -1415,15 +1497,38 @@ def offres():
         title = (request.form.get("title") or "").strip()[:140]
         description = (request.form.get("description") or "").strip()[:1000]
         direction = "high" if request.form.get("direction") == "high" else "low"
+        mode = "fhe" if request.form.get("mode") == "fhe" else "reveal"
         if not title:
             flash("Donne un intitulé à l'appel d'offres.")
             return render_template("offres.html", tenders=_my_tenders(me),
                                    title=title, description=description)
+        price_min = price_step = n_levels = 0
+        if mode == "fhe":
+            # Enchère aveugle : moins-disant uniquement (le plus courant pour un marché).
+            direction = "low"
+            try:
+                price_min = int(request.form.get("price_min") or "")
+                price_max = int(request.form.get("price_max") or "")
+                price_step = int(request.form.get("price_step") or "")
+            except ValueError:
+                price_min = price_max = price_step = -1
+            if price_min < 0 or price_step <= 0 or price_max < price_min:
+                flash("Renseigne un prix min, un prix max et un pas valides pour l'enchère chiffrée.")
+                return render_template("offres.html", tenders=_my_tenders(me),
+                                       title=title, description=description)
+            n_levels = (price_max - price_min) // price_step + 1
+            if n_levels < 2 or n_levels > 30:
+                flash("La grille de prix doit compter entre 2 et 30 paliers "
+                      "(ajuste le pas ou l'écart min–max).")
+                return render_template("offres.html", tenders=_my_tenders(me),
+                                       title=title, description=description)
         with closing(db()) as conn, conn:
             tid = _insert_returning_id(conn,
                 "INSERT INTO tenders (owner_user_id, title, description, direction, status, "
-                "created_at) VALUES (?,?,?,?, 'open', ?)",
-                (me["id"], title, description, direction, int(time.time())))
+                "mode, price_min, price_step, n_levels, created_at) "
+                "VALUES (?,?,?,?, 'open', ?,?,?,?,?)",
+                (me["id"], title, description, direction, mode,
+                 price_min, price_step, n_levels, int(time.time())))
         return redirect(url_for("offre", tid=tid))
     return render_template("offres.html", tenders=_my_tenders(me), title="", description="")
 
@@ -1446,12 +1551,14 @@ def offre(tid):
             break
         prev = b["hash"]
     results = None
-    if t["status"] == "closed":
+    if t["status"] == "closed" and t["mode"] != "fhe":
         revealed = [b for b in bids if b["revealed"] and b["amount"] is not None]
         revealed.sort(key=lambda b: b["amount"], reverse=(t["direction"] == "high"))
         results = revealed
+    levels = _tender_levels(t) if t["mode"] == "fhe" else []
     return render_template("offre.html", t=t, bids=bids, is_owner=is_owner,
-                           integrity=integrity, results=results, n_sealed=len(bids))
+                           integrity=integrity, results=results, n_sealed=len(bids),
+                           levels=levels)
 
 
 @app.route("/offre/<int:tid>/soumettre", methods=["POST"])
@@ -1471,6 +1578,14 @@ def offre_soumettre(tid):
     if not name or not secret or amount is None or amount < 0:
         flash("Nom, montant (entier positif) et mot secret sont requis.")
         return redirect(url_for("offre", tid=tid))
+
+    level = None
+    if t["mode"] == "fhe":
+        level = _price_level(t, amount)
+        if level is None:
+            flash("Ton montant doit être une valeur exacte de la grille de prix affichée.")
+            return redirect(url_for("offre", tid=tid))
+
     with closing(db()) as conn, conn:
         r = conn.execute("SELECT COUNT(*) c FROM bids WHERE tender_id=? AND bidder_name=?",
                          (tid, name)).fetchone()
@@ -1483,10 +1598,24 @@ def offre_soumettre(tid):
         ts = int(time.time())
         commitment = _bid_commitment(amount, secret)
         h = _bid_hash(prev, tid, name, commitment, ts)
-        conn.execute("INSERT INTO bids (tender_id, bidder_name, commitment, created_at, prev_hash, "
-                     "hash, revealed, amount) VALUES (?,?,?,?,?,?,0,NULL)",
-                     (tid, name, commitment, ts, prev, h))
-    flash("Offre scellée. Garde bien ton montant + mot secret pour la révélation.")
+        bid_id = _insert_returning_id(conn,
+            "INSERT INTO bids (tender_id, bidder_name, commitment, created_at, prev_hash, "
+            "hash, revealed, amount) VALUES (?,?,?,?,?,?,0,NULL)",
+            (tid, name, commitment, ts, prev, h))
+        if t["mode"] == "fhe":
+            # Thermomètre chiffré : bit(j) = 1 si (mon prix <= prix du palier j), sinon 0.
+            # Le montant en clair n'est JAMAIS stocké : seuls ces bits chiffrés le sont.
+            slot = min(bid_id % fhe.capacity(), fhe.capacity() - 1)
+            for j in range(t["n_levels"]):
+                bit = 1 if level <= j else 0
+                blob = fhe.encrypt_ballot(slot, bit)
+                conn.execute("INSERT INTO bid_levels (bid_id, level, blob) VALUES (?,?,?)",
+                             (bid_id, j, blob))
+    if t["mode"] == "fhe":
+        flash("Offre chiffrée déposée. Si tu ne gagnes pas, ton prix restera secret à vie. "
+              "Garde ton montant + mot secret pour prouver ta victoire.")
+    else:
+        flash("Offre scellée. Garde bien ton montant + mot secret pour la révélation.")
     return redirect(url_for("offre", tid=tid))
 
 
@@ -1500,6 +1629,15 @@ def offre_clore(tid):
         abort(403)
     with closing(db()) as conn, conn:
         conn.execute("UPDATE tenders SET status='closed' WHERE id=?", (tid,))
+    if t["mode"] == "fhe":
+        # Dépouillement FHE : on trouve le prix minimum SANS déchiffrer les offres
+        # perdantes, puis on ne publie que ce prix gagnant.
+        t = dict(_tender(tid))
+        win_lvl = _compute_winning_level(t)
+        win_price = (t["price_min"] + win_lvl * t["price_step"]) if win_lvl is not None else None
+        with closing(db()) as conn, conn:
+            conn.execute("UPDATE tenders SET winning_level=?, winning_price=? WHERE id=?",
+                         (win_lvl, win_price, tid))
     return redirect(url_for("offre", tid=tid))
 
 
@@ -1517,6 +1655,29 @@ def offre_reveler(tid):
         amount = int(request.form.get("amount") or "")
     except ValueError:
         amount = None
+    # Mode chiffré : SEUL le gagnant (à exactement le prix gagnant) peut se déclarer.
+    # Les perdants ne révèlent jamais leur montant.
+    if t["mode"] == "fhe":
+        if t["winning_price"] is None:
+            flash("Aucun gagnant (aucune offre valide).")
+            return redirect(url_for("offre", tid=tid))
+        if t["winner_name"]:
+            flash("Le gagnant est déjà confirmé.")
+            return redirect(url_for("offre", tid=tid))
+        if amount is None or amount != t["winning_price"]:
+            flash("Pour te déclarer gagnant, indique EXACTEMENT le prix gagnant affiché.")
+            return redirect(url_for("offre", tid=tid))
+        with closing(db()) as conn, conn:
+            b = conn.execute("SELECT * FROM bids WHERE tender_id=? AND bidder_name=?",
+                             (tid, name)).fetchone()
+            if not b or _bid_commitment(amount, secret) != b["commitment"]:
+                flash("Nom + montant + mot secret ne correspondent pas à une offre déposée.")
+                return redirect(url_for("offre", tid=tid))
+            conn.execute("UPDATE bids SET revealed=1, amount=? WHERE id=?", (amount, b["id"]))
+            conn.execute("UPDATE tenders SET winner_name=? WHERE id=?", (name, tid))
+        flash("Victoire confirmée et vérifiée ! Les prix des autres restent secrets.")
+        return redirect(url_for("offre", tid=tid))
+
     with closing(db()) as conn, conn:
         b = conn.execute("SELECT * FROM bids WHERE tender_id=? AND bidder_name=?",
                          (tid, name)).fetchone()
