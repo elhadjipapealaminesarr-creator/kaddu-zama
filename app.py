@@ -17,6 +17,7 @@ from flask import (
     make_response, abort, flash, send_from_directory, session
 )
 from werkzeug.security import generate_password_hash, check_password_hash
+from markupsafe import Markup
 
 import fhe_engine as fhe   # compile + génère les clés FHE au démarrage
 
@@ -28,6 +29,158 @@ app.secret_key = os.environ.get("APP_SECRET", secrets.token_hex(16))
 app.jinja_env.globals["ANNEE"] = time.strftime("%Y")
 app.jinja_env.globals["ZAMA"] = True
 app.jinja_env.filters["dateh"] = lambda ts: time.strftime("%d/%m/%Y", time.localtime(int(ts)))
+
+# --- Langue : détection automatique (navigateur) + choix manuel FR/EN --------
+SUPPORTED_LANGS = ("fr", "en")
+
+# Le français est la langue source. On ne stocke ici QUE les traductions anglaises ;
+# toute clé absente retombe automatiquement sur le texte français fourni en défaut.
+TRANSLATIONS = {
+    "en": {
+        # Barre de navigation (coquille de l'app)
+        "nav.communaute": "Community", "nav.idees": "Ideas", "nav.tontines": "Tontines",
+        "nav.offres": "Tenders", "nav.guide": "Guide", "nav.creer": "Create",
+        "nav.connexion": "Sign in", "nav.sortir": "Sign out",
+        "nav.solutions": "Solutions", "nav.comment": "How it works", "nav.ouvrir": "Open Kaddu",
+        # Pied de page (coquille)
+        "foot.chiffres": "Your votes are end-to-end encrypted.",
+        "foot.cree": "Made with Kaddu — create your own vote &#8594;",
+        "foot.edition": "Zama edition &middot; powered by Zama's FHE encryption &middot;",
+        "foot.mentions": "Legal notice", "foot.confidentialite": "Privacy", "foot.contact": "Contact",
+        # Accueil — héros
+        "hero.kick": "&#128274; Protected by Zama's FHE encryption",
+        "hero.title_pre": "Confidentiality in service of the ", "hero.title_hl": "community",
+        "hero.lead": "Secret votes, tamper-proof tontines and collective decisions — where no one, "
+                     "not even the organizer, can see your choices. Built for associations, "
+                     "cooperatives, tontines and unions across French-speaking Africa.",
+        "hero.cta_create": "&#10133;&nbsp; Create a free vote",
+        "hero.cta_code": "I have a code to vote",
+        "hero.trust1": "&#10004; Free, no account", "hero.trust2": "&#128241; Installs like an app",
+        "hero.trust3": "&#9878; Verifiable result",
+        # Accueil — modules
+        "mod.eyebrow": "One platform, many uses",
+        "mod.h2": "Everything that needs trust and discretion",
+        "mod.sub": "A single encryption engine, several concrete solutions for your communities.",
+        "mod.live": "&#9679; Online", "mod.new": "New", "mod.soon": "Soon", "mod.prep": "In preparation",
+        "mod.open": "Open &#8594;",
+        "mod.vote.h3": "Confidential voting",
+        "mod.vote.p": "Board elections, assembly decisions, internal polls. Each ballot is encrypted; "
+                      "the result is public and verifiable, the votes stay secret.",
+        "mod.vote.go": "Use it now &#8594;",
+        "mod.tontine.h3": "Tamper-proof tontine",
+        "mod.tontine.p": "Manage members, rounds and contributions cleanly, with no cheating possible — "
+                         "a tamper-evident ledger (hash chain); the money flows outside the app.",
+        "mod.offres.h3": "Sealed-bid tenders",
+        "mod.offres.p": "Each bid is sealed at submission (commit-reveal): no one sees the amounts "
+                        "before opening. Anti-corruption through mathematics.",
+        "mod.pool.h3": "Protected pooling",
+        "mod.pool.p": "Combine a group's sensitive data (budgets, figures) to get a total or an average "
+                      "— without anyone exposing their individual numbers.",
+        "mod.compare.h3": "Private comparator",
+        "mod.compare.p": "Compare salaries or prices within a group and know “where I stand”, "
+                         "without anyone seeing the others' figures.",
+        "mod.idea.h3": "An idea for your community?",
+        "mod.idea.p": "Post it on the idea wall: the community votes, the best ones rise.",
+        "mod.idea.go": "Open the idea wall &#8594;",
+        # Accueil — comment ça marche
+        "how.eyebrow": "Simple for everyone", "how.h2": "Three steps, no technical skills",
+        "how.s1.h3": "You create",
+        "how.s1.p": "A question, some choices, and a link + QR code to share with your members on WhatsApp.",
+        "how.s2.h3": "Everyone takes part in secret",
+        "how.s2.p": "The choice is encrypted on the spot. Neither the server nor the organizer can read it.",
+        "how.s3.h3": "The result, verifiable",
+        "how.s3.p": "The total is computed on the encrypted data. No individual answer is revealed.",
+        "img.caption": "United communities, every voice protected.",
+        # Accueil — technologie Zama
+        "zama.eyebrow": "The technology",
+        "zama.h2": "Secrecy guaranteed by mathematics, not by trust",
+        "zama.p1": "Kaddu relies on Zama's <b>fully homomorphic encryption (FHE)</b>: it computes "
+                   "directly on encrypted data, without ever decrypting it.",
+        "zama.p2": "In practice: your ballots travel and are counted <b>under seal</b>. Only the final "
+                   "result is revealed — never the individual answers.",
+        "zama.badge1": "&#128274; End-to-end encryption", "zama.badge2": "&#9878; Verifiable result",
+        # Accueil — pourquoi
+        "why.eyebrow": "Why Kaddu", "why.h2": "Built for trust, designed for here",
+        "why.secret.h3": "Truly secret",
+        "why.secret.p": "Each answer is encrypted. Neither the organizer, nor the server, nor a hacker "
+                        "can see an individual choice.",
+        "why.free.h3": "Free, no account",
+        "why.free.p": "Nothing to pay, nothing to install to vote. Share a link, everyone takes part in one click.",
+        "why.phone.h3": "Built for the phone",
+        "why.phone.p": "Light, fast on a small data plan, and installable like a real app on Android and iPhone.",
+        "why.verif.h3": "Verifiable result",
+        "why.verif.p": "The tally is computed on the encrypted data, then published. Transparency without "
+                       "sacrificing secrecy.",
+        # Accueil — FAQ
+        "faq.eyebrow": "Frequently asked questions", "faq.h2": "Your questions, our answers",
+        "faq.q1": "Can the organizer see my vote?",
+        "faq.a1": "No. Your ballot is encrypted on the spot. Even the person who created the vote only "
+                  "sees the final result, never the individual choices.",
+        "faq.q2": "Do I need to install an app?",
+        "faq.a2": "No. A simple link (or a QR code) is enough to vote. If you wish, you can still "
+                  "“install” Kaddu on your home screen.",
+        "faq.q3": "Is it free?",
+        "faq.a3": "Yes, it's free. Kaddu is designed to be accessible to every community.",
+        "faq.q4": "Is it really secure?",
+        "faq.a4": "Yes. Kaddu relies on Zama's homomorphic encryption (FHE): it computes on encrypted "
+                  "data without ever decrypting it. Secrecy is guaranteed by mathematics.",
+        "faq.q5": "Who is Kaddu for?",
+        "faq.a5": "For associations, cooperatives, tontines, unions, alumni groups, student councils — "
+                  "anywhere people make decisions together and trust matters.",
+        # Accueil — appel final
+        "final.h2": "Ready to run a truly secret vote?",
+        "final.p": "Free, no account, ready in a minute. Share the link, your members vote, the result appears.",
+        "final.cta1": "&#10133;&nbsp; Create my first vote", "final.cta2": "I have a code to vote",
+        # Accueil — pied
+        "foot.desc": "Confidentiality in service of communities — associations, cooperatives, tontines, "
+                     "unions, alumni groups. Powered by Zama's FHE encryption.",
+        "foot.produit": "Product", "foot.creervote": "Create a vote", "foot.murIdees": "Idea wall",
+        "foot.informations": "Information", "foot.contactus": "Contact us",
+        "foot.copyright": "Kaddu &middot; Made for French-speaking Africa.",
+        # Accueil — fenêtre d'accueil
+        "intro.title": "Welcome to Kaddu \U0001F44B",
+        "intro.sub": "Truly secret votes for your communities. In 3 steps:",
+        "intro.s1.t": "Create a vote", "intro.s1.d": "A question, some choices. That's all.",
+        "intro.s2.t": "Share the link", "intro.s2.d": "On WhatsApp, in one click (or a QR code).",
+        "intro.s3.t": "Everyone votes in secret", "intro.s3.d": "The ballot is encrypted. Only the result appears.",
+        "intro.cta": "Create a free vote", "intro.explore": "Explore first",
+        "intro.guide": "See the full guide &#8594;",
+    }
+}
+
+
+def pick_lang():
+    """Choix explicite (session) > langue du navigateur (Accept-Language) > français."""
+    chosen = session.get("lang")
+    if chosen in SUPPORTED_LANGS:
+        return chosen
+    accept = (request.headers.get("Accept-Language") or "").lower()
+    for part in accept.replace(" ", "").split(","):
+        code = part.split(";")[0][:2]
+        if code in SUPPORTED_LANGS:
+            return code
+        if code:            # première langue déclarée non supportée -> défaut français
+            break
+    return "fr"
+
+
+@app.context_processor
+def inject_i18n():
+    lang = pick_lang()
+
+    def t(key, default=""):
+        if lang == "fr":
+            return Markup(default)
+        return Markup(TRANSLATIONS.get(lang, {}).get(key, default))
+
+    return {"LANG": lang, "t": t}
+
+
+@app.route("/lang/<code>")
+def set_lang(code):
+    if code in SUPPORTED_LANGS:
+        session["lang"] = code
+    return redirect(request.referrer or url_for("index"))
 
 
 # Base durable : PostgreSQL (Neon) si DATABASE_URL est défini, sinon SQLite en local.
@@ -261,7 +414,22 @@ def init_db():
                 pass  # la colonne existe déjà
 
 
-init_db()
+def _init_db_with_retry(attempts=6):
+    """Neon (Postgres gratuit) peut être 'endormi' au démarrage : la 1re salve
+    de connexions peut échouer (ProtocolViolation / server conn crashed).
+    On réessaie au lieu de faire planter tout le déploiement."""
+    for i in range(attempts):
+        try:
+            init_db()
+            return
+        except Exception as e:
+            if i == attempts - 1:
+                raise
+            print(f"[init_db] tentative {i+1} échouée ({e}); nouvel essai...", flush=True)
+            time.sleep(2 * (i + 1))
+
+
+_init_db_with_retry()
 
 
 # --- Utilisateurs / session --------------------------------------------------
