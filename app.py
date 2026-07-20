@@ -162,15 +162,18 @@ def init_db():
                 member_count  INTEGER NOT NULL DEFAULT 0,
                 current_cycle INTEGER NOT NULL DEFAULT 1,
                 closed        INTEGER NOT NULL DEFAULT 0,
+                mode          TEXT NOT NULL DEFAULT 'simple',
                 created_at    INTEGER NOT NULL
             )
         """)
         conn.execute(f"""
             CREATE TABLE IF NOT EXISTS tontine_members (
-                id         {ID_PK},
-                tontine_id INTEGER NOT NULL,
-                position   INTEGER NOT NULL,
-                name       TEXT NOT NULL
+                id           {ID_PK},
+                tontine_id   INTEGER NOT NULL,
+                position     INTEGER NOT NULL,
+                name         TEXT NOT NULL,
+                member_token TEXT NOT NULL DEFAULT '',
+                active       INTEGER NOT NULL DEFAULT 1
             )
         """)
         conn.execute(f"""
@@ -188,12 +191,72 @@ def init_db():
         conn.execute("CREATE INDEX IF NOT EXISTS ix_tmembers ON tontine_members(tontine_id, position)")
         conn.execute("CREATE INDEX IF NOT EXISTS ix_tledger ON tontine_ledger(tontine_id, cycle)")
 
+        # --- Demande de tour + vote SECRET des membres (FHE) ------------------
+        conn.execute(f"""
+            CREATE TABLE IF NOT EXISTS turn_requests (
+                id           {ID_PK},
+                tontine_id   INTEGER NOT NULL,
+                requester_id INTEGER NOT NULL,
+                cycle        INTEGER NOT NULL,
+                kind         TEXT NOT NULL DEFAULT 'turn',
+                status       TEXT NOT NULL DEFAULT 'open',
+                yes_count    INTEGER,
+                votes_cast   INTEGER,
+                created_at   INTEGER NOT NULL
+            )
+        """)
+        conn.execute(f"""
+            CREATE TABLE IF NOT EXISTS turn_votes (
+                request_id INTEGER NOT NULL,
+                member_id  INTEGER NOT NULL,
+                slot       INTEGER NOT NULL,
+                blob       {BLOB_TYPE} NOT NULL
+            )
+        """)
+        conn.execute("CREATE INDEX IF NOT EXISTS ix_turnvotes ON turn_votes(request_id, slot)")
+
+        # --- Appels d'offres scellés (engagement-révélation) ------------------
+        conn.execute(f"""
+            CREATE TABLE IF NOT EXISTS tenders (
+                id            {ID_PK},
+                owner_user_id INTEGER NOT NULL,
+                title         TEXT NOT NULL,
+                description   TEXT NOT NULL DEFAULT '',
+                direction     TEXT NOT NULL DEFAULT 'low',
+                status        TEXT NOT NULL DEFAULT 'open',
+                created_at    INTEGER NOT NULL
+            )
+        """)
+        conn.execute(f"""
+            CREATE TABLE IF NOT EXISTS bids (
+                id          {ID_PK},
+                tender_id   INTEGER NOT NULL,
+                bidder_name TEXT NOT NULL,
+                commitment  TEXT NOT NULL,
+                created_at  INTEGER NOT NULL,
+                prev_hash   TEXT NOT NULL DEFAULT '',
+                hash        TEXT NOT NULL DEFAULT '',
+                revealed    INTEGER NOT NULL DEFAULT 0,
+                amount      INTEGER
+            )
+        """)
+        conn.execute("CREATE INDEX IF NOT EXISTS ix_bids ON bids(tender_id, id)")
+
         # Migration douce : rendre un vote visible sur la place publique.
         for col, ddl in (("public", "INTEGER NOT NULL DEFAULT 0"),
                          ("owner_user_id", "INTEGER")):
             try:
                 with closing(db()) as c2, c2:
                     c2.execute(f"ALTER TABLE polls ADD COLUMN {col} {ddl}")
+            except Exception:
+                pass  # la colonne existe déjà
+        for table, col, ddl in (("tontines", "mode", "TEXT NOT NULL DEFAULT 'simple'"),
+                                ("tontine_members", "member_token", "TEXT NOT NULL DEFAULT ''"),
+                                ("tontine_members", "active", "INTEGER NOT NULL DEFAULT 1"),
+                                ("turn_requests", "kind", "TEXT NOT NULL DEFAULT 'turn'")):
+            try:
+                with closing(db()) as c2, c2:
+                    c2.execute(f"ALTER TABLE {table} ADD COLUMN {col} {ddl}")
             except Exception:
                 pass  # la colonne existe déjà
 
@@ -651,10 +714,49 @@ def _tontine(tid):
 
 
 def _tontine_members(tid):
+    """Membres ACTIFS (roster vivant, bénéficiaires, votes)."""
+    with closing(db()) as conn:
+        rows = conn.execute("SELECT * FROM tontine_members WHERE tontine_id = ? AND active = 1 "
+                            "ORDER BY position", (tid,)).fetchall()
+    return [dict(r) for r in rows]
+
+
+def _all_members(tid):
+    """Tous les membres, y compris ceux qui ont quitté (pour le règlement / historique)."""
     with closing(db()) as conn:
         rows = conn.execute("SELECT * FROM tontine_members WHERE tontine_id = ? ORDER BY position",
                             (tid,)).fetchall()
     return [dict(r) for r in rows]
+
+
+def _settlement(tid):
+    """Calcule, pour chaque membre, cotisé / reçu / net (convention montant fixe)."""
+    t = dict(_tontine(tid))
+    allm = _all_members(tid)
+    ledger = _tontine_ledger(tid)
+    amount = t["amount"] or 0
+    mode = t.get("mode", "simple")
+    n_active = sum(1 for m in allm if m["active"])
+    pot = amount * (max(n_active, 1) - 1)
+    rows = []
+    for m in allm:
+        # cycles où sa cotisation est validée
+        cycles = set(e["cycle"] for e in ledger if e["member_id"] == m["id"])
+        contrib = 0
+        for cyc in cycles:
+            if mode == "p2p":
+                if (_has_evt(ledger, "member_paid", cyc, m["id"])
+                        and _has_evt(ledger, "benef_received", cyc, m["id"])):
+                    contrib += 1
+            else:
+                if _has_evt(ledger, "contribution", cyc, m["id"]):
+                    contrib += 1
+        received = sum(1 for e in ledger if e["kind"] == "payout" and e["member_id"] == m["id"])
+        cotise = amount * contrib
+        recu = pot * received
+        rows.append({"name": m["name"], "active": m["active"], "contrib": contrib,
+                     "received": received, "cotise": cotise, "recu": recu, "net": recu - cotise})
+    return rows
 
 
 def _tontine_ledger(tid):
@@ -710,17 +812,37 @@ def tontines():
             return render_template("tontines.html", tontines=_my_tontines(me), name=name,
                                    amount=amount, frequency=frequency, members="\n".join(members))
         members = members[:60]
+        mode = "p2p" if request.form.get("mode") == "p2p" else "simple"
         with closing(db()) as conn, conn:
             tid = _insert_returning_id(conn,
                 "INSERT INTO tontines (owner_user_id, name, amount, frequency, member_count, "
-                "current_cycle, closed, created_at) VALUES (?,?,?,?,?,1,0,?)",
-                (me["id"], name, amount, frequency, len(members), int(time.time())))
+                "current_cycle, closed, mode, created_at) VALUES (?,?,?,?,?,1,0,?,?)",
+                (me["id"], name, amount, frequency, len(members), mode, int(time.time())))
             for i, mname in enumerate(members, start=1):
-                conn.execute("INSERT INTO tontine_members (tontine_id, position, name) VALUES (?,?,?)",
-                             (tid, i, mname))
+                conn.execute("INSERT INTO tontine_members (tontine_id, position, name, member_token) "
+                             "VALUES (?,?,?,?)", (tid, i, mname, secrets.token_urlsafe(8)))
         return redirect(url_for("tontine", tid=tid))
     return render_template("tontines.html", tontines=_my_tontines(me),
                            name="", amount="", frequency="", members="")
+
+
+def _has_evt(ledger, kind, cycle, mid):
+    return any(e["kind"] == kind and e["cycle"] == cycle and e["member_id"] == mid for e in ledger)
+
+
+def _fill_status(members, ledger, cycle, mode):
+    """Ajoute à chaque membre son statut de cotisation pour le tour courant."""
+    for m in members:
+        m["is_beneficiary"] = (m["position"] == cycle)
+        if mode == "p2p":
+            m["member_paid"] = _has_evt(ledger, "member_paid", cycle, m["id"])
+            m["benef_received"] = _has_evt(ledger, "benef_received", cycle, m["id"])
+            m["validated"] = m["member_paid"] and m["benef_received"]
+        else:
+            m["member_paid"] = _has_evt(ledger, "contribution", cycle, m["id"])
+            m["benef_received"] = m["member_paid"]
+            m["validated"] = m["member_paid"]
+    return members
 
 
 @app.route("/tontine/<int:tid>")
@@ -734,17 +856,104 @@ def tontine(tid):
     me = current_user()
     is_owner = bool(me and me["id"] == t["owner_user_id"])
     cycle = t["current_cycle"]
-    paid_ids = set(e["member_id"] for e in ledger
-                   if e["kind"] == "contribution" and e["cycle"] == cycle)
-    for m in members:
-        m["paid"] = m["id"] in paid_ids
-        m["is_beneficiary"] = (m["position"] == cycle)
+    mode = t.get("mode", "simple")
+    _fill_status(members, ledger, cycle, mode)
     beneficiary = next((m for m in members if m["position"] == cycle), None)
-    all_paid = bool(members) and all(m["paid"] for m in members)
+    all_paid = bool(members) and all(m["validated"] for m in members)
+    req = _open_request(tid)
+    req_ctx = None
+    if req:
+        req = dict(req)
+        rq = next((m for m in members if m["id"] == req["requester_id"]), None)
+        req_ctx = {"id": req["id"], "kind": req.get("kind", "turn"),
+                   "requester_name": rq["name"] if rq else "",
+                   "votes_cast": _votes_cast(req["id"])}
+    settle = _settlement(tid) if t["closed"] else None
+    dissolved = any(e["kind"] == "dissolved" for e in ledger)
     return render_template("tontine.html", t=t, members=members, ledger=ledger,
                            is_owner=is_owner, cycle=cycle, beneficiary=beneficiary,
-                           all_paid=all_paid, integrity=_ledger_ok(ledger, tid),
+                           all_paid=all_paid, mode=mode, base=base_url(), req=req_ctx,
+                           settle=settle, dissolved=dissolved,
+                           integrity=_ledger_ok(ledger, tid),
                            fingerprint=(ledger[-1]["hash"] if ledger else ""))
+
+
+@app.route("/tontine/<int:tid>/m/<token>")
+def tontine_membre(tid, token):
+    t = _tontine(tid)
+    if not t:
+        abort(404)
+    t = dict(t)
+    members = _tontine_members(tid)
+    mem = next((m for m in members if m["member_token"] == token and token), None)
+    if not mem:
+        abort(404)
+    ledger = _tontine_ledger(tid)
+    cycle = t["current_cycle"]
+    my_paid = (_has_evt(ledger, "member_paid", cycle, mem["id"])
+               or _has_evt(ledger, "contribution", cycle, mem["id"]))
+    is_benef = (mem["position"] == cycle)
+    payers = []
+    if is_benef:
+        for m in members:
+            if m["id"] == mem["id"]:
+                continue
+            payers.append({"id": m["id"], "name": m["name"],
+                           "member_paid": _has_evt(ledger, "member_paid", cycle, m["id"]),
+                           "benef_received": _has_evt(ledger, "benef_received", cycle, m["id"])})
+    beneficiary = next((m for m in members if m["position"] == cycle), None)
+    req = _open_request(tid)
+    req_ctx = None
+    if req:
+        req = dict(req)
+        rq = next((m for m in members if m["id"] == req["requester_id"]), None)
+        req_ctx = {"id": req["id"], "kind": req.get("kind", "turn"),
+                   "requester_name": rq["name"] if rq else "",
+                   "is_requester": (req["requester_id"] == mem["id"]),
+                   "can_vote": (req["requester_id"] != mem["id"]) and not _has_voted(req["id"], mem["id"]),
+                   "i_voted": _has_voted(req["id"], mem["id"])}
+    can_request = ((not req) and (not t["closed"]) and (mem["position"] != cycle)
+                   and (len(members) >= 3))
+    return render_template("tontine_membre.html", t=t, mem=mem, token=token, cycle=cycle,
+                           my_paid=my_paid, is_benef=is_benef, payers=payers,
+                           beneficiary=beneficiary, req=req_ctx, can_request=can_request)
+
+
+@app.route("/tontine/<int:tid>/m/<token>/verse", methods=["POST"])
+def tontine_verse(tid, token):
+    t = _tontine(tid)
+    if not t:
+        abort(404)
+    mem = next((m for m in _tontine_members(tid) if m["member_token"] == token and token), None)
+    if not mem:
+        abort(404)
+    if not t["closed"]:
+        cycle = t["current_cycle"]
+        with closing(db()) as conn, conn:
+            if not _has_evt(_tontine_ledger(tid), "member_paid", cycle, mem["id"]):
+                _ledger_add(conn, tid, cycle, mem["id"], "member_paid")
+    return redirect(url_for("tontine_membre", tid=tid, token=token))
+
+
+@app.route("/tontine/<int:tid>/m/<token>/recu", methods=["POST"])
+def tontine_recu(tid, token):
+    t = _tontine(tid)
+    if not t:
+        abort(404)
+    mem = next((m for m in _tontine_members(tid) if m["member_token"] == token and token), None)
+    if not mem:
+        abort(404)
+    cycle = t["current_cycle"]
+    if mem["position"] == cycle and not t["closed"]:
+        try:
+            payer_id = int(request.form.get("payer_id") or "0")
+        except ValueError:
+            payer_id = 0
+        if payer_id:
+            with closing(db()) as conn, conn:
+                if not _has_evt(_tontine_ledger(tid), "benef_received", cycle, payer_id):
+                    _ledger_add(conn, tid, cycle, payer_id, "benef_received")
+    return redirect(url_for("tontine_membre", tid=tid, token=token))
 
 
 @app.route("/tontine/<int:tid>/payer", methods=["POST"])
@@ -755,7 +964,8 @@ def tontine_payer(tid):
     me = current_user()
     if not me or me["id"] != t["owner_user_id"]:
         abort(403)
-    if t["closed"]:
+    if t["closed"] or t["mode"] == "p2p":
+        # en mode P2P, la validation se fait par le membre + le bénéficiaire, pas par l'organisateur.
         return redirect(url_for("tontine", tid=tid))
     try:
         mid = int(request.form.get("member_id") or "0")
@@ -790,6 +1000,339 @@ def tontine_cycle(tid):
         conn.execute("UPDATE tontines SET current_cycle=?, closed=? WHERE id=?",
                      (new_cycle, closed, tid))
     return redirect(url_for("tontine", tid=tid))
+
+
+# --- Demande de tour + vote SECRET des membres (FHE) -------------------------
+def _open_request(tid):
+    with closing(db()) as conn:
+        return conn.execute("SELECT * FROM turn_requests WHERE tontine_id=? AND status='open' "
+                            "ORDER BY id DESC LIMIT 1", (tid,)).fetchone()
+
+
+def _has_voted(rid, member_id):
+    with closing(db()) as conn:
+        r = conn.execute("SELECT COUNT(*) c FROM turn_votes WHERE request_id=? AND member_id=?",
+                         (rid, member_id)).fetchone()
+    return r["c"] > 0
+
+
+def _votes_cast(rid):
+    with closing(db()) as conn:
+        return conn.execute("SELECT COUNT(*) c FROM turn_votes WHERE request_id=?", (rid,)).fetchone()["c"]
+
+
+@app.route("/tontine/<int:tid>/m/<token>/demander", methods=["POST"])
+def tontine_demander(tid, token):
+    t = _tontine(tid)
+    if not t:
+        abort(404)
+    members = _tontine_members(tid)
+    mem = next((m for m in members if m["member_token"] == token and token), None)
+    if not mem:
+        abort(404)
+    cycle = t["current_cycle"]
+    if (not t["closed"] and mem["position"] != cycle
+            and not _open_request(tid) and len(members) >= 3):
+        with closing(db()) as conn, conn:
+            _insert_returning_id(conn,
+                "INSERT INTO turn_requests (tontine_id, requester_id, cycle, status, created_at) "
+                "VALUES (?,?,?, 'open', ?)", (tid, mem["id"], cycle, int(time.time())))
+    return redirect(url_for("tontine_membre", tid=tid, token=token))
+
+
+@app.route("/tontine/<int:tid>/m/<token>/voter-tour", methods=["POST"])
+def tontine_voter_tour(tid, token):
+    t = _tontine(tid)
+    if not t:
+        abort(404)
+    mem = next((m for m in _tontine_members(tid) if m["member_token"] == token and token), None)
+    if not mem:
+        abort(404)
+    req = _open_request(tid)
+    if not req:
+        return redirect(url_for("tontine_membre", tid=tid, token=token))
+    rid = req["id"]
+    if mem["id"] == req["requester_id"] or _has_voted(rid, mem["id"]):
+        return redirect(url_for("tontine_membre", tid=tid, token=token))
+    n = _votes_cast(rid)
+    if n >= fhe.capacity():
+        flash("Capacité de vote atteinte.")
+        return redirect(url_for("tontine_membre", tid=tid, token=token))
+    bit = 1 if request.form.get("choice") == "oui" else 0
+    blob = fhe.encrypt_ballot(n, bit)
+    with closing(db()) as conn, conn:
+        conn.execute("INSERT INTO turn_votes (request_id, member_id, slot, blob) VALUES (?,?,?,?)",
+                     (rid, mem["id"], n, blob))
+    return redirect(url_for("tontine_membre", tid=tid, token=token))
+
+
+@app.route("/tontine/<int:tid>/demande/<int:rid>/clore", methods=["POST"])
+def tontine_demande_clore(tid, rid):
+    t = _tontine(tid)
+    if not t:
+        abort(404)
+    me = current_user()
+    if not me or me["id"] != t["owner_user_id"]:
+        abort(403)
+    with closing(db()) as conn:
+        req = conn.execute("SELECT * FROM turn_requests WHERE id=? AND tontine_id=?",
+                           (rid, tid)).fetchone()
+    if not req or req["status"] != "open":
+        return redirect(url_for("tontine", tid=tid))
+    with closing(db()) as conn:
+        rows = conn.execute("SELECT blob FROM turn_votes WHERE request_id=? ORDER BY slot",
+                            (rid,)).fetchall()
+    req = dict(req)
+    blobs = [bytes(r["blob"]) for r in rows]
+    votes_cast = len(blobs)
+    yes = fhe.tally(blobs) if blobs else 0
+    granted = votes_cast > 0 and (yes * 2 > votes_cast)
+    cycle = req["cycle"]
+    rkind = req.get("kind", "turn")
+    with closing(db()) as conn, conn:
+        conn.execute("UPDATE turn_requests SET status=?, yes_count=?, votes_cast=? WHERE id=?",
+                     ("granted" if granted else "denied", yes, votes_cast, rid))
+        if rkind == "dissolve":
+            if granted:
+                conn.execute("UPDATE tontines SET closed=1 WHERE id=?", (tid,))
+                _ledger_add(conn, tid, cycle, 0, "dissolved")
+            else:
+                _ledger_add(conn, tid, cycle, 0, "dissolve_denied")
+        else:
+            if granted:
+                benef = conn.execute("SELECT id, position FROM tontine_members WHERE tontine_id=? "
+                                     "AND position=? AND active=1", (tid, cycle)).fetchone()
+                reqm = conn.execute("SELECT id, position FROM tontine_members WHERE id=?",
+                                   (req["requester_id"],)).fetchone()
+                if benef and reqm and benef["id"] != reqm["id"]:
+                    conn.execute("UPDATE tontine_members SET position=? WHERE id=?",
+                                 (reqm["position"], benef["id"]))
+                    conn.execute("UPDATE tontine_members SET position=? WHERE id=?",
+                                 (cycle, reqm["id"]))
+            _ledger_add(conn, tid, cycle, req["requester_id"],
+                        "turn_granted" if granted else "turn_denied")
+    return redirect(url_for("tontine", tid=tid))
+
+
+def _do_leave(tid, mem):
+    """Retire un membre : recalage de l'ordre si tour non encore re&ccedil;u, scell&eacute; au registre."""
+    t = dict(_tontine(tid))
+    if t["closed"]:
+        return
+    ledger = _tontine_ledger(tid)
+    received = any(e["kind"] == "payout" and e["member_id"] == mem["id"] for e in ledger)
+    cycle = t["current_cycle"]
+    with closing(db()) as conn, conn:
+        conn.execute("UPDATE tontine_members SET active=0 WHERE id=?", (mem["id"],))
+        if not received:
+            after = conn.execute("SELECT id, position FROM tontine_members WHERE tontine_id=? "
+                                 "AND active=1 AND position > ?", (tid, mem["position"])).fetchall()
+            for a in after:
+                conn.execute("UPDATE tontine_members SET position=? WHERE id=?",
+                             (a["position"] - 1, a["id"]))
+            conn.execute("UPDATE tontines SET member_count = member_count - 1 WHERE id=?", (tid,))
+            conn.execute("UPDATE tontines SET closed=1 WHERE id=? AND current_cycle > member_count",
+                         (tid,))
+        _ledger_add(conn, tid, cycle, mem["id"], "member_left")
+
+
+@app.route("/tontine/<int:tid>/m/<token>/quitter", methods=["POST"])
+def tontine_quitter(tid, token):
+    t = _tontine(tid)
+    if not t:
+        abort(404)
+    mem = next((m for m in _tontine_members(tid) if m["member_token"] == token and token), None)
+    if mem:
+        _do_leave(tid, mem)
+    return redirect(url_for("tontine", tid=tid))
+
+
+@app.route("/tontine/<int:tid>/membre/<int:mid>/retirer", methods=["POST"])
+def tontine_retirer(tid, mid):
+    t = _tontine(tid)
+    if not t:
+        abort(404)
+    me = current_user()
+    if not me or me["id"] != t["owner_user_id"]:
+        abort(403)
+    mem = next((m for m in _tontine_members(tid) if m["id"] == mid), None)
+    if mem:
+        _do_leave(tid, mem)
+    return redirect(url_for("tontine", tid=tid))
+
+
+@app.route("/tontine/<int:tid>/dissoudre-proposer", methods=["POST"])
+def tontine_dissoudre(tid):
+    t = _tontine(tid)
+    if not t:
+        abort(404)
+    me = current_user()
+    if not me or me["id"] != t["owner_user_id"]:
+        abort(403)
+    if not t["closed"] and not _open_request(tid) and len(_tontine_members(tid)) >= 2:
+        with closing(db()) as conn, conn:
+            _insert_returning_id(conn,
+                "INSERT INTO turn_requests (tontine_id, requester_id, cycle, kind, status, created_at) "
+                "VALUES (?,0,?, 'dissolve', 'open', ?)", (tid, t["current_cycle"], int(time.time())))
+    return redirect(url_for("tontine", tid=tid))
+
+
+# --- Appels d'offres scellés (engagement-révélation) -------------------------
+def _tender(tid):
+    with closing(db()) as conn:
+        return conn.execute("SELECT * FROM tenders WHERE id = ?", (tid,)).fetchone()
+
+
+def _bids(tid):
+    with closing(db()) as conn:
+        rows = conn.execute("SELECT * FROM bids WHERE tender_id = ? ORDER BY id", (tid,)).fetchall()
+    return [dict(r) for r in rows]
+
+
+def _my_tenders(me):
+    if not me:
+        return []
+    with closing(db()) as conn:
+        rows = conn.execute("SELECT * FROM tenders WHERE owner_user_id = ? ORDER BY id DESC",
+                            (me["id"],)).fetchall()
+    return [dict(r) for r in rows]
+
+
+def _bid_commitment(amount, secret):
+    return hashlib.sha256(("%d|%s" % (int(amount), secret)).encode("utf-8")).hexdigest()
+
+
+def _bid_hash(prev, tid, name, commitment, ts):
+    payload = "%s|%s|%s|%s|%s" % (prev, tid, name, commitment, ts)
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+@app.route("/offres", methods=["GET", "POST"])
+def offres():
+    me = current_user()
+    if request.method == "POST":
+        if not me:
+            return redirect(url_for("connexion", next=url_for("offres")))
+        title = (request.form.get("title") or "").strip()[:140]
+        description = (request.form.get("description") or "").strip()[:1000]
+        direction = "high" if request.form.get("direction") == "high" else "low"
+        if not title:
+            flash("Donne un intitulé à l'appel d'offres.")
+            return render_template("offres.html", tenders=_my_tenders(me),
+                                   title=title, description=description)
+        with closing(db()) as conn, conn:
+            tid = _insert_returning_id(conn,
+                "INSERT INTO tenders (owner_user_id, title, description, direction, status, "
+                "created_at) VALUES (?,?,?,?, 'open', ?)",
+                (me["id"], title, description, direction, int(time.time())))
+        return redirect(url_for("offre", tid=tid))
+    return render_template("offres.html", tenders=_my_tenders(me), title="", description="")
+
+
+@app.route("/offre/<int:tid>")
+def offre(tid):
+    t = _tender(tid)
+    if not t:
+        abort(404)
+    t = dict(t)
+    bids = _bids(tid)
+    me = current_user()
+    is_owner = bool(me and me["id"] == t["owner_user_id"])
+    prev = ""
+    integrity = True
+    for b in bids:
+        h = _bid_hash(prev, tid, b["bidder_name"], b["commitment"], b["created_at"])
+        if h != b["hash"] or b["prev_hash"] != prev:
+            integrity = False
+            break
+        prev = b["hash"]
+    results = None
+    if t["status"] == "closed":
+        revealed = [b for b in bids if b["revealed"] and b["amount"] is not None]
+        revealed.sort(key=lambda b: b["amount"], reverse=(t["direction"] == "high"))
+        results = revealed
+    return render_template("offre.html", t=t, bids=bids, is_owner=is_owner,
+                           integrity=integrity, results=results, n_sealed=len(bids))
+
+
+@app.route("/offre/<int:tid>/soumettre", methods=["POST"])
+def offre_soumettre(tid):
+    t = _tender(tid)
+    if not t:
+        abort(404)
+    if t["status"] != "open":
+        flash("Les soumissions sont closes.")
+        return redirect(url_for("offre", tid=tid))
+    name = (request.form.get("name") or "").strip()[:60]
+    secret = (request.form.get("secret") or "").strip()
+    try:
+        amount = int(request.form.get("amount") or "")
+    except ValueError:
+        amount = None
+    if not name or not secret or amount is None or amount < 0:
+        flash("Nom, montant (entier positif) et mot secret sont requis.")
+        return redirect(url_for("offre", tid=tid))
+    with closing(db()) as conn, conn:
+        r = conn.execute("SELECT COUNT(*) c FROM bids WHERE tender_id=? AND bidder_name=?",
+                         (tid, name)).fetchone()
+        if r["c"] > 0:
+            flash("Ce nom a déjà soumis une offre.")
+            return redirect(url_for("offre", tid=tid))
+        last = conn.execute("SELECT hash FROM bids WHERE tender_id=? ORDER BY id DESC LIMIT 1",
+                            (tid,)).fetchone()
+        prev = last["hash"] if last else ""
+        ts = int(time.time())
+        commitment = _bid_commitment(amount, secret)
+        h = _bid_hash(prev, tid, name, commitment, ts)
+        conn.execute("INSERT INTO bids (tender_id, bidder_name, commitment, created_at, prev_hash, "
+                     "hash, revealed, amount) VALUES (?,?,?,?,?,?,0,NULL)",
+                     (tid, name, commitment, ts, prev, h))
+    flash("Offre scellée. Garde bien ton montant + mot secret pour la révélation.")
+    return redirect(url_for("offre", tid=tid))
+
+
+@app.route("/offre/<int:tid>/clore", methods=["POST"])
+def offre_clore(tid):
+    t = _tender(tid)
+    if not t:
+        abort(404)
+    me = current_user()
+    if not me or me["id"] != t["owner_user_id"]:
+        abort(403)
+    with closing(db()) as conn, conn:
+        conn.execute("UPDATE tenders SET status='closed' WHERE id=?", (tid,))
+    return redirect(url_for("offre", tid=tid))
+
+
+@app.route("/offre/<int:tid>/reveler", methods=["POST"])
+def offre_reveler(tid):
+    t = _tender(tid)
+    if not t:
+        abort(404)
+    if t["status"] != "closed":
+        flash("La révélation ouvre après la clôture des soumissions.")
+        return redirect(url_for("offre", tid=tid))
+    name = (request.form.get("name") or "").strip()[:60]
+    secret = (request.form.get("secret") or "").strip()
+    try:
+        amount = int(request.form.get("amount") or "")
+    except ValueError:
+        amount = None
+    with closing(db()) as conn, conn:
+        b = conn.execute("SELECT * FROM bids WHERE tender_id=? AND bidder_name=?",
+                         (tid, name)).fetchone()
+        if not b:
+            flash("Aucune offre à ce nom.")
+            return redirect(url_for("offre", tid=tid))
+        if b["revealed"]:
+            flash("Cette offre est déjà révélée.")
+            return redirect(url_for("offre", tid=tid))
+        if amount is None or _bid_commitment(amount, secret) != b["commitment"]:
+            flash("Montant + mot secret ne correspondent pas à l'offre scellée.")
+            return redirect(url_for("offre", tid=tid))
+        conn.execute("UPDATE bids SET revealed=1, amount=? WHERE id=?", (amount, b["id"]))
+    flash("Offre révélée et vérifiée.")
+    return redirect(url_for("offre", tid=tid))
 
 
 @app.errorhandler(404)
