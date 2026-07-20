@@ -225,7 +225,9 @@ class _Conn:
 
 def db():
     if IS_PG:
-        return _Conn(psycopg.connect(DATABASE_URL, row_factory=dict_row))
+        # connect_timeout court : si Neon (Postgres gratuit) est endormi/injoignable,
+        # on échoue vite au lieu de bloquer le démarrage (sinon Render tue le déploiement).
+        return _Conn(psycopg.connect(DATABASE_URL, row_factory=dict_row, connect_timeout=8))
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return _Conn(conn)
@@ -414,22 +416,41 @@ def init_db():
                 pass  # la colonne existe déjà
 
 
-def _init_db_with_retry(attempts=6):
-    """Neon (Postgres gratuit) peut être 'endormi' au démarrage : la 1re salve
-    de connexions peut échouer (ProtocolViolation / server conn crashed).
-    On réessaie au lieu de faire planter tout le déploiement."""
+def _boot_init_db(attempts=3):
+    """Neon (Postgres gratuit) peut être 'endormi'/flaky au démarrage.
+    IMPORTANT : le démarrage NE DOIT PAS être bloqué par l'init de la base, sinon
+    le port ne s'ouvre jamais et Render tue le déploiement (« port scan timeout »).
+    On tente brièvement ; en cas d'échec on continue (les tables existent déjà en
+    prod) et on ré-essaiera à la première requête via _ensure_db()."""
+    global _DB_READY
     for i in range(attempts):
         try:
             init_db()
+            _DB_READY = True
             return
         except Exception as e:
-            if i == attempts - 1:
-                raise
-            print(f"[init_db] tentative {i+1} échouée ({e}); nouvel essai...", flush=True)
-            time.sleep(2 * (i + 1))
+            print(f"[init_db] tentative {i+1}/{attempts} échouée ({e})", flush=True)
+            if i < attempts - 1:
+                time.sleep(2)
+    print("[init_db] init différée : le serveur démarre quand même "
+          "(les tables existent déjà en prod ; nouvel essai à la 1re requête).", flush=True)
 
 
-_init_db_with_retry()
+_DB_READY = False
+_boot_init_db()
+
+
+@app.before_request
+def _ensure_db():
+    """Si l'init au démarrage a échoué (Neon endormi), on retente une fois, à froid,
+    quand la base est de nouveau joignable — sans jamais bloquer le boot."""
+    global _DB_READY
+    if not _DB_READY:
+        try:
+            init_db()
+            _DB_READY = True
+        except Exception:
+            pass  # on retentera à la prochaine requête
 
 
 # --- Utilisateurs / session --------------------------------------------------
