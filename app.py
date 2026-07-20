@@ -225,9 +225,12 @@ class _Conn:
 
 def db():
     if IS_PG:
-        # connect_timeout court : si Neon (Postgres gratuit) est endormi/injoignable,
-        # on échoue vite au lieu de bloquer le démarrage (sinon Render tue le déploiement).
-        return _Conn(psycopg.connect(DATABASE_URL, row_factory=dict_row, connect_timeout=8))
+        # connect_timeout : échec rapide si Neon est injoignable.
+        # statement_timeout : AUCUNE requête ne peut figer un worker (sinon gunicorn tue le
+        # worker sur timeout → réponse vide). Toute requête abandonne après 8 s.
+        return _Conn(psycopg.connect(
+            DATABASE_URL, row_factory=dict_row, connect_timeout=8,
+            options="-c statement_timeout=8000"))
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return _Conn(conn)
@@ -416,48 +419,37 @@ def init_db():
                 pass  # la colonne existe déjà
 
 
-def _boot_init_db(attempts=3):
-    """Neon (Postgres gratuit) peut être 'endormi'/flaky au démarrage.
-    IMPORTANT : le démarrage NE DOIT PAS être bloqué par l'init de la base, sinon
-    le port ne s'ouvre jamais et Render tue le déploiement (« port scan timeout »).
-    On tente brièvement ; en cas d'échec on continue (les tables existent déjà en
-    prod) et on ré-essaiera à la première requête via _ensure_db()."""
+_DB_READY = False
+
+
+def _init_db_bg():
+    """Initialise la base EN ARRIÈRE-PLAN (jamais dans le chemin d'une requête, jamais
+    au blocage du port). Réessaie tant que Neon n'est pas joignable. Les tables existent
+    déjà en prod : c'est surtout un filet de sécurité pour d'éventuelles colonnes/tables
+    manquantes."""
     global _DB_READY
-    for i in range(attempts):
+    for _ in range(60):
         try:
             init_db()
             _DB_READY = True
+            print("[init_db] base initialisée ✔", flush=True)
             return
         except Exception as e:
-            print(f"[init_db] tentative {i+1}/{attempts} échouée ({e})", flush=True)
-            if i < attempts - 1:
-                time.sleep(2)
-    print("[init_db] init différée : le serveur démarre quand même "
-          "(les tables existent déjà en prod ; nouvel essai à la 1re requête).", flush=True)
+            print(f"[init_db] arrière-plan : nouvel essai ({e})", flush=True)
+            time.sleep(5)
+    print("[init_db] abandon après plusieurs essais (les tables existent déjà en prod).",
+          flush=True)
 
 
-_DB_READY = False
-# En local (SQLite) : init immédiate (rapide, sans risque).
-# En prod (Postgres/Neon) : on NE touche PAS la base au démarrage. Le serveur doit
-# ouvrir son port TOUT DE SUITE, sinon Render échoue (« port scan timeout ») — ce qui
-# arrivait car Neon (gratuit) refuse/crashe les connexions tant que l'ancienne instance
-# tourne (limite de connexions). L'init se fait à la 1re requête via _ensure_db(), une
-# fois l'ancienne instance arrêtée et les connexions libérées. Les tables existent déjà.
-if not IS_PG:
-    _boot_init_db()
-
-
-@app.before_request
-def _ensure_db():
-    """Init paresseuse : au 1er passage (et tant qu'elle échoue) on (re)tente d'initialiser
-    la base — sans jamais bloquer le démarrage du serveur."""
-    global _DB_READY
-    if not _DB_READY:
-        try:
-            init_db()
-            _DB_READY = True
-        except Exception:
-            pass  # Neon pas encore joignable : on retentera à la prochaine requête
+if IS_PG:
+    # Prod : thread d'arrière-plan → le port s'ouvre immédiatement, aucune requête n'est
+    # bloquée par l'init, et Neon est retenté tranquillement jusqu'à ce qu'il réponde.
+    import threading
+    threading.Thread(target=_init_db_bg, daemon=True).start()
+else:
+    # Local (SQLite) : instantané et sans risque.
+    init_db()
+    _DB_READY = True
 
 
 # --- Utilisateurs / session --------------------------------------------------
