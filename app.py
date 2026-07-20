@@ -437,20 +437,27 @@ def _boot_init_db(attempts=3):
 
 
 _DB_READY = False
-_boot_init_db()
+# En local (SQLite) : init immédiate (rapide, sans risque).
+# En prod (Postgres/Neon) : on NE touche PAS la base au démarrage. Le serveur doit
+# ouvrir son port TOUT DE SUITE, sinon Render échoue (« port scan timeout ») — ce qui
+# arrivait car Neon (gratuit) refuse/crashe les connexions tant que l'ancienne instance
+# tourne (limite de connexions). L'init se fait à la 1re requête via _ensure_db(), une
+# fois l'ancienne instance arrêtée et les connexions libérées. Les tables existent déjà.
+if not IS_PG:
+    _boot_init_db()
 
 
 @app.before_request
 def _ensure_db():
-    """Si l'init au démarrage a échoué (Neon endormi), on retente une fois, à froid,
-    quand la base est de nouveau joignable — sans jamais bloquer le boot."""
+    """Init paresseuse : au 1er passage (et tant qu'elle échoue) on (re)tente d'initialiser
+    la base — sans jamais bloquer le démarrage du serveur."""
     global _DB_READY
     if not _DB_READY:
         try:
             init_db()
             _DB_READY = True
         except Exception:
-            pass  # on retentera à la prochaine requête
+            pass  # Neon pas encore joignable : on retentera à la prochaine requête
 
 
 # --- Utilisateurs / session --------------------------------------------------
