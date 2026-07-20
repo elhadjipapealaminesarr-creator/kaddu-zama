@@ -40,15 +40,43 @@
       <label class="fld" for="description">Description (optionnel)</label>
       <textarea id="description" name="description" rows="3" placeholder="D&eacute;tails, crit&egrave;res, d&eacute;lai&hellip;">{{ description }}</textarea>
 
-      <label class="fld">Crit&egrave;re gagnant</label>
-      <label class="choice"><input type="radio" name="direction" value="low" checked>
-        <span class="box"><span class="dot"></span><span>Moins-disant &mdash; le montant le plus <b>bas</b> gagne</span></span></label>
-      <label class="choice"><input type="radio" name="direction" value="high">
-        <span class="box"><span class="dot"></span><span>Mieux-disant &mdash; le montant le plus <b>haut</b> gagne</span></span></label>
+      <label class="fld">Type d'appel d'offres</label>
+      <label class="choice"><input type="radio" name="mode" value="reveal" checked onchange="kadduMode()">
+        <span class="box"><span class="dot"></span><span><b>Classique (scell&eacute;)</b> &mdash; les offres sont ouvertes &agrave; la fin ; chacun r&eacute;v&egrave;le son montant.</span></span></label>
+      <label class="choice"><input type="radio" name="mode" value="fhe" onchange="kadduMode()">
+        <span class="box"><span class="dot"></span><span>&#128274; <b>Chiffr&eacute; (FHE)</b> &mdash; le gagnant est calcul&eacute; sur les offres <b>chiffr&eacute;es</b>. Les <b>perdants ne r&eacute;v&egrave;lent jamais</b> leur prix. (Moins-disant.)</span></span></label>
+
+      <div id="revealFields">
+        <label class="fld">Crit&egrave;re gagnant</label>
+        <label class="choice"><input type="radio" name="direction" value="low" checked>
+          <span class="box"><span class="dot"></span><span>Moins-disant &mdash; le montant le plus <b>bas</b> gagne</span></span></label>
+        <label class="choice"><input type="radio" name="direction" value="high">
+          <span class="box"><span class="dot"></span><span>Mieux-disant &mdash; le montant le plus <b>haut</b> gagne</span></span></label>
+      </div>
+
+      <div id="fheFields" style="display:none">
+        <p class="muted small" style="margin-top:14px">Grille de prix : les soumissionnaires proposeront un prix sur cette grille (du min au max, par pas). 2 &agrave; 30 paliers.</p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <div style="flex:1;min-width:120px"><label class="fld" for="price_min">Prix min (FCFA)</label>
+            <input type="number" id="price_min" name="price_min" min="0" step="1" placeholder="100000"></div>
+          <div style="flex:1;min-width:120px"><label class="fld" for="price_max">Prix max (FCFA)</label>
+            <input type="number" id="price_max" name="price_max" min="0" step="1" placeholder="500000"></div>
+          <div style="flex:1;min-width:120px"><label class="fld" for="price_step">Pas (FCFA)</label>
+            <input type="number" id="price_step" name="price_step" min="1" step="1" placeholder="50000"></div>
+        </div>
+      </div>
 
       <div style="margin-top:14px"></div>
       <button type="submit" class="btn btn-primary">Cr&eacute;er l'appel d'offres &#128274;</button>
     </form>
   </div>
 {% endif %}
+<script>
+function kadduMode(){
+  var fhe = document.querySelector('input[name=mode][value=fhe]').checked;
+  document.getElementById('fheFields').style.display = fhe ? 'block' : 'none';
+  document.getElementById('revealFields').style.display = fhe ? 'none' : 'block';
+}
+kadduMode();
+</script>
 {% endblock %}

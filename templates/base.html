@@ -152,16 +152,16 @@ footer .lock{color:var(--primary)}
     <span class="name"><b>Kaddu</b></span>
   </a>
   <nav style="display:flex;gap:15px;justify-content:center;margin-top:9px;font-size:.9rem;flex-wrap:wrap;align-items:center">
-    <a href="{{ url_for('communaute') }}" style="color:var(--muted);font-weight:500">{{ t('nav.communaute', 'Communauté') }}</a>
-    <a href="{{ url_for('idees') }}" style="color:var(--muted);font-weight:500">{{ t('nav.idees', 'Idées') }}</a>
-    <a href="{{ url_for('tontines') }}" style="color:var(--muted);font-weight:500">{{ t('nav.tontines', 'Tontines') }}</a>
-    <a href="{{ url_for('offres') }}" style="color:var(--muted);font-weight:500">{{ t('nav.offres', 'Offres') }}</a>
-    <a href="{{ url_for('guide') }}" style="color:var(--muted);font-weight:500">{{ t('nav.guide', 'Guide') }}</a>
+    <a href="{{ url_for('communaute') }}" style="color:var(--muted);font-weight:500">{{ tr('nav.communaute', 'Communauté') }}</a>
+    <a href="{{ url_for('idees') }}" style="color:var(--muted);font-weight:500">{{ tr('nav.idees', 'Idées') }}</a>
+    <a href="{{ url_for('tontines') }}" style="color:var(--muted);font-weight:500">{{ tr('nav.tontines', 'Tontines') }}</a>
+    <a href="{{ url_for('offres') }}" style="color:var(--muted);font-weight:500">{{ tr('nav.offres', 'Offres') }}</a>
+    <a href="{{ url_for('guide') }}" style="color:var(--muted);font-weight:500">{{ tr('nav.guide', 'Guide') }}</a>
     {% if me %}
-      <a href="{{ url_for('creer') }}" style="color:var(--muted);font-weight:500">{{ t('nav.creer', 'Créer') }}</a>
-      <a href="{{ url_for('deconnexion') }}" style="color:var(--muted);font-weight:500">{{ me['display_name'] }} · {{ t('nav.sortir', 'Sortir') }}</a>
+      <a href="{{ url_for('creer') }}" style="color:var(--muted);font-weight:500">{{ tr('nav.creer', 'Créer') }}</a>
+      <a href="{{ url_for('deconnexion') }}" style="color:var(--muted);font-weight:500">{{ me['display_name'] }} · {{ tr('nav.sortir', 'Sortir') }}</a>
     {% else %}
-      <a href="{{ url_for('connexion') }}" style="color:var(--muted);font-weight:500">{{ t('nav.connexion', 'Connexion') }}</a>
+      <a href="{{ url_for('connexion') }}" style="color:var(--muted);font-weight:500">{{ tr('nav.connexion', 'Connexion') }}</a>
     {% endif %}
     <span style="display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;font-weight:600;font-size:.82rem">
       <a href="/lang/fr" style="padding:3px 9px;{{ 'background:var(--primary);color:#fff' if LANG == 'fr' else 'color:var(--muted)' }}">FR</a>
@@ -178,13 +178,13 @@ footer .lock{color:var(--primary)}
   </div>
 </main>
 <footer>
-  <span class="lock">&#128274;</span> {{ t('foot.chiffres', 'Vos votes sont chiffrés de bout en bout.') }}<br>
-  <a href="{{ url_for('creer') }}" style="color:var(--primary-d);font-weight:600">{{ t('foot.cree', 'Créé avec Kaddu — créez votre propre vote &#8594;') }}</a><br>
-  <span style="opacity:.8">{{ t('foot.edition', 'édition Zama · propulsé par le chiffrement FHE de Zama ·') }} {{ ANNEE }}</span><br>
+  <span class="lock">&#128274;</span> {{ tr('foot.chiffres', 'Vos votes sont chiffrés de bout en bout.') }}<br>
+  <a href="{{ url_for('creer') }}" style="color:var(--primary-d);font-weight:600">{{ tr('foot.cree', 'Créé avec Kaddu — créez votre propre vote &#8594;') }}</a><br>
+  <span style="opacity:.8">{{ tr('foot.edition', 'édition Zama · propulsé par le chiffrement FHE de Zama ·') }} {{ ANNEE }}</span><br>
   <span style="opacity:.8">
-    <a href="{{ url_for('mentions') }}" style="color:var(--muted)">{{ t('foot.mentions', 'Mentions légales') }}</a> ·
-    <a href="{{ url_for('confidentialite') }}" style="color:var(--muted)">{{ t('foot.confidentialite', 'Confidentialité') }}</a> ·
-    <a href="mailto:elhadjipapealaminesarr@gmail.com" style="color:var(--muted)">{{ t('foot.contact', 'Contact') }}</a>
+    <a href="{{ url_for('mentions') }}" style="color:var(--muted)">{{ tr('foot.mentions', 'Mentions légales') }}</a> ·
+    <a href="{{ url_for('confidentialite') }}" style="color:var(--muted)">{{ tr('foot.confidentialite', 'Confidentialité') }}</a> ·
+    <a href="mailto:elhadjipapealaminesarr@gmail.com" style="color:var(--muted)">{{ tr('foot.contact', 'Contact') }}</a>
   </span>
 </footer>
 {% block scripts %}{% endblock %}
