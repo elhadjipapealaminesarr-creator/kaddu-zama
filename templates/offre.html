@@ -19,17 +19,38 @@
 </div>
 
 <div class="card center">
-  {% if t['status']=='closed' %}
-    <span class="pill pill-gold">Soumissions closes{% if t['mode']!='fhe' %} &mdash; phase de r&eacute;v&eacute;lation{% endif %}</span>
-  {% else %}
+  {% if subs_open %}
     <span class="pill pill-green">Soumissions ouvertes</span>
+  {% elif t['cancelled'] %}
+    <span class="pill" style="background:#7a2e2e;color:#fff">Annul&eacute; &mdash; pas assez d'offres</span>
+  {% else %}
+    <span class="pill pill-gold">Soumissions closes{% if t['mode']!='fhe' %} &mdash; phase de r&eacute;v&eacute;lation{% endif %}</span>
   {% endif %}
   <div class="small" style="margin-top:10px">
     {% if integrity %}<span class="pill pill-green">&#128274; Registre int&egrave;gre</span>
     {% else %}<span class="pill" style="background:#c0392b;color:#fff">&#9888;&#65039; Registre alt&eacute;r&eacute; !</span>{% endif %}
     <span class="muted small" style="margin-left:8px">{{ n_sealed }} offre(s) d&eacute;pos&eacute;e(s)</span>
   </div>
+  {% if t['closes_at'] %}<div class="muted small" style="margin-top:8px">&#9200;&#65039; Date limite : <b data-dl="{{ t['closes_at'] }}">&hellip;</b></div>{% endif %}
+  {% if t['min_bids'] %}<div class="muted small" style="margin-top:4px">Minimum requis : <b>{{ t['min_bids'] }}</b> offre(s) &mdash; sinon l'appel d'offres est annul&eacute;.</div>{% endif %}
+  {% if t['invite_only'] %}<div class="muted small" style="margin-top:4px">&#128273; Sur invitation uniquement.</div>{% endif %}
 </div>
+
+{% if t['invite_only'] and is_owner %}
+<div class="card">
+  <h2 style="font-family:'Sora';font-size:1.15rem">&#128273; Liens priv&eacute;s des soci&eacute;t&eacute;s invit&eacute;es</h2>
+  <p class="muted small">Envoie &agrave; chaque soci&eacute;t&eacute; <b>son</b> lien. Une seule offre par lien.</p>
+  {% for iv in invites %}
+  <div style="margin-top:10px">
+    <div class="small"><b>{{ iv['name'] }}</b> {% if iv['used'] %}<span class="pill pill-gold">a soumis &#10004;</span>{% else %}<span class="pill pill-green">en attente</span>{% endif %}</div>
+    <div class="copybox" style="margin-top:4px">
+      <input type="text" id="iv{{ iv['id'] }}" value="{{ base_url }}{{ url_for('offre_invite', tid=t['id'], token=iv['token']) }}" readonly>
+      <button type="button" onclick="cpv('iv{{ iv['id'] }}',this)">Copier</button>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
 
 {% if t['mode'] == 'fhe' %}
   {# ---------------- MODE CHIFFRÉ (enchère aveugle FHE) ---------------- #}
@@ -40,7 +61,10 @@
     </div>
   </div>
 
-  {% if t['status']=='open' %}
+  {% if subs_open %}
+    {% if t['invite_only'] %}
+    <div class="card center"><p class="muted small">&#128273; Appel d'offres <b>sur invitation</b> : les soci&eacute;t&eacute;s invit&eacute;es d&eacute;posent leur offre via leur <b>lien priv&eacute;</b>.</p></div>
+    {% else %}
     <div class="card pad-lg">
       <h2 style="font-family:'Sora';font-size:1.2rem">D&eacute;poser une offre chiffr&eacute;e</h2>
       <p class="muted small">Ton prix est <b>chiffr&eacute;</b> (FHE) : personne, pas m&ecirc;me l'organisateur, ne le voit. Si tu ne gagnes pas, il restera <b>secret &agrave; vie</b>. &#9888;&#65039; Note bien ton <b>montant</b> et ton <b>mot secret</b> pour prouver ta victoire.</p>
@@ -56,6 +80,7 @@
         <button type="submit" class="btn btn-primary">Chiffrer &amp; d&eacute;poser mon offre &#128274;</button>
       </form>
     </div>
+    {% endif %}
 
     <div class="card">
       <h2 style="font-family:'Sora';font-size:1.2rem">Offres d&eacute;pos&eacute;es</h2>
@@ -112,7 +137,10 @@
 
 {% else %}
   {# ---------------- MODE CLASSIQUE (engagement–révélation) ---------------- #}
-  {% if t['status']=='open' %}
+  {% if subs_open %}
+    {% if t['invite_only'] %}
+    <div class="card center"><p class="muted small">&#128273; Appel d'offres <b>sur invitation</b> : les soci&eacute;t&eacute;s invit&eacute;es d&eacute;posent leur offre via leur <b>lien priv&eacute;</b>.</p></div>
+    {% else %}
     <div class="card pad-lg">
       <h2 style="font-family:'Sora';font-size:1.2rem">Soumettre une offre scell&eacute;e</h2>
       <p class="muted small">Ton montant n'est <b>pas</b> enregistr&eacute; : seule une empreinte l'est. &#9888;&#65039; Note bien ton <b>montant</b> et ton <b>mot secret</b> &mdash; ils te serviront &agrave; r&eacute;v&eacute;ler apr&egrave;s la cl&ocirc;ture.</p>
@@ -127,6 +155,7 @@
         <button type="submit" class="btn btn-primary">Sceller mon offre &#128274;</button>
       </form>
     </div>
+    {% endif %}
 
     <div class="card">
       <h2 style="font-family:'Sora';font-size:1.2rem">Offres d&eacute;pos&eacute;es</h2>
@@ -179,4 +208,19 @@
     </div>
   {% endif %}
 {% endif %}
+
+<script>
+(function(){
+  var el=document.querySelector('[data-dl]');
+  if(el){var ts=parseInt(el.getAttribute('data-dl'),10)*1000;var d=new Date(ts);
+    el.textContent=d.toLocaleString();
+    var diff=ts-Date.now();
+    if(diff>0){var days=Math.floor(diff/86400000),h=Math.floor(diff/3600000)%24;
+      el.textContent+=' (dans '+(days>0?days+' j ':'')+h+' h)';}
+    else{el.textContent+=' — échéance atteinte';}}
+})();
+function cpv(id,btn){var el=document.getElementById(id);el.select();el.setSelectionRange(0,9999);
+  navigator.clipboard.writeText(el.value).then(function(){var t=btn.textContent;btn.textContent='Copié ✓';
+    setTimeout(function(){btn.textContent=t;},1400);});}
+</script>
 {% endblock %}

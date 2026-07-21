@@ -6,44 +6,84 @@
 <div class="hero">
   <span class="kicker">&#10067; Guide</span>
   <h1>Comment ça marche</h1>
-  <p class="lead">Kaddu en une minute : créez un vote, partagez le lien, chacun vote en secret,
-  le résultat s'affiche. Aucune compétence technique.</p>
+  <p class="lead">Kaddu, ce n'est pas qu'un outil de vote : c'est une bo&icirc;te &agrave; outils de confiance
+  pour vos communaut&eacute;s. Tous reposent sur un m&ecirc;me principe &mdash; le secret garanti par les
+  <b>math&eacute;matiques</b> (chiffrement FHE de Zama), pas par la confiance. Aucune comp&eacute;tence technique.</p>
 </div>
 
-<div class="card" style="padding:14px">
-  <img src="/static/demo.gif" alt="Démonstration animée : créer un vote, partager, voter, résultat"
-       style="display:block;width:100%;max-width:360px;margin:0 auto;border-radius:12px">
-  <p class="center muted small" style="margin-top:10px">Le parcours complet, en images.</p>
+<div class="card center">
+  <span class="pill pill-green">&#9679; 5 services en ligne</span>
+  <p class="muted small" style="margin-top:10px">Choisissez l'outil qui correspond &agrave; votre besoin. Chacun s'utilise en quelques minutes,
+  gratuitement, sans compte pour participer.</p>
+</div>
+
+<!-- VOTE -->
+<div class="card">
+  <span class="pill pill-gold">&#128499;&#65039; Vote confidentiel</span>
+  <h2 style="margin-top:12px">D&eacute;cider ensemble, en secret</h2>
+  <img src="/static/demo.gif" alt="D&eacute;mo : cr&eacute;er un vote, partager, voter, r&eacute;sultat"
+       style="display:block;width:100%;max-width:320px;margin:8px auto 14px;border-radius:12px">
+  <ul class="steps">
+    <li><span class="n">1</span><div><div class="t">Cr&eacute;ez le vote</div>
+      <div class="d">Un titre, une question, des choix. Kaddu vous donne un lien + un QR code.</div></div></li>
+    <li><span class="n">2</span><div><div class="t">Partagez sur WhatsApp</div>
+      <div class="d">Chacun ouvre le lien, choisit et scelle son bulletin &mdash; chiffr&eacute; aussit&ocirc;t, invisible pour tous.</div></div></li>
+    <li><span class="n">3</span><div><div class="t">Cl&ocirc;turez et r&eacute;v&eacute;lez</div>
+      <div class="d">Le r&eacute;sultat est calcul&eacute; sur les bulletins chiffr&eacute;s puis affich&eacute;, v&eacute;rifiable par tous.</div></div></li>
+  </ul>
+  <p class="muted small">Astuce : g&eacute;n&eacute;rez un <b>lien unique par membre</b> pour qu'on ne vote qu'une fois.</p>
+  <a href="{{ url_for('creer') }}" class="btn btn-primary">Cr&eacute;er un vote</a>
+</div>
+
+<!-- TONTINE -->
+<div class="card">
+  <span class="pill pill-gold">&#129534; Tontine inviolable</span>
+  <h2 style="margin-top:12px">&Eacute;pargner &agrave; plusieurs, sans g&eacute;rant tout-puissant</h2>
+  <ul class="steps">
+    <li><span class="n">1</span><div><div class="t">Cr&eacute;ez la tontine</div>
+      <div class="d">Les membres, le montant par tour, l'ordre de passage. Chaque membre re&ccedil;oit son lien priv&eacute;.</div></div></li>
+    <li><span class="n">2</span><div><div class="t">Double validation &agrave; chaque tour</div>
+      <div class="d">Un versement ne compte que si le <b>payeur</b> ET le <b>b&eacute;n&eacute;ficiaire</b> confirment. Le g&eacute;rant ne peut rien falsifier seul.</div></div></li>
+    <li><span class="n">3</span><div><div class="t">Registre infalsifiable</div>
+      <div class="d">Chaque op&eacute;ration est scell&eacute;e dans une cha&icirc;ne d'empreintes : impossible de r&eacute;&eacute;crire l'histoire. L'argent circule <b>hors de l'app</b> &mdash; Kaddu n'est que l'arbitre.</div></div></li>
+    <li><span class="n">4</span><div><div class="t">Priorit&eacute; d&eacute;cid&eacute;e en secret</div>
+      <div class="d">Un membre demande &agrave; passer plus t&ocirc;t ? Les autres tranchent par un <b>vote chiffr&eacute;</b> &mdash; personne ne voit qui a vot&eacute; quoi.</div></div></li>
+  </ul>
+  <a href="{{ url_for('tontines') }}" class="btn btn-primary">Ouvrir les tontines</a>
+</div>
+
+<!-- OFFRES -->
+<div class="card">
+  <span class="pill pill-gold">&#128273; Appels d'offres scell&eacute;s</span>
+  <h2 style="margin-top:12px">Attribuer sans corruption</h2>
+  <ul class="steps">
+    <li><span class="n">1</span><div><div class="t">Cr&eacute;ez l'appel d'offres</div>
+      <div class="d">Deux modes : <b>scell&eacute;</b> (les montants restent cach&eacute;s jusqu'&agrave; l'ouverture) ou <b>chiffr&eacute;</b> (ench&egrave;re aveugle).</div></div></li>
+    <li><span class="n">2</span><div><div class="t">Chacun d&eacute;pose son offre</div>
+      <div class="d">L'offre est scell&eacute;e &agrave; la soumission : personne, pas m&ecirc;me l'organisateur, ne voit les prix avant l'heure.</div></div></li>
+    <li><span class="n">3</span><div><div class="t">Le gagnant, prouv&eacute;</div>
+      <div class="d">En mode chiffr&eacute;, le gagnant est calcul&eacute; <b>sur les offres chiffr&eacute;es</b> : les perdants ne r&eacute;v&egrave;lent <b>jamais</b> leur prix.</div></div></li>
+  </ul>
+  <a href="{{ url_for('offres') }}" class="btn btn-primary">Ouvrir les appels d'offres</a>
+</div>
+
+<!-- IDÉES + PLACE PUBLIQUE -->
+<div class="card">
+  <span class="pill pill-green">&#128161; Mur d'id&eacute;es</span>
+  <h2 style="margin-top:12px">Faire remonter les meilleures id&eacute;es</h2>
+  <p class="muted small">Chacun propose une id&eacute;e pour la communaut&eacute; ou pour Kaddu. Les membres votent, et les
+  mieux not&eacute;es remontent en haut. Simple et transparent.</p>
+  <a href="{{ url_for('idees') }}" class="btn btn-ghost">Ouvrir le mur d'id&eacute;es</a>
 </div>
 
 <div class="card">
-  <span class="pill pill-gold">&#128273; Organisateur</span>
-  <h2 style="margin-top:12px">Vous lancez le vote</h2>
-  <ul class="steps">
-    <li><span class="n">1</span><div><div class="t">Créez le vote</div>
-      <div class="d">Cliquez « Créer un vote », écrivez le titre, la question et les choix.</div></div></li>
-    <li><span class="n">2</span><div><div class="t">Partagez le lien</div>
-      <div class="d">Kaddu vous donne un lien (et un QR code). Envoyez-le sur WhatsApp à vos membres.</div></div></li>
-    <li><span class="n">3</span><div><div class="t">Clôturez et révélez</div>
-      <div class="d">Quand chacun a voté, cliquez « Clore le vote » : le résultat apparaît, vérifiable par tous.</div></div></li>
-  </ul>
-  <p class="muted small">Astuce : pour un scrutin sérieux, générez un <b>lien unique par membre</b>
-  (dans le tableau de bord) — chacun ne pourra voter qu'une seule fois.</p>
+  <span class="pill pill-green">&#127760; Place publique</span>
+  <h2 style="margin-top:12px">D&eacute;couvrir et participer</h2>
+  <p class="muted small">Parcourez les votes ouverts au public, participez et &eacute;changez avec la communaut&eacute; Kaddu.</p>
+  <a href="{{ url_for('communaute') }}" class="btn btn-ghost">Voir la place publique</a>
 </div>
 
-<div class="card">
-  <span class="pill pill-green">&#128499;&#65039; Votant</span>
-  <h2 style="margin-top:12px">Vous participez en secret</h2>
-  <ul class="steps">
-    <li><span class="n">1</span><div><div class="t">Ouvrez le lien</div>
-      <div class="d">Cliquez le lien reçu, ou scannez le QR code. Rien à installer, aucun compte requis.</div></div></li>
-    <li><span class="n">2</span><div><div class="t">Choisissez et scellez</div>
-      <div class="d">Sélectionnez votre réponse, puis « Sceller mon vote ». Votre choix est chiffré aussitôt.</div></div></li>
-    <li><span class="n">3</span><div><div class="t">C'est terminé</div>
-      <div class="d">Votre bulletin est invisible — même pour l'organisateur. Vous verrez seulement le résultat final.</div></div></li>
-  </ul>
-</div>
-
+<!-- POURQUOI SECRET -->
 <div class="card">
   <div class="seal-lock">
     <svg width="50" height="50" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -54,29 +94,31 @@
     </svg>
   </div>
   <h2 class="center">Pourquoi c'est vraiment secret</h2>
-  <p class="muted small center">Votre choix est <b>chiffré</b> dès que vous cliquez. Kaddu additionne
-  les votes <b>sans jamais les ouvrir</b>, grâce au chiffrement FHE de Zama. Ni l'organisateur,
-  ni le serveur, ni un pirate ne peut lire un bulletin — seul le total final est révélé.</p>
+  <p class="muted small center">Vos donn&eacute;es sont <b>chiffr&eacute;es</b> d&egrave;s que vous cliquez. Kaddu calcule
+  (compte les votes, d&eacute;termine un gagnant&hellip;) <b>sans jamais les ouvrir</b>, gr&acirc;ce au chiffrement
+  FHE de Zama. Ni l'organisateur, ni le serveur, ni un pirate ne peut lire une donn&eacute;e individuelle &mdash;
+  seul le r&eacute;sultat final est r&eacute;v&eacute;l&eacute;.</p>
 </div>
 
+<!-- FAQ -->
 <div class="card">
   <h2>Questions fréquentes</h2>
   <div style="display:flex;flex-direction:column;gap:8px;margin-top:6px">
     <details style="border:1px solid var(--line);border-radius:12px;padding:12px 14px">
       <summary style="font-weight:600;cursor:pointer">L'organisateur peut-il voir mon vote ?</summary>
-      <p class="muted small" style="margin-top:8px">Non. Le bulletin est chiffré sur-le-champ ; l'organisateur ne voit que le résultat final.</p></details>
+      <p class="muted small" style="margin-top:8px">Non. Le bulletin est chiffr&eacute; sur-le-champ ; l'organisateur ne voit que le r&eacute;sultat final.</p></details>
     <details style="border:1px solid var(--line);border-radius:12px;padding:12px 14px">
-      <summary style="font-weight:600;cursor:pointer">Faut-il un compte pour voter ?</summary>
-      <p class="muted small" style="margin-top:8px">Non. Un simple lien suffit. Le compte sert seulement à la communauté (commenter, proposer des idées).</p></details>
+      <summary style="font-weight:600;cursor:pointer">Kaddu touche-t-il &agrave; l'argent des tontines ?</summary>
+      <p class="muted small" style="margin-top:8px">Non. L'argent circule <b>hors de l'app</b> (mobile money, esp&egrave;ces&hellip;). Kaddu est seulement l'arbitre impartial et le registre infalsifiable.</p></details>
+    <details style="border:1px solid var(--line);border-radius:12px;padding:12px 14px">
+      <summary style="font-weight:600;cursor:pointer">Faut-il un compte pour participer ?</summary>
+      <p class="muted small" style="margin-top:8px">Non. Un simple lien suffit. Le compte sert seulement &agrave; organiser (cr&eacute;er des votes, g&eacute;rer une tontine, proposer des id&eacute;es).</p></details>
     <details style="border:1px solid var(--line);border-radius:12px;padding:12px 14px">
       <summary style="font-weight:600;cursor:pointer">Est-ce gratuit ?</summary>
-      <p class="muted small" style="margin-top:8px">Oui, entièrement gratuit.</p></details>
-    <details style="border:1px solid var(--line);border-radius:12px;padding:12px 14px">
-      <summary style="font-weight:600;cursor:pointer">Peut-on voter deux fois ?</summary>
-      <p class="muted small" style="margin-top:8px">Avec les liens membres uniques, non : chaque lien ne vote qu'une fois. C'est recommandé pour les scrutins importants.</p></details>
+      <p class="muted small" style="margin-top:8px">Oui, enti&egrave;rement gratuit.</p></details>
   </div>
 </div>
 
-<a href="{{ url_for('creer') }}" class="btn btn-primary">&#10133; Créer mon premier vote</a>
-<a href="{{ url_for('communaute') }}" class="btn btn-ghost">Voir la communauté</a>
+<a href="{{ url_for('creer') }}" class="btn btn-primary">&#10133; Ouvrir Kaddu</a>
+<a href="{{ url_for('communaute') }}" class="btn btn-ghost">Voir la communaut&eacute;</a>
 {% endblock %}

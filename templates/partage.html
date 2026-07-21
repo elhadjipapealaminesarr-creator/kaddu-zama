@@ -13,9 +13,24 @@
     <input type="text" id="voteurl" value="{{ vote_url }}" readonly>
     <button type="button" onclick="cp('voteurl',this)">Copier</button>
   </div>
-  <a href="https://wa.me/?text={{ ('Participez au vote « ' ~ poll['title'] ~ ' » sur Kaddu — un vote 100% secret : ' ~ vote_url) | urlencode }}"
-     target="_blank" rel="noopener" class="btn" style="background:#25D366;color:#0b3d25;margin-top:8px">
-     &#128241;&nbsp; Partager sur WhatsApp</a>
+
+  {% set share_text = 'Participez au vote « ' ~ poll['title'] ~ ' » sur Kaddu — un vote 100% secret : ' ~ vote_url %}
+  {% set txt = share_text | urlencode %}
+  {% set u = vote_url | urlencode %}
+  {% set ttl = poll['title'] | urlencode %}
+
+  <button type="button" id="nativeShare" onclick="kShare()" class="btn btn-gold" style="margin-top:12px;display:none;width:100%;justify-content:center">
+    &#128228;&nbsp; Partager…</button>
+
+  <p class="small muted" style="margin:14px 0 8px">Ou partagez directement :</p>
+  <div class="share-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px">
+    <a href="https://wa.me/?text={{ txt }}" target="_blank" rel="noopener" class="btn shr" style="background:#25D366;color:#0b3d25">&#128241;&nbsp;WhatsApp</a>
+    <a href="https://t.me/share/url?url={{ u }}&text={{ ('Participez au vote « ' ~ poll['title'] ~ ' » sur Kaddu — 100% secret') | urlencode }}" target="_blank" rel="noopener" class="btn shr" style="background:#229ED9;color:#fff">&#9992;&#65039;&nbsp;Telegram</a>
+    <a href="https://www.facebook.com/sharer/sharer.php?u={{ u }}" target="_blank" rel="noopener" class="btn shr" style="background:#1877F2;color:#fff">&#128077;&nbsp;Facebook</a>
+    <a href="https://twitter.com/intent/tweet?text={{ ('Participez au vote « ' ~ poll['title'] ~ ' » sur Kaddu — un vote 100% secret') | urlencode }}&url={{ u }}" target="_blank" rel="noopener" class="btn shr" style="background:#0f1419;color:#fff">&#120143;&nbsp;X</a>
+    <a href="sms:?&body={{ txt }}" class="btn shr" style="background:#5E6B64;color:#fff">&#128172;&nbsp;SMS</a>
+    <a href="mailto:?subject={{ ('Vote Kaddu : ' ~ poll['title']) | urlencode }}&body={{ txt }}" class="btn shr" style="background:#B87A28;color:#fff">&#9993;&#65039;&nbsp;E-mail</a>
+  </div>
 </div>
 
 {% if admin_url %}
@@ -43,5 +58,12 @@ function cp(id,btn){
   navigator.clipboard.writeText(el.value).then(()=>{const t=btn.textContent;btn.textContent="Copié ✓";
     setTimeout(()=>btn.textContent=t,1400);});
 }
+var K_URL="{{ vote_url }}", K_TITLE="{{ poll['title'] }}";
+function kShare(){
+  if(navigator.share){navigator.share({title:"Kaddu — "+K_TITLE,
+    text:"Participez au vote « "+K_TITLE+" » sur Kaddu — un vote 100% secret :",url:K_URL}).catch(function(){});}
+}
+if(navigator.share){var b=document.getElementById('nativeShare');if(b)b.style.display='inline-flex';}
 </script>
+<style>.shr{font-size:.9rem;padding:11px 10px;justify-content:center;white-space:nowrap}</style>
 {% endblock %}

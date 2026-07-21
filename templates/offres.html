@@ -66,6 +66,22 @@
         </div>
       </div>
 
+      <label class="fld" for="deadline">Date limite de soumission (optionnel)</label>
+      <input type="datetime-local" id="deadline" name="deadline">
+      <p class="muted small">Apr&egrave;s cette date, plus aucune offre n'est accept&eacute;e et le d&eacute;pouillement s'ouvre automatiquement. Le timing devient incontestable.</p>
+
+      <label class="fld" for="min_bids">Nombre minimum d'offres (optionnel)</label>
+      <input type="number" id="min_bids" name="min_bids" min="0" step="1" placeholder="0" value="0">
+      <p class="muted small">En dessous de ce nombre &agrave; la cl&ocirc;ture, l'appel d'offres est annul&eacute; (aucun gagnant) &mdash; garantit une vraie concurrence.</p>
+
+      <label style="display:flex;gap:9px;align-items:flex-start;margin-top:14px;cursor:pointer">
+        <input type="checkbox" name="invite_only" value="1" onchange="kadduInvite()" style="margin-top:4px;width:auto">
+        <span class="small"><b>Sur invitation</b> &mdash; seules les soci&eacute;t&eacute;s list&eacute;es peuvent soumettre (1 lien priv&eacute; chacune, une seule offre). Bloque les fausses offres et les doublons.</span></label>
+      <div id="inviteFields" style="display:none">
+        <label class="fld" for="invites">Soci&eacute;t&eacute;s invit&eacute;es (une par ligne)</label>
+        <textarea id="invites" name="invites" rows="4" placeholder="Entreprise Diallo&#10;SARL Ndiaye&#10;Ets Fall"></textarea>
+      </div>
+
       <div style="margin-top:14px"></div>
       <button type="submit" class="btn btn-primary">Cr&eacute;er l'appel d'offres &#128274;</button>
     </form>
@@ -76,6 +92,10 @@ function kadduMode(){
   var fhe = document.querySelector('input[name=mode][value=fhe]').checked;
   document.getElementById('fheFields').style.display = fhe ? 'block' : 'none';
   document.getElementById('revealFields').style.display = fhe ? 'none' : 'block';
+}
+function kadduInvite(){
+  var on = document.querySelector('input[name=invite_only]').checked;
+  document.getElementById('inviteFields').style.display = on ? 'block' : 'none';
 }
 kadduMode();
 </script>
