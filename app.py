@@ -423,6 +423,16 @@ def init_db():
             )
         """)
         conn.execute("CREATE INDEX IF NOT EXISTS ix_bid_levels ON bid_levels(bid_id, level)")
+        conn.execute(f"""
+            CREATE TABLE IF NOT EXISTS tender_invites (
+                id        {ID_PK},
+                tender_id INTEGER NOT NULL,
+                name      TEXT NOT NULL,
+                token     TEXT NOT NULL,
+                used      INTEGER NOT NULL DEFAULT 0
+            )
+        """)
+        conn.execute("CREATE INDEX IF NOT EXISTS ix_tinvites ON tender_invites(tender_id)")
 
         # Migration douce : rendre un vote visible sur la place publique.
         for col, ddl in (("public", "INTEGER NOT NULL DEFAULT 0"),
@@ -442,7 +452,11 @@ def init_db():
                                 ("tenders", "n_levels", "INTEGER NOT NULL DEFAULT 0"),
                                 ("tenders", "winning_level", "INTEGER"),
                                 ("tenders", "winning_price", "INTEGER"),
-                                ("tenders", "winner_name", "TEXT")):
+                                ("tenders", "winner_name", "TEXT"),
+                                ("tenders", "closes_at", "INTEGER"),
+                                ("tenders", "min_bids", "INTEGER NOT NULL DEFAULT 0"),
+                                ("tenders", "invite_only", "INTEGER NOT NULL DEFAULT 0"),
+                                ("tenders", "cancelled", "INTEGER NOT NULL DEFAULT 0")):
             try:
                 with closing(db()) as c2, c2:
                     c2.execute(f"ALTER TABLE {table} ADD COLUMN {col} {ddl}")
@@ -1488,6 +1502,59 @@ def _bid_hash(prev, tid, name, commitment, ts):
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
+def _tender_invites(tid):
+    with closing(db()) as conn:
+        rows = conn.execute("SELECT * FROM tender_invites WHERE tender_id=? ORDER BY id",
+                            (tid,)).fetchall()
+    return [dict(r) for r in rows]
+
+
+def _parse_deadline(s):
+    """Convertit une date/heure de formulaire ('YYYY-MM-DDTHH:MM') en horodatage unix."""
+    s = (s or "").strip()
+    if not s:
+        return None
+    try:
+        st = time.strptime(s[:16], "%Y-%m-%dT%H:%M")
+        return int(time.mktime(st))
+    except Exception:
+        return None
+
+
+def _subs_open(t):
+    """Les soumissions sont-elles encore acceptées ? (statut ouvert, non annulé, avant l'échéance)"""
+    if t["status"] != "open" or t["cancelled"]:
+        return False
+    return t["closes_at"] is None or int(time.time()) < t["closes_at"]
+
+
+def _finalize_tender(tid):
+    """Clôt un appel d'offres et applique les règles : minimum d'offres puis dépouillement FHE."""
+    t = dict(_tender(tid))
+    n = len(_bids(tid))
+    if t["min_bids"] and n < t["min_bids"]:
+        with closing(db()) as conn, conn:
+            conn.execute("UPDATE tenders SET status='closed', cancelled=1 WHERE id=?", (tid,))
+        return
+    with closing(db()) as conn, conn:
+        conn.execute("UPDATE tenders SET status='closed' WHERE id=?", (tid,))
+    if t["mode"] == "fhe":
+        t = dict(_tender(tid))
+        win_lvl = _compute_winning_level(t)
+        win_price = (t["price_min"] + win_lvl * t["price_step"]) if win_lvl is not None else None
+        with closing(db()) as conn, conn:
+            conn.execute("UPDATE tenders SET winning_level=?, winning_price=? WHERE id=?",
+                         (win_lvl, win_price, tid))
+
+
+def _maybe_autoclose(t):
+    """Ferme automatiquement l'appel d'offres si l'échéance est dépassée."""
+    if t["status"] == "open" and t["closes_at"] and int(time.time()) >= t["closes_at"]:
+        _finalize_tender(t["id"])
+        return dict(_tender(t["id"]))
+    return t
+
+
 @app.route("/offres", methods=["GET", "POST"])
 def offres():
     me = current_user()
@@ -1522,13 +1589,32 @@ def offres():
                       "(ajuste le pas ou l'écart min–max).")
                 return render_template("offres.html", tenders=_my_tenders(me),
                                        title=title, description=description)
+        closes_at = _parse_deadline(request.form.get("deadline"))
+        try:
+            min_bids = max(0, int(request.form.get("min_bids") or "0"))
+        except ValueError:
+            min_bids = 0
+        invite_only = 1 if request.form.get("invite_only") else 0
+        invited = []
+        if invite_only:
+            for line in (request.form.get("invites") or "").splitlines():
+                nm = line.strip()[:60]
+                if nm:
+                    invited.append(nm)
+            invited = invited[:50]
+            if not invited:
+                invite_only = 0  # coché mais aucune société listée → traité comme ouvert
         with closing(db()) as conn, conn:
             tid = _insert_returning_id(conn,
                 "INSERT INTO tenders (owner_user_id, title, description, direction, status, "
-                "mode, price_min, price_step, n_levels, created_at) "
-                "VALUES (?,?,?,?, 'open', ?,?,?,?,?)",
+                "mode, price_min, price_step, n_levels, created_at, closes_at, min_bids, invite_only) "
+                "VALUES (?,?,?,?, 'open', ?,?,?,?,?,?,?,?)",
                 (me["id"], title, description, direction, mode,
-                 price_min, price_step, n_levels, int(time.time())))
+                 price_min, price_step, n_levels, int(time.time()),
+                 closes_at, min_bids, invite_only))
+            for nm in invited:
+                conn.execute("INSERT INTO tender_invites (tender_id, name, token) VALUES (?,?,?)",
+                             (tid, nm, secrets.token_urlsafe(9)))
         return redirect(url_for("offre", tid=tid))
     return render_template("offres.html", tenders=_my_tenders(me), title="", description="")
 
@@ -1539,6 +1625,7 @@ def offre(tid):
     if not t:
         abort(404)
     t = dict(t)
+    t = _maybe_autoclose(t)
     bids = _bids(tid)
     me = current_user()
     is_owner = bool(me and me["id"] == t["owner_user_id"])
@@ -1556,9 +1643,11 @@ def offre(tid):
         revealed.sort(key=lambda b: b["amount"], reverse=(t["direction"] == "high"))
         results = revealed
     levels = _tender_levels(t) if t["mode"] == "fhe" else []
+    invites = _tender_invites(tid)
     return render_template("offre.html", t=t, bids=bids, is_owner=is_owner,
                            integrity=integrity, results=results, n_sealed=len(bids),
-                           levels=levels)
+                           levels=levels, subs_open=_subs_open(t), invites=invites,
+                           invite=None, base_url=base_url())
 
 
 @app.route("/offre/<int:tid>/soumettre", methods=["POST"])
@@ -1566,10 +1655,26 @@ def offre_soumettre(tid):
     t = _tender(tid)
     if not t:
         abort(404)
-    if t["status"] != "open":
+    t = _maybe_autoclose(dict(t))
+    if not _subs_open(t):
         flash("Les soumissions sont closes.")
         return redirect(url_for("offre", tid=tid))
-    name = (request.form.get("name") or "").strip()[:60]
+    invite = None
+    if t["invite_only"]:
+        token = (request.form.get("token") or "").strip()
+        with closing(db()) as conn:
+            invite = conn.execute("SELECT * FROM tender_invites WHERE tender_id=? AND token=?",
+                                  (tid, token)).fetchone()
+        if not token or not invite:
+            flash("Cet appel d'offres est sur invitation : utilise ton lien privé valide.")
+            return redirect(url_for("offre", tid=tid))
+        if invite["used"]:
+            flash("Cette invitation a déjà servi à déposer une offre.")
+            return redirect(url_for("offre", tid=tid))
+    if invite:
+        name = (invite["name"] or "").strip()[:60]
+    else:
+        name = (request.form.get("name") or "").strip()[:60]
     secret = (request.form.get("secret") or "").strip()
     try:
         amount = int(request.form.get("amount") or "")
@@ -1611,12 +1716,32 @@ def offre_soumettre(tid):
                 blob = fhe.encrypt_ballot(slot, bit)
                 conn.execute("INSERT INTO bid_levels (bid_id, level, blob) VALUES (?,?,?)",
                              (bid_id, j, blob))
+        if invite:
+            conn.execute("UPDATE tender_invites SET used=1 WHERE id=?", (invite["id"],))
+    recu = ("Reçu : empreinte %s… déposée le %s — garde-le, il prouve ton dépôt."
+            % (h[:16], time.strftime("%d/%m/%Y %H:%M", time.localtime(ts))))
     if t["mode"] == "fhe":
-        flash("Offre chiffrée déposée. Si tu ne gagnes pas, ton prix restera secret à vie. "
-              "Garde ton montant + mot secret pour prouver ta victoire.")
+        flash("Offre chiffrée déposée. Si tu ne gagnes pas, ton prix reste secret à vie. "
+              "Garde ton montant + mot secret pour prouver ta victoire. " + recu)
     else:
-        flash("Offre scellée. Garde bien ton montant + mot secret pour la révélation.")
+        flash("Offre scellée. Garde ton montant + mot secret pour la révélation. " + recu)
     return redirect(url_for("offre", tid=tid))
+
+
+@app.route("/offre/<int:tid>/i/<token>")
+def offre_invite(tid, token):
+    t = _tender(tid)
+    if not t:
+        abort(404)
+    t = _maybe_autoclose(dict(t))
+    with closing(db()) as conn:
+        inv = conn.execute("SELECT * FROM tender_invites WHERE tender_id=? AND token=?",
+                           (tid, token)).fetchone()
+    if not inv:
+        abort(404)
+    levels = _tender_levels(t) if t["mode"] == "fhe" else []
+    return render_template("offre_invite.html", t=t, invite=dict(inv), token=token,
+                           levels=levels, subs_open=_subs_open(t))
 
 
 @app.route("/offre/<int:tid>/clore", methods=["POST"])
@@ -1624,20 +1749,16 @@ def offre_clore(tid):
     t = _tender(tid)
     if not t:
         abort(404)
+    t = dict(t)
     me = current_user()
     if not me or me["id"] != t["owner_user_id"]:
         abort(403)
-    with closing(db()) as conn, conn:
-        conn.execute("UPDATE tenders SET status='closed' WHERE id=?", (tid,))
-    if t["mode"] == "fhe":
-        # Dépouillement FHE : on trouve le prix minimum SANS déchiffrer les offres
-        # perdantes, puis on ne publie que ce prix gagnant.
-        t = dict(_tender(tid))
-        win_lvl = _compute_winning_level(t)
-        win_price = (t["price_min"] + win_lvl * t["price_step"]) if win_lvl is not None else None
-        with closing(db()) as conn, conn:
-            conn.execute("UPDATE tenders SET winning_level=?, winning_price=? WHERE id=?",
-                         (win_lvl, win_price, tid))
+    if t["closes_at"] and int(time.time()) < t["closes_at"]:
+        flash("Une échéance est fixée : le dépouillement s'ouvrira automatiquement à la date limite.")
+        return redirect(url_for("offre", tid=tid))
+    _finalize_tender(tid)
+    if dict(_tender(tid))["cancelled"]:
+        flash("Appel d'offres clos : moins de %d offre(s) reçue(s), aucun gagnant." % t["min_bids"])
     return redirect(url_for("offre", tid=tid))
 
 
