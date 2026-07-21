@@ -429,7 +429,7 @@ def init_db():
                          ("owner_user_id", "INTEGER")):
             try:
                 with closing(db()) as c2, c2:
-                    c2.execute(f"ALTER TABLE polls ADD COLUMN {col} {ddl}")
+                    c2.execute(f'ALTER TABLE polls ADD COLUMN "{col}" {ddl}')
             except Exception:
                 pass  # la colonne existe déjà
         for table, col, ddl in (("tontines", "mode", "TEXT NOT NULL DEFAULT 'simple'"),
@@ -579,7 +579,7 @@ def creer():
         owner = me["id"] if me else None
         with closing(db()) as conn, conn:
             conn.execute("INSERT INTO polls (id, admin_token, title, question, options, "
-                         "created_at, closed, public, owner_user_id) VALUES (?,?,?,?,?,?,0,?,?)",
+                         'created_at, closed, "public", owner_user_id) VALUES (?,?,?,?,?,?,0,?,?)',
                          (poll_id, admin_token, title, question, json.dumps(options),
                           int(time.time()), pub, owner))
         return redirect(url_for("partage", poll_id=poll_id, t=admin_token))
@@ -840,7 +840,7 @@ def communaute():
         polls = conn.execute(
             "SELECT id, title, question, closed, created_at, "
             "(SELECT COALESCE(MAX(voter)+1,0) FROM ballots b WHERE b.poll_id = p.id) n "
-            "FROM polls p WHERE public = 1 ORDER BY created_at DESC LIMIT 60").fetchall()
+            'FROM polls p WHERE "public" = 1 ORDER BY created_at DESC LIMIT 60').fetchall()
     return render_template("communaute.html", polls=[dict(p) for p in polls])
 
 
