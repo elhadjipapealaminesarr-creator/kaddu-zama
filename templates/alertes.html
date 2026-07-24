@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% block title %}Coffre-fort d'alertes — Kaddu{% endblock %}
+{% block content %}
+
+{% if register %}
+  {# ---------- Vue d'un registre ---------- #}
+  <div class="hero">
+    <span class="kicker">&#128272; Coffre-fort d'alertes</span>
+    <h1>{{ register['title'] }}</h1>
+    {% if register['context'] %}<p class="lead">{{ register['context'] }}</p>{% endif %}
+    <p class="muted small">Une alerte reste <b>invisible tant qu'elle est isolée</b>. Elle n'apparaît que lorsque <b>{{ register['threshold'] }} personnes</b> signalent indépendamment la même cible. Tu n'es jamais le signaleur seul.</p>
+  </div>
+
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+      <div>
+        <div class="muted small">Seuil de révélation</div>
+        <div style="font-family:'Sora';font-weight:700;font-size:1.4rem">{{ register['threshold'] }} alertes concordantes</div>
+      </div>
+      <span class="pill {% if register['closed'] %}pill-gold{% else %}pill-green{% endif %}" style="flex:none">
+        {% if register['closed'] %}Évalué{% else %}Ouvert{% endif %}</span>
+    </div>
+
+    {% if register['closed'] %}
+      <div style="margin-top:18px">
+        {% if register['revealed'] %}
+          <div class="muted small" style="margin-bottom:8px">Cibles ayant atteint le seuil</div>
+          {% for row in register['revealed'] %}
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-radius:12px;background:var(--soft,#F4F0E8);margin:6px 0">
+              <b>{{ row['name'] }}</b>
+              <span class="pill pill-gold">{{ row['count'] }} alertes concordantes</span>
+            </div>
+          {% endfor %}
+          <div class="muted small" style="margin-top:10px">&#9888; Signal, pas jugement. Ce dossier doit être remis à un tiers de confiance / au canal approprié. Les signaleurs restent anonymes.</div>
+        {% else %}
+          <div style="padding:16px;border-radius:12px;background:var(--soft,#F4F0E8);text-align:center">
+            Aucune cible n'a atteint le seuil. <b>Aucune alerte n'est révélée.</b>
+          </div>
+        {% endif %}
+      </div>
+    {% endif %}
+  </div>
+
+  {% if not register['closed'] %}
+    {% if register['is_owner'] %}
+      <div class="card">
+        <div class="muted small" style="margin-bottom:6px">Alertes déposées (contenu invisible) : <b>{{ register['n_alerts'] }}</b></div>
+        <form method="post" action="{{ url_for('alerte_evaluer', rid=register['id']) }}"
+              onsubmit="return confirm('Évaluer le registre ? Seules les cibles atteignant le seuil seront révélées.');">
+          <button type="submit" class="btn btn-gold">&#128273; Évaluer (révéler ce qui dépasse le seuil)</button>
+        </form>
+        <p class="muted small" style="margin-top:10px">Même toi, l'organisateur, tu ne vois rien avant l'évaluation — et rien des cibles sous le seuil.</p>
+      </div>
+    {% endif %}
+
+    <div class="card pad-lg">
+      <h2 style="font-family:'Sora';font-size:1.2rem">&#128276; Déposer une alerte</h2>
+      {% if not me %}
+        <p class="muted">Connecte-toi pour déposer une alerte (une seule par personne).</p>
+        <a href="{{ url_for('connexion', next=url_for('alerte_voir', rid=register['id'])) }}" class="btn btn-primary" style="width:auto">Se connecter</a>
+      {% elif register['already'] %}
+        <p class="muted">Tu as déjà déposé une alerte dans ce registre. Merci.</p>
+      {% elif register['full'] %}
+        <p class="muted">Nombre maximum d'alertes atteint.</p>
+      {% else %}
+        <form method="post" action="{{ url_for('alerte_signaler', rid=register['id']) }}">
+          <label class="fld">Qui signales-tu ?</label>
+          {% for tg in target_list %}
+            <label class="choice"><input type="radio" name="target_pos" value="{{ tg['position'] }}" required>
+              <span class="box"><span class="dot"></span><span>{{ tg['name'] }}</span></span></label>
+          {% endfor %}
+          <div style="margin-top:14px"></div>
+          <button type="submit" class="btn btn-primary">Chiffrer et déposer &#128274;</button>
+        </form>
+        <p class="muted small" style="margin-top:12px">&#128161; Ton choix est chiffré. Tant que {{ register['threshold'] }} personnes n'ont pas visé la même cible, il reste totalement invisible. Aucun outil ne garantit une sécurité absolue&nbsp;: en cas de danger immédiat, contacte les secours ou une personne de confiance.</p>
+      {% endif %}
+    </div>
+  {% endif %}
+
+  <p style="margin-top:18px"><a href="{{ url_for('alertes') }}" class="muted small">&#8592; Tous mes registres</a></p>
+
+{% else %}
+  {# ---------- Liste + création ---------- #}
+  <div class="hero">
+    <span class="kicker">&#128272; Coffre-fort d'alertes</span>
+    <h1>Signaler sans être seul</h1>
+    <p class="lead">Corruption, harcèlement, abus d'autorité : une alerte reste <b>invisible tant qu'une seule personne la porte</b>. Elle n'apparaît que lorsque plusieurs personnes signalent, indépendamment, la même cible.</p>
+  </div>
+
+  {% if not me %}
+    <div class="card center">
+      <p>Connecte-toi pour ouvrir un registre.</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:8px">
+        <a href="{{ url_for('connexion', next=url_for('alertes')) }}" class="btn btn-primary" style="width:auto">Se connecter</a>
+        <a href="{{ url_for('inscription', next=url_for('alertes')) }}" class="btn" style="width:auto">Créer un compte</a>
+      </div>
+    </div>
+  {% else %}
+    <div class="card" style="border-left:3px solid var(--gold,#B87A28)">
+      <p class="muted small" style="margin:0">&#9888; Un registre s'ouvre par un <b>tiers de confiance</b> (syndicat, ONG, médiateur). Les cibles sont une liste de rôles/fonctions, pas un champ libre. Kaddu révèle un signal collectif — il ne rend pas un jugement.</p>
+    </div>
+
+    {% if registers %}
+      {% for r in registers %}
+      <a href="{{ url_for('alerte_voir', rid=r['id']) }}" class="card" style="display:block;text-decoration:none;color:inherit">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+          <div>
+            <div style="font-family:'Sora';font-weight:600;font-size:1.08rem">{{ r['title'] }}</div>
+            <div class="muted small" style="margin-top:2px">Seuil {{ r['threshold'] }}</div>
+          </div>
+          <span class="pill {% if r['closed'] %}pill-gold{% else %}pill-green{% endif %}" style="flex:none">
+            {% if r['closed'] %}Évalué{% else %}Ouvert{% endif %}</span>
+        </div>
+      </a>
+      {% endfor %}
+    {% endif %}
+
+    <div class="card pad-lg">
+      <h2 style="font-family:'Sora';font-size:1.25rem">&#10133; Ouvrir un registre</h2>
+      <form method="post">
+        <label class="fld" for="title">Intitulé</label>
+        <input type="text" id="title" name="title" value="{{ title }}" placeholder="Ex. Signalement anti-corruption — mairie de X" required>
+
+        <label class="fld" for="context">Contexte (optionnel)</label>
+        <input type="text" id="context" name="context" value="{{ context }}" placeholder="Ex. réservé aux usagers du service">
+
+        <label class="fld" for="threshold">Seuil de révélation (2 à 10)</label>
+        <input type="number" id="threshold" name="threshold" min="2" max="10" value="{{ threshold }}">
+
+        <label class="fld" for="targets">Cibles possibles — une par ligne (rôles / fonctions)</label>
+        <textarea id="targets" name="targets" rows="5" placeholder="Agent guichet A&#10;Chef de service B&#10;Responsable C">{{ targets }}</textarea>
+
+        <div style="margin-top:14px"></div>
+        <button type="submit" class="btn btn-primary">Ouvrir le registre &#128274;</button>
+      </form>
+      <p class="muted small" style="margin-top:12px">&#128161; Tu obtiens un lien à partager. Chacun dépose au plus une alerte. À l'évaluation, seules les cibles ayant atteint le seuil apparaissent — les autres ne révèlent rien.</p>
+    </div>
+  {% endif %}
+{% endif %}
+
+{% endblock %}

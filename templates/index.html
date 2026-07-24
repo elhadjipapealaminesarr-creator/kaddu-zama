@@ -163,7 +163,7 @@ footer .brand{color:#fff}footer .brand b{color:var(--gold)}
 <section id="outils"><div class="wrap center">
   <div class="eyebrow">{{ tr('mod.eyebrow', 'Une plateforme, plusieurs usages') }}</div>
   <h2 class="h2">{{ tr('mod.h2', 'Tout ce qui demande confiance et discrétion') }}</h2>
-  <p class="sub">{{ tr('mod.sub2', 'Un seul moteur de chiffrement, sept services concrets pour vos communautés. Kaddu ne se limite pas au vote.') }}</p>
+  <p class="sub">{{ tr('mod.sub2', 'Un seul moteur de chiffrement, huit services concrets pour vos communautés. Kaddu ne se limite pas au vote.') }}</p>
   <div class="tools" style="text-align:left">
 
     <a class="tool" href="{{ url_for('creer') }}">
@@ -196,17 +196,23 @@ footer .brand{color:#fff}footer .brand b{color:var(--gold)}
       <div class="bd"><h3>{{ tr('mod.place.h3', 'Place publique') }}</h3><p>{{ tr('mod.place.p', 'Découvrez les votes ouverts au public, participez et échangez avec la communauté Kaddu.') }}</p><span class="go">{{ tr('mod.place.go', 'Explorer &#8594;') }}</span></div>
     </a>
 
-    <div class="tool">
-      <div class="ph" style="background:var(--soft)"><span class="tag" style="background:var(--gold-soft);color:var(--gold-d)">{{ tr('mod.soon', 'Bientôt') }}</span>
-        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#5E6B64" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="7" cy="8" r="3"/><circle cx="17" cy="8" r="3"/><path d="M4 20v-2a3 3 0 013-3M20 20v-2a3 3 0 00-3-3M10 20v-1a2 2 0 012-2 2 2 0 012 2v1"/></svg></div>
-      <div class="bd"><h3>{{ tr('mod.pool.h3', 'Mise en commun protégée') }}</h3><p>{{ tr('mod.pool.p', "Regrouper des données sensibles d'un groupe (budgets, chiffres) pour obtenir un total ou une moyenne — sans que personne n'expose ses chiffres individuels.") }}</p><span class="go" style="color:var(--muted)">{{ tr('mod.prep', 'En préparation') }}</span></div>
-    </div>
+    <a class="tool" href="{{ url_for('commun') }}">
+      <div class="ph" style="background:#0A4638 url('https://images.pexels.com/photos/33560946/pexels-photo-33560946.jpeg?auto=compress&cs=tinysrgb&w=600') center/cover"><span style="position:absolute;inset:0;background:rgba(184,122,40,.55)"></span><span class="tag">{{ tr('mod.live', '&#9679; En ligne') }}</span>
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" aria-hidden="true" style="position:relative;z-index:1"><circle cx="7" cy="8" r="3"/><circle cx="17" cy="8" r="3"/><path d="M4 20v-2a3 3 0 013-3M20 20v-2a3 3 0 00-3-3M10 20v-1a2 2 0 012-2 2 2 0 012 2v1"/></svg></div>
+      <div class="bd"><h3>{{ tr('mod.pool.h3', 'Mise en commun protégée') }}</h3><p>{{ tr('mod.pool.p', "Regrouper des données sensibles d'un groupe (budgets, chiffres) pour obtenir un total ou une moyenne — sans que personne n'expose ses chiffres individuels.") }}</p><span class="go">{{ tr('mod.open', 'Ouvrir &#8594;') }}</span></div>
+    </a>
 
-    <div class="tool">
-      <div class="ph" style="background:var(--soft)"><span class="tag" style="background:var(--gold-soft);color:var(--gold-d)">{{ tr('mod.soon', 'Bientôt') }}</span>
-        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#5E6B64" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M6 4v16M6 8h9l-2-2M18 20V4M18 16H9l2 2"/></svg></div>
-      <div class="bd"><h3>{{ tr('mod.compare.h3', 'Comparateur privé') }}</h3><p>{{ tr('mod.compare.p', "Comparer des salaires ou des prix au sein d'un groupe et savoir « où je me situe », sans que quiconque voie les chiffres de l'autre.") }}</p><span class="go" style="color:var(--muted)">{{ tr('mod.prep', 'En préparation') }}</span></div>
-    </div>
+    <a class="tool" href="{{ url_for('comparer') }}">
+      <div class="ph" style="background:#0A4638 url('https://images.pexels.com/photos/36706903/pexels-photo-36706903.jpeg?auto=compress&cs=tinysrgb&w=600') center/cover"><span style="position:absolute;inset:0;background:rgba(10,70,56,.55)"></span><span class="tag">{{ tr('mod.live', '&#9679; En ligne') }}</span>
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" aria-hidden="true" style="position:relative;z-index:1"><path d="M6 4v16M6 8h9l-2-2M18 20V4M18 16H9l2 2"/></svg></div>
+      <div class="bd"><h3>{{ tr('mod.compare.h3', 'Comparateur privé') }}</h3><p>{{ tr('mod.compare.p', "Comparer des salaires ou des prix au sein d'un groupe et savoir « où je me situe », sans que quiconque voie les chiffres de l'autre.") }}</p><span class="go">{{ tr('mod.open', 'Ouvrir &#8594;') }}</span></div>
+    </a>
+
+    <a class="tool" href="{{ url_for('alertes') }}">
+      <div class="ph" style="background:#0A4638 url('https://images.pexels.com/photos/33560951/pexels-photo-33560951.jpeg?auto=compress&cs=tinysrgb&w=600') center 30%/cover"><span style="position:absolute;inset:0;background:rgba(10,70,56,.62)"></span><span class="tag">{{ tr('mod.live', '&#9679; En ligne') }}</span>
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" aria-hidden="true" style="position:relative;z-index:1"><path d="M12 3a3 3 0 013 3v1.5c2 1 3 3 3 5.5v3l1.5 2H4.5L6 16v-3c0-2.5 1-4.5 3-5.5V6a3 3 0 013-3z"/><path d="M10 20a2 2 0 004 0"/></svg></div>
+      <div class="bd"><h3>{{ tr('mod.alert.h3', "Coffre-fort d'alertes") }}</h3><p>{{ tr('mod.alert.p', "Signaler corruption ou harcèlement sans être seul : une alerte n'apparaît que si plusieurs personnes visent la même cible. Sous le seuil, elle reste invisible.") }}</p><span class="go">{{ tr('mod.open', 'Ouvrir &#8594;') }}</span></div>
+    </a>
 
   </div>
 </div></section>
@@ -219,7 +225,7 @@ footer .brand{color:#fff}footer .brand b{color:var(--gold)}
     <div class="stats">
       <div class="stat"><div class="n">100%</div><div class="l">{{ tr('mis.s1', 'des votes chiffrés de bout en bout') }}</div></div>
       <div class="stat"><div class="n">0</div><div class="l">{{ tr('mis.s2', 'choix individuel jamais exposé') }}</div></div>
-      <div class="stat"><div class="n">7</div><div class="l">{{ tr('mis.s3', 'outils civiques dans une seule app') }}</div></div>
+      <div class="stat"><div class="n">8</div><div class="l">{{ tr('mis.s3', 'outils civiques dans une seule app') }}</div></div>
       <div class="stat"><div class="n">FHE</div><div class="l">{{ tr('mis.s4', 'le chiffrement de Zama, en vrai') }}</div></div>
     </div>
   </div>

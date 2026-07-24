@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% block title %}Mise en commun protégée — Kaddu{% endblock %}
+{% block content %}
+
+{% if pool %}
+  {# ---------- Vue d'une mise en commun ---------- #}
+  <div class="hero">
+    <span class="kicker">&#128202; Mise en commun protégée</span>
+    <h1>{{ pool['title'] }}</h1>
+    {% if pool['question'] %}<p class="lead">{{ pool['question'] }}</p>{% endif %}
+    <p class="muted small">Chaque chiffre est <b>chiffré sur le téléphone</b> avant l'envoi. Le serveur additionne sur les données chiffrées&nbsp;: seul le <b>total</b> est révélé, jamais un montant individuel.</p>
+  </div>
+
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+      <div>
+        <div class="muted small">Participations</div>
+        <div style="font-family:'Sora';font-weight:700;font-size:1.4rem">{{ pool['n_contrib'] }} / {{ pool['capacity'] }}</div>
+      </div>
+      <span class="pill {% if pool['closed'] %}pill-gold{% else %}pill-green{% endif %}" style="flex:none">
+        {% if pool['closed'] %}Close{% else %}Ouverte{% endif %}</span>
+    </div>
+
+    {% if pool['closed'] %}
+      <div style="margin-top:16px;padding:18px;border-radius:14px;background:var(--soft,#F4F0E8);text-align:center">
+        <div class="muted small">Total mis en commun (calculé sur les chiffrés)</div>
+        <div style="font-family:'Sora';font-weight:800;font-size:2rem;color:var(--primary-d,#0A4638)">{{ '{:,}'.format(pool['total']).replace(',', ' ') }} FCFA</div>
+        {% if pool['average'] is not none %}
+          <div class="muted small" style="margin-top:6px">Moyenne par participant&nbsp;: <b>{{ '{:,}'.format(pool['average']).replace(',', ' ') }} FCFA</b></div>
+        {% endif %}
+        <div class="muted small" style="margin-top:10px">&#128274; Aucun chiffre individuel n'a été déchiffré pour obtenir ce total.</div>
+      </div>
+    {% endif %}
+  </div>
+
+  {% if not pool['closed'] %}
+    <div class="card pad-lg">
+      <h2 style="font-family:'Sora';font-size:1.2rem">&#10133; Ajouter mon chiffre</h2>
+      {% if pool['full'] %}
+        <p class="muted">Le nombre maximum de participants est atteint.</p>
+      {% else %}
+        <form method="post" action="{{ url_for('commun_ajouter', pid=pool['id']) }}">
+          <label class="fld" for="contributor">Ton nom (optionnel)</label>
+          <input type="text" id="contributor" name="contributor" placeholder="Ex. Awa">
+
+          <label class="fld" for="value">Ton montant (FCFA)</label>
+          <input type="number" id="value" name="value" min="0" max="{{ pool_max }}" placeholder="Ex. 25000" required inputmode="numeric">
+
+          <div style="margin-top:14px"></div>
+          <button type="submit" class="btn btn-primary">Chiffrer et ajouter &#128274;</button>
+        </form>
+        <p class="muted small" style="margin-top:12px">&#128161; Ton montant est chiffré <b>avant</b> d'être enregistré. Même l'organisateur ne peut pas le lire&nbsp;: il ne verra que le total final.</p>
+      {% endif %}
+    </div>
+
+    {% if pool['is_owner'] %}
+      <div class="card">
+        <form method="post" action="{{ url_for('commun_cloturer', pid=pool['id']) }}"
+              onsubmit="return confirm('Clore et révéler le total ? Aucune nouvelle participation ne sera possible.');">
+          <button type="submit" class="btn btn-gold">&#128273; Clore et révéler le total</button>
+        </form>
+        <p class="muted small" style="margin-top:10px">En tant qu'organisateur, tu peux clore quand tu veux. Le total est calculé par addition homomorphe sur les chiffrés.</p>
+      </div>
+    {% endif %}
+  {% endif %}
+
+  <p style="margin-top:18px"><a href="{{ url_for('commun') }}" class="muted small">&#8592; Toutes mes mises en commun</a></p>
+
+{% else %}
+  {# ---------- Liste + création ---------- #}
+  <div class="hero">
+    <span class="kicker">&#128202; Mise en commun protégée</span>
+    <h1>Additionner sans exposer</h1>
+    <p class="lead">Regroupez des chiffres sensibles &mdash; budgets, cotisations, dons &mdash; pour obtenir un <b>total et une moyenne</b>, sans que personne, pas même l'organisateur, ne voie le chiffre de l'autre.</p>
+  </div>
+
+  {% if not me %}
+    <div class="card center">
+      <p>Connecte-toi pour créer une mise en commun.</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:8px">
+        <a href="{{ url_for('connexion', next=url_for('commun')) }}" class="btn btn-primary" style="width:auto">Se connecter</a>
+        <a href="{{ url_for('inscription', next=url_for('commun')) }}" class="btn" style="width:auto">Créer un compte</a>
+      </div>
+    </div>
+  {% else %}
+    {% if pools %}
+      {% for p in pools %}
+      <a href="{{ url_for('commun_voir', pid=p['id']) }}" class="card" style="display:block;text-decoration:none;color:inherit">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+          <div>
+            <div style="font-family:'Sora';font-weight:600;font-size:1.08rem">{{ p['title'] }}</div>
+            <div class="muted small" style="margin-top:2px">{{ p['n_contrib'] }} participation(s){% if p['closed'] and p['total'] is not none %} &middot; total {{ '{:,}'.format(p['total']).replace(',', ' ') }} FCFA{% endif %}</div>
+          </div>
+          <span class="pill {% if p['closed'] %}pill-gold{% else %}pill-green{% endif %}" style="flex:none">
+            {% if p['closed'] %}Close{% else %}Ouverte{% endif %}</span>
+        </div>
+      </a>
+      {% endfor %}
+    {% endif %}
+
+    <div class="card pad-lg">
+      <h2 style="font-family:'Sora';font-size:1.25rem">&#10133; Nouvelle mise en commun</h2>
+      <form method="post">
+        <label class="fld" for="title">Intitulé</label>
+        <input type="text" id="title" name="title" value="{{ title }}" placeholder="Ex. Budget prévisionnel de l'association" required>
+
+        <label class="fld" for="question">Précision (optionnel)</label>
+        <input type="text" id="question" name="question" value="{{ question }}" placeholder="Ex. Combien chacun peut-il engager ce trimestre ?">
+
+        <div style="margin-top:14px"></div>
+        <button type="submit" class="btn btn-primary">Créer &#128274;</button>
+      </form>
+      <p class="muted small" style="margin-top:12px">&#128161; Tu obtiens un lien à partager. Chacun ajoute son chiffre, chiffré. À la clôture, Kaddu révèle uniquement le total et la moyenne.</p>
+    </div>
+  {% endif %}
+{% endif %}
+
+{% endblock %}

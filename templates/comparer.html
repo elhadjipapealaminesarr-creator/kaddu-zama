@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% block title %}Comparateur privé — Kaddu{% endblock %}
+{% block content %}
+
+{% if compare %}
+  {# ---------- Vue d'un comparateur ---------- #}
+  <div class="hero">
+    <span class="kicker">&#128207; Comparateur privé</span>
+    <h1>{{ compare['title'] }}</h1>
+    <p class="muted small">Chacun soumet sa <b>tranche</b>, chiffrée. On ne révèle que la <b>distribution</b> du groupe&nbsp;: tu vois où tu te situes, jamais le chiffre exact d'un autre.</p>
+  </div>
+
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+      <div>
+        <div class="muted small">Participations</div>
+        <div style="font-family:'Sora';font-weight:700;font-size:1.4rem">{{ compare['n_contrib'] }} / {{ compare['capacity'] }}</div>
+      </div>
+      <span class="pill {% if compare['closed'] %}pill-gold{% else %}pill-green{% endif %}" style="flex:none">
+        {% if compare['closed'] %}Clos{% else %}Ouvert{% endif %}</span>
+    </div>
+
+    {% if compare['closed'] and compare['histogram'] %}
+      <div style="margin-top:18px">
+        <div class="muted small" style="margin-bottom:8px">Distribution du groupe (calculée sur les chiffrés)</div>
+        {% set maxc = compare['histogram']|max %}
+        {% for j in range(compare['n_levels']) %}
+          {% set lo = compare['bounds'][j][0] %}
+          {% set hi = compare['bounds'][j][1] %}
+          {% set cnt = compare['histogram'][j] %}
+          <div style="display:flex;align-items:center;gap:10px;margin:6px 0">
+            <div class="muted small" style="width:130px;flex:none;text-align:right">{{ '{:,}'.format(lo).replace(',', ' ') }}–{{ '{:,}'.format(hi).replace(',', ' ') }}</div>
+            <div style="flex:1;background:var(--soft,#F4F0E8);border-radius:8px;overflow:hidden;height:22px">
+              <div style="height:100%;width:{{ (cnt * 100 // maxc) if maxc else 0 }}%;background:var(--primary-d,#0A4638);min-width:{{ 2 if cnt else 0 }}px"></div>
+            </div>
+            <div style="width:34px;flex:none;font-weight:600">{{ cnt }}</div>
+          </div>
+        {% endfor %}
+        <div class="muted small" style="margin-top:10px">&#128274; Aucun chiffre individuel n'a été déchiffré. Seul le nombre de personnes par tranche est connu.</div>
+      </div>
+    {% endif %}
+  </div>
+
+  {% if not compare['closed'] %}
+    <div class="card pad-lg">
+      <h2 style="font-family:'Sora';font-size:1.2rem">&#10133; Me situer</h2>
+      {% if compare['full'] %}
+        <p class="muted">Le nombre maximum de participants est atteint.</p>
+      {% else %}
+        <form method="post" action="{{ url_for('comparer_ajouter', cid=compare['id']) }}">
+          <label class="fld" for="value">Ton chiffre{% if compare['unit'] %} ({{ compare['unit'] }}){% endif %}</label>
+          <input type="number" id="value" name="value" min="{{ compare['vmin'] }}" placeholder="Ex. {{ compare['vmin'] }} à {{ compare['vmax'] }}" required inputmode="numeric">
+          <div style="margin-top:14px"></div>
+          <button type="submit" class="btn btn-primary">Chiffrer et me situer &#128274;</button>
+        </form>
+        <p class="muted small" style="margin-top:12px">&#128161; Ton chiffre exact n'est jamais enregistré&nbsp;: seule ta tranche est chiffrée. Tu apprends ta position, sans exposer ton montant.</p>
+      {% endif %}
+    </div>
+
+    {% if compare['is_owner'] %}
+      <div class="card">
+        <form method="post" action="{{ url_for('comparer_cloturer', cid=compare['id']) }}"
+              onsubmit="return confirm('Clore et révéler la distribution ?');">
+          <button type="submit" class="btn btn-gold">&#128273; Clore et révéler la distribution</button>
+        </form>
+      </div>
+    {% endif %}
+  {% endif %}
+
+  <p style="margin-top:18px"><a href="{{ url_for('comparer') }}" class="muted small">&#8592; Tous mes comparateurs</a></p>
+
+{% else %}
+  {# ---------- Liste + création ---------- #}
+  <div class="hero">
+    <span class="kicker">&#128207; Comparateur privé</span>
+    <h1>Savoir où je me situe</h1>
+    <p class="lead">Comparer des <b>salaires, prix ou cotisations</b> au sein d'un groupe et savoir où l'on se place &mdash; sans que quiconque voie le chiffre de l'autre.</p>
+  </div>
+
+  {% if not me %}
+    <div class="card center">
+      <p>Connecte-toi pour créer un comparateur.</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:8px">
+        <a href="{{ url_for('connexion', next=url_for('comparer')) }}" class="btn btn-primary" style="width:auto">Se connecter</a>
+        <a href="{{ url_for('inscription', next=url_for('comparer')) }}" class="btn" style="width:auto">Créer un compte</a>
+      </div>
+    </div>
+  {% else %}
+    {% if compares %}
+      {% for c in compares %}
+      <a href="{{ url_for('comparer_voir', cid=c['id']) }}" class="card" style="display:block;text-decoration:none;color:inherit">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+          <div>
+            <div style="font-family:'Sora';font-weight:600;font-size:1.08rem">{{ c['title'] }}</div>
+            <div class="muted small" style="margin-top:2px">{{ '{:,}'.format(c['vmin']).replace(',', ' ') }}–{{ '{:,}'.format(c['vmax']).replace(',', ' ') }} {{ c['unit'] }} &middot; {{ c['n_levels'] }} tranches</div>
+          </div>
+          <span class="pill {% if c['closed'] %}pill-gold{% else %}pill-green{% endif %}" style="flex:none">
+            {% if c['closed'] %}Clos{% else %}Ouvert{% endif %}</span>
+        </div>
+      </a>
+      {% endfor %}
+    {% endif %}
+
+    <div class="card pad-lg">
+      <h2 style="font-family:'Sora';font-size:1.25rem">&#10133; Nouveau comparateur</h2>
+      <form method="post">
+        <label class="fld" for="title">Intitulé</label>
+        <input type="text" id="title" name="title" value="{{ title }}" placeholder="Ex. Salaires dans l'équipe" required>
+
+        <label class="fld" for="unit">Unité (optionnel)</label>
+        <input type="text" id="unit" name="unit" value="{{ unit }}" placeholder="Ex. FCFA">
+
+        <div style="display:flex;gap:10px">
+          <div style="flex:1"><label class="fld" for="vmin">Minimum</label>
+            <input type="number" id="vmin" name="vmin" value="{{ vmin }}" placeholder="0" required></div>
+          <div style="flex:1"><label class="fld" for="vmax">Maximum</label>
+            <input type="number" id="vmax" name="vmax" value="{{ vmax }}" placeholder="500000" required></div>
+        </div>
+
+        <label class="fld" for="n_levels">Nombre de tranches (2 à 10)</label>
+        <input type="number" id="n_levels" name="n_levels" min="2" max="10" value="{{ n_levels }}">
+
+        <div style="margin-top:14px"></div>
+        <button type="submit" class="btn btn-primary">Créer &#128274;</button>
+      </form>
+      <p class="muted small" style="margin-top:12px">&#128161; Tu obtiens un lien à partager. Chacun soumet son chiffre (chiffré), et à la clôture Kaddu révèle seulement combien de personnes par tranche.</p>
+    </div>
+  {% endif %}
+{% endif %}
+
+{% endblock %}
