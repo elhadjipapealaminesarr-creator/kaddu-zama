@@ -79,6 +79,11 @@ TRANSLATIONS = {
         "mod.compare.h3": "Private comparator",
         "mod.compare.p": "Compare salaries or prices within a group and know “where I stand”, "
                          "without anyone seeing the others' figures.",
+        "mod.sub2": "One encryption engine, eight concrete services for your communities. "
+                    "Kaddu is not just about voting.",
+        "mod.alert.h3": "Alert vault",
+        "mod.alert.p": "Report corruption or harassment without being alone: an alert only surfaces "
+                       "once several people flag the same target. Below the threshold, it stays invisible.",
         "mod.idea.h3": "An idea for your community?",
         "mod.idea.p": "Post it on the idea wall: the community votes, the best ones rise.",
         "mod.idea.go": "Open the idea wall &#8594;",
@@ -434,29 +439,144 @@ def init_db():
         """)
         conn.execute("CREATE INDEX IF NOT EXISTS ix_tinvites ON tender_invites(tender_id)")
 
-        # Migration douce : rendre un vote visible sur la place publique.
-        for col, ddl in (("public", "INTEGER NOT NULL DEFAULT 0"),
-                         ("owner_user_id", "INTEGER")):
-            try:
-                with closing(db()) as c2, c2:
-                    c2.execute(f'ALTER TABLE polls ADD COLUMN "{col}" {ddl}')
-            except Exception:
-                pass  # la colonne existe déjà
-        for table, col, ddl in (("tontines", "mode", "TEXT NOT NULL DEFAULT 'simple'"),
-                                ("tontine_members", "member_token", "TEXT NOT NULL DEFAULT ''"),
-                                ("tontine_members", "active", "INTEGER NOT NULL DEFAULT 1"),
-                                ("turn_requests", "kind", "TEXT NOT NULL DEFAULT 'turn'"),
-                                ("tenders", "mode", "TEXT NOT NULL DEFAULT 'reveal'"),
-                                ("tenders", "price_min", "INTEGER NOT NULL DEFAULT 0"),
-                                ("tenders", "price_step", "INTEGER NOT NULL DEFAULT 0"),
-                                ("tenders", "n_levels", "INTEGER NOT NULL DEFAULT 0"),
-                                ("tenders", "winning_level", "INTEGER"),
-                                ("tenders", "winning_price", "INTEGER"),
-                                ("tenders", "winner_name", "TEXT"),
-                                ("tenders", "closes_at", "INTEGER"),
-                                ("tenders", "min_bids", "INTEGER NOT NULL DEFAULT 0"),
-                                ("tenders", "invite_only", "INTEGER NOT NULL DEFAULT 0"),
-                                ("tenders", "cancelled", "INTEGER NOT NULL DEFAULT 0")):
+        # --- Mise en commun protégée (somme homomorphe) ----------------------
+        conn.execute(f"""
+            CREATE TABLE IF NOT EXISTS pools (
+                id            {ID_PK},
+                owner_user_id INTEGER NOT NULL,
+                title         TEXT NOT NULL,
+                question      TEXT NOT NULL DEFAULT '',
+                closed        INTEGER NOT NULL DEFAULT 0,
+                total         INTEGER,
+                n_contrib     INTEGER NOT NULL DEFAULT 0,
+                created_at    INTEGER NOT NULL
+            )
+        """)
+        conn.execute(f"""
+            CREATE TABLE IF NOT EXISTS pool_items (
+                pool_id     INTEGER NOT NULL,
+                slot        INTEGER NOT NULL,
+                contributor TEXT NOT NULL DEFAULT '',
+                blob        {BLOB_TYPE} NOT NULL
+            )
+        """)
+        conn.execute("CREATE INDEX IF NOT EXISTS ix_poolitems ON pool_items(pool_id, slot)")
+        # Anti-bourrage : une contribution par compte (sans lier le montant au compte).
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS pool_participants (
+                pool_id INTEGER NOT NULL,
+                user_id INTEGER NOT NULL,
+                PRIMARY KEY (pool_id, user_id)
+            )
+        """)
+
+        # --- Comparateur privé (histogramme chiffré par tranches) ------------
+        conn.execute(f"""
+            CREATE TABLE IF NOT EXISTS compares (
+                id            {ID_PK},
+                owner_user_id INTEGER NOT NULL,
+                title         TEXT NOT NULL,
+                unit          TEXT NOT NULL DEFAULT '',
+                vmin          INTEGER NOT NULL DEFAULT 0,
+                vmax          INTEGER NOT NULL DEFAULT 0,
+                n_levels      INTEGER NOT NULL DEFAULT 5,
+                closed        INTEGER NOT NULL DEFAULT 0,
+                results       TEXT,
+                created_at    INTEGER NOT NULL
+            )
+        """)
+        conn.execute(f"""
+            CREATE TABLE IF NOT EXISTS compare_items (
+                compare_id INTEGER NOT NULL,
+                slot       INTEGER NOT NULL,
+                level      INTEGER NOT NULL,
+                blob       {BLOB_TYPE} NOT NULL
+            )
+        """)
+        conn.execute("CREATE INDEX IF NOT EXISTS ix_cmpitems ON compare_items(compare_id, level)")
+        # Anti-bourrage : une réponse par compte (sans lier la valeur au compte).
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS compare_participants (
+                compare_id INTEGER NOT NULL,
+                user_id    INTEGER NOT NULL,
+                PRIMARY KEY (compare_id, user_id)
+            )
+        """)
+
+        # --- Coffre-fort d'alertes (révélation à seuil, FHE) -----------------
+        conn.execute(f"""
+            CREATE TABLE IF NOT EXISTS registers (
+                id            {ID_PK},
+                owner_user_id INTEGER NOT NULL,
+                title         TEXT NOT NULL,
+                context       TEXT NOT NULL DEFAULT '',
+                threshold     INTEGER NOT NULL DEFAULT 3,
+                closed        INTEGER NOT NULL DEFAULT 0,
+                results       TEXT,
+                created_at    INTEGER NOT NULL
+            )
+        """)
+        conn.execute(f"""
+            CREATE TABLE IF NOT EXISTS register_targets (
+                id          {ID_PK},
+                register_id INTEGER NOT NULL,
+                position    INTEGER NOT NULL,
+                name        TEXT NOT NULL
+            )
+        """)
+        conn.execute("CREATE INDEX IF NOT EXISTS ix_rtargets ON register_targets(register_id, position)")
+        conn.execute(f"""
+            CREATE TABLE IF NOT EXISTS register_alerts (
+                register_id INTEGER NOT NULL,
+                target_pos  INTEGER NOT NULL,
+                slot        INTEGER NOT NULL,
+                blob        {BLOB_TYPE} NOT NULL
+            )
+        """)
+        conn.execute("CREATE INDEX IF NOT EXISTS ix_ralerts ON register_alerts(register_id, target_pos)")
+        # Empêche un même compte de signaler deux fois SANS lier le compte à sa
+        # cible : on sait qu'il a signalé, jamais QUI il a visé (secret préservé).
+        conn.execute(f"""
+            CREATE TABLE IF NOT EXISTS register_participants (
+                register_id INTEGER NOT NULL,
+                user_id     INTEGER NOT NULL,
+                PRIMARY KEY (register_id, user_id)
+            )
+        """)
+
+    # --- Migrations douces (colonnes ajoutées après coup) ---------------------
+    # IMPORTANT : ces ALTER TABLE s'exécutent APRÈS la fermeture du bloc `with`
+    # ci-dessus, donc APRÈS le commit qui crée les tables. Sur une base neuve,
+    # une connexion ouverte avant ce commit ne verrait pas encore les tables :
+    # l'ALTER échouerait et le `except: pass` masquerait l'erreur en silence,
+    # laissant la base incomplète. En sortant ces boucles du `with`, les tables
+    # sont déjà validées et visibles quand on ajoute les colonnes.
+    _migrations = [
+        ('polls',           '"public"',      "INTEGER NOT NULL DEFAULT 0"),
+        ('polls',           'owner_user_id', "INTEGER"),
+        ('tontines',        'mode',          "TEXT NOT NULL DEFAULT 'simple'"),
+        ('tontine_members', 'member_token',  "TEXT NOT NULL DEFAULT ''"),
+        ('tontine_members', 'active',        "INTEGER NOT NULL DEFAULT 1"),
+        ('turn_requests',   'kind',          "TEXT NOT NULL DEFAULT 'turn'"),
+        ('tenders',         'mode',          "TEXT NOT NULL DEFAULT 'reveal'"),
+        ('tenders',         'price_min',     "INTEGER NOT NULL DEFAULT 0"),
+        ('tenders',         'price_step',    "INTEGER NOT NULL DEFAULT 0"),
+        ('tenders',         'n_levels',      "INTEGER NOT NULL DEFAULT 0"),
+        ('tenders',         'winning_level', "INTEGER"),
+        ('tenders',         'winning_price', "INTEGER"),
+        ('tenders',         'winner_name',   "TEXT"),
+        ('tenders',         'closes_at',     "INTEGER"),
+        ('tenders',         'min_bids',      "INTEGER NOT NULL DEFAULT 0"),
+        ('tenders',         'invite_only',   "INTEGER NOT NULL DEFAULT 0"),
+        ('tenders',         'cancelled',     "INTEGER NOT NULL DEFAULT 0"),
+    ]
+    for table, col, ddl in _migrations:
+        try:
+            with closing(db()) as c2, c2:
+                c2.execute(f"ALTER TABLE {table} ADD COLUMN IF NOT EXISTS {col} {ddl}")
+        except Exception:
+            # SQLite ne supporte pas "ADD COLUMN IF NOT EXISTS" : on retente sans,
+            # et si la colonne existe déjà l'erreur est sans conséquence.
             try:
                 with closing(db()) as c2, c2:
                     c2.execute(f"ALTER TABLE {table} ADD COLUMN {col} {ddl}")
@@ -1814,6 +1934,471 @@ def offre_reveler(tid):
         conn.execute("UPDATE bids SET revealed=1, amount=? WHERE id=?", (amount, b["id"]))
     flash("Offre révélée et vérifiée.")
     return redirect(url_for("offre", tid=tid))
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  MISE EN COMMUN PROTÉGÉE — somme homomorphe (FHE)
+#  Chaque participant chiffre son chiffre (budget, cotisation, don). Le serveur
+#  additionne sur les données CHIFFRÉES et ne révèle que le total et la moyenne.
+#  Aucun montant individuel n'est jamais déchiffré ni stocké en clair.
+# ═══════════════════════════════════════════════════════════════════════════
+
+def _pool(pid):
+    with closing(db()) as conn:
+        return conn.execute("SELECT * FROM pools WHERE id=?", (pid,)).fetchone()
+
+
+def _my_pools(me):
+    if not me:
+        return []
+    with closing(db()) as conn:
+        rows = conn.execute("SELECT * FROM pools WHERE owner_user_id=? ORDER BY id DESC",
+                            (me["id"],)).fetchall()
+    return [dict(r) for r in rows]
+
+
+@app.route("/commun", methods=["GET", "POST"])
+def commun():
+    me = current_user()
+    if request.method == "POST":
+        if not me:
+            return redirect(url_for("connexion", next=url_for("commun")))
+        title = (request.form.get("title") or "").strip()[:120]
+        question = (request.form.get("question") or "").strip()[:200]
+        if not title:
+            flash("Donne un intitulé à la mise en commun.")
+            return render_template("commun.html", pools=_my_pools(me), me=me,
+                                   title=title, question=question, pool=None,
+                                   pool_max=fhe.pool_max())
+        with closing(db()) as conn, conn:
+            pid = _insert_returning_id(conn,
+                "INSERT INTO pools (owner_user_id, title, question, closed, n_contrib, "
+                "created_at) VALUES (?,?,?,0,0,?)",
+                (me["id"], title, question, int(time.time())))
+        return redirect(url_for("commun_voir", pid=pid))
+    return render_template("commun.html", pools=_my_pools(me), me=me,
+                           title="", question="", pool=None, pool_max=fhe.pool_max())
+
+
+@app.route("/commun/<int:pid>")
+def commun_voir(pid):
+    p = _pool(pid)
+    if not p:
+        abort(404)
+    p = dict(p)
+    me = current_user()
+    with closing(db()) as conn:
+        n = conn.execute("SELECT COUNT(*) c FROM pool_items WHERE pool_id=?", (pid,)).fetchone()["c"]
+    p["n_contrib"] = n
+    p["is_owner"] = bool(me and me["id"] == p["owner_user_id"])
+    p["capacity"] = fhe.capacity()
+    p["full"] = n >= fhe.capacity()
+    p["average"] = (p["total"] // n) if (p["closed"] and p["total"] is not None and n) else None
+    return render_template("commun.html", pools=_my_pools(me), me=me,
+                           title="", question="", pool=p, pool_max=fhe.pool_max())
+
+
+@app.route("/commun/<int:pid>/ajouter", methods=["POST"])
+def commun_ajouter(pid):
+    p = _pool(pid)
+    if not p:
+        abort(404)
+    me = current_user()
+    if not me:   # anti-bourrage : connexion requise
+        return redirect(url_for("connexion", next=url_for("commun_voir", pid=pid)))
+    if p["closed"]:
+        flash("Cette mise en commun est close : on ne peut plus ajouter de chiffre.")
+        return redirect(url_for("commun_voir", pid=pid))
+    contributor = (request.form.get("contributor") or "").strip()[:60]
+    try:
+        value = int(request.form.get("value") or "")
+    except ValueError:
+        value = None
+    if value is None or value < 0:
+        flash("Entre un montant entier positif.")
+        return redirect(url_for("commun_voir", pid=pid))
+    if value > fhe.pool_max():
+        flash("Le montant dépasse le maximum autorisé (%d)." % fhe.pool_max())
+        return redirect(url_for("commun_voir", pid=pid))
+    with closing(db()) as conn, conn:
+        # une seule contribution par compte (sans lier le montant au compte)
+        dup = conn.execute("SELECT 1 FROM pool_participants WHERE pool_id=? AND user_id=?",
+                           (pid, me["id"])).fetchone()
+        if dup:
+            flash("Tu as déjà contribué à cette mise en commun.")
+            return redirect(url_for("commun_voir", pid=pid))
+        n = conn.execute("SELECT COUNT(*) c FROM pool_items WHERE pool_id=?", (pid,)).fetchone()["c"]
+        if n >= fhe.capacity():
+            flash("Nombre maximum de participants atteint pour cette mise en commun.")
+            return redirect(url_for("commun_voir", pid=pid))
+        slot = n
+        blob = fhe.encrypt_value(slot, value)   # le montant en clair n'est PAS stocké
+        conn.execute("INSERT INTO pool_items (pool_id, slot, contributor, blob) VALUES (?,?,?,?)",
+                     (pid, slot, contributor, blob))
+        conn.execute("INSERT INTO pool_participants (pool_id, user_id) VALUES (?,?)", (pid, me["id"]))
+        conn.execute("UPDATE pools SET n_contrib=? WHERE id=?", (n + 1, pid))
+    flash("Ton chiffre a été chiffré et ajouté. Personne ne peut le lire — seul le total sera révélé.")
+    return redirect(url_for("commun_voir", pid=pid))
+
+
+@app.route("/commun/<int:pid>/cloturer", methods=["POST"])
+def commun_cloturer(pid):
+    p = _pool(pid)
+    if not p:
+        abort(404)
+    me = current_user()
+    if not me or me["id"] != p["owner_user_id"]:
+        abort(403)
+    if p["closed"]:
+        return redirect(url_for("commun_voir", pid=pid))
+    with closing(db()) as conn, conn:
+        rows = conn.execute("SELECT blob FROM pool_items WHERE pool_id=? ORDER BY slot", (pid,)).fetchall()
+        blobs = [r["blob"] for r in rows]
+        total = fhe.pool_sum(blobs) if blobs else 0   # somme calculée sur les chiffrés
+        conn.execute("UPDATE pools SET closed=1, total=?, n_contrib=? WHERE id=?",
+                     (total, len(blobs), pid))
+    flash("Mise en commun close : le total a été calculé sur les données chiffrées, "
+          "sans qu'aucun chiffre individuel ne soit jamais déchiffré.")
+    return redirect(url_for("commun_voir", pid=pid))
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  COMPARATEUR PRIVÉ — histogramme chiffré par tranches (FHE)
+#  Chacun soumet sa TRANCHE (fourchette) chiffrée. On révèle uniquement la
+#  distribution : combien de personnes par tranche. Chacun voit « où il se
+#  situe » sans que quiconque connaisse le chiffre exact d'un autre.
+#  Réutilise le circuit de vote déjà éprouvé (encrypt_ballot / tally).
+# ═══════════════════════════════════════════════════════════════════════════
+
+def _compare(cid):
+    with closing(db()) as conn:
+        return conn.execute("SELECT * FROM compares WHERE id=?", (cid,)).fetchone()
+
+
+def _my_compares(me):
+    if not me:
+        return []
+    with closing(db()) as conn:
+        rows = conn.execute("SELECT * FROM compares WHERE owner_user_id=? ORDER BY id DESC",
+                            (me["id"],)).fetchall()
+    return [dict(r) for r in rows]
+
+
+def _level_of(c, value):
+    """Range une valeur dans sa tranche [0 .. n_levels-1] (calcul en clair, non stocké)."""
+    vmin, vmax, n = c["vmin"], c["vmax"], c["n_levels"]
+    if vmax <= vmin:
+        return 0
+    v = max(vmin, min(int(value), vmax))
+    lvl = (v - vmin) * n // (vmax - vmin)
+    return min(lvl, n - 1)
+
+
+def _level_bounds(c):
+    """Libellés des tranches, ex. '0–20 000'."""
+    vmin, vmax, n = c["vmin"], c["vmax"], c["n_levels"]
+    step = (vmax - vmin) / n if n else 0
+    out = []
+    for j in range(n):
+        lo = int(vmin + j * step)
+        hi = int(vmin + (j + 1) * step) if j < n - 1 else vmax
+        out.append((lo, hi))
+    return out
+
+
+@app.route("/comparer", methods=["GET", "POST"])
+def comparer():
+    me = current_user()
+    if request.method == "POST":
+        if not me:
+            return redirect(url_for("connexion", next=url_for("comparer")))
+        title = (request.form.get("title") or "").strip()[:120]
+        unit = (request.form.get("unit") or "").strip()[:20]
+        try:
+            vmin = int(request.form.get("vmin") or "0")
+            vmax = int(request.form.get("vmax") or "0")
+            n_levels = int(request.form.get("n_levels") or "5")
+        except ValueError:
+            vmin, vmax, n_levels = 0, 0, 5
+        n_levels = max(2, min(n_levels, 10))
+        if not title or vmax <= vmin:
+            flash("Donne un intitulé et une fourchette valide (max supérieur au min).")
+            return render_template("comparer.html", compares=_my_compares(me), me=me,
+                                   title=title, unit=unit, vmin=vmin, vmax=vmax,
+                                   n_levels=n_levels, compare=None)
+        with closing(db()) as conn, conn:
+            cid = _insert_returning_id(conn,
+                "INSERT INTO compares (owner_user_id, title, unit, vmin, vmax, n_levels, "
+                "closed, created_at) VALUES (?,?,?,?,?,?,0,?)",
+                (me["id"], title, unit, vmin, vmax, n_levels, int(time.time())))
+        return redirect(url_for("comparer_voir", cid=cid))
+    return render_template("comparer.html", compares=_my_compares(me), me=me,
+                           title="", unit="", vmin="", vmax="", n_levels=5, compare=None)
+
+
+@app.route("/comparer/<int:cid>")
+def comparer_voir(cid):
+    c = _compare(cid)
+    if not c:
+        abort(404)
+    c = dict(c)
+    me = current_user()
+    with closing(db()) as conn:
+        n = conn.execute("SELECT COUNT(DISTINCT slot) c FROM compare_items WHERE compare_id=?",
+                         (cid,)).fetchone()["c"]
+    c["n_contrib"] = n
+    c["is_owner"] = bool(me and me["id"] == c["owner_user_id"])
+    c["capacity"] = fhe.capacity()
+    c["full"] = n >= fhe.capacity()
+    c["bounds"] = _level_bounds(c)
+    c["histogram"] = None
+    if c["closed"] and c["results"]:
+        import json
+        c["histogram"] = json.loads(c["results"])
+    return render_template("comparer.html", compares=_my_compares(me), me=me,
+                           title="", unit="", vmin="", vmax="", n_levels=5, compare=c)
+
+
+@app.route("/comparer/<int:cid>/ajouter", methods=["POST"])
+def comparer_ajouter(cid):
+    c = _compare(cid)
+    if not c:
+        abort(404)
+    c = dict(c)
+    me = current_user()
+    if not me:   # anti-bourrage : connexion requise
+        return redirect(url_for("connexion", next=url_for("comparer_voir", cid=cid)))
+    if c["closed"]:
+        flash("Ce comparateur est clos.")
+        return redirect(url_for("comparer_voir", cid=cid))
+    try:
+        value = int(request.form.get("value") or "")
+    except ValueError:
+        value = None
+    if value is None:
+        flash("Entre ton chiffre.")
+        return redirect(url_for("comparer_voir", cid=cid))
+    level = _level_of(c, value)   # tranche calculée en clair, JAMAIS stockée
+    with closing(db()) as conn, conn:
+        # une seule réponse par compte (sans lier la valeur au compte)
+        dup = conn.execute("SELECT 1 FROM compare_participants WHERE compare_id=? AND user_id=?",
+                           (cid, me["id"])).fetchone()
+        if dup:
+            flash("Tu as déjà répondu à ce comparateur.")
+            return redirect(url_for("comparer_voir", cid=cid))
+        n = conn.execute("SELECT COUNT(DISTINCT slot) c FROM compare_items WHERE compare_id=?",
+                         (cid,)).fetchone()["c"]
+        if n >= fhe.capacity():
+            flash("Nombre maximum de participants atteint.")
+            return redirect(url_for("comparer_voir", cid=cid))
+        slot = n
+        # Encodage one-hot chiffré : bit=1 sur ma tranche, 0 sur les autres.
+        for j in range(c["n_levels"]):
+            bit = 1 if j == level else 0
+            blob = fhe.encrypt_ballot(slot, bit)
+            conn.execute("INSERT INTO compare_items (compare_id, slot, level, blob) VALUES (?,?,?,?)",
+                         (cid, slot, j, blob))
+        conn.execute("INSERT INTO compare_participants (compare_id, user_id) VALUES (?,?)",
+                     (cid, me["id"]))
+    lo, hi = _level_bounds(c)[level]
+    flash("Ta réponse est chiffrée. Ta tranche : %s–%s %s. Personne ne voit ton chiffre exact."
+          % ("{:,}".format(lo).replace(",", " "), "{:,}".format(hi).replace(",", " "), c["unit"]))
+    return redirect(url_for("comparer_voir", cid=cid))
+
+
+@app.route("/comparer/<int:cid>/cloturer", methods=["POST"])
+def comparer_cloturer(cid):
+    c = _compare(cid)
+    if not c:
+        abort(404)
+    c = dict(c)
+    me = current_user()
+    if not me or me["id"] != c["owner_user_id"]:
+        abort(403)
+    if c["closed"]:
+        return redirect(url_for("comparer_voir", cid=cid))
+    import json
+    histo = []
+    with closing(db()) as conn, conn:
+        for j in range(c["n_levels"]):
+            rows = conn.execute("SELECT blob FROM compare_items WHERE compare_id=? AND level=?",
+                               (cid, j)).fetchall()
+            blobs = [r["blob"] for r in rows]
+            histo.append(fhe.tally(blobs) if blobs else 0)   # décompte par tranche sur les chiffrés
+        conn.execute("UPDATE compares SET closed=1, results=? WHERE id=?",
+                     (json.dumps(histo), cid))
+    flash("Comparateur clos : la distribution a été calculée sur les données chiffrées.")
+    return redirect(url_for("comparer_voir", cid=cid))
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  COFFRE-FORT D'ALERTES — révélation à seuil (FHE)
+#  Une alerte reste INVISIBLE tant qu'elle est isolée. Elle n'apparaît que
+#  lorsque PLUSIEURS personnes signalent indépendamment la même cible (seuil).
+#  Sous le seuil : zéro information, pas même « 1 personne a signalé ».
+#  Les cibles sont choisies dans une liste définie par l'ouvreur (anti-doxxing).
+#  Les signaleurs ne sont jamais révélés, même quand le seuil tombe.
+#  ⚠ Outil de signalement, pas de jugement : une alerte franchie ouvre un
+#  dossier vers un humain de confiance / le canal approprié.
+# ═══════════════════════════════════════════════════════════════════════════
+
+def _register(rid):
+    with closing(db()) as conn:
+        return conn.execute("SELECT * FROM registers WHERE id=?", (rid,)).fetchone()
+
+
+def _register_targets(rid):
+    with closing(db()) as conn:
+        rows = conn.execute("SELECT * FROM register_targets WHERE register_id=? ORDER BY position",
+                            (rid,)).fetchall()
+    return [dict(r) for r in rows]
+
+
+def _my_registers(me):
+    if not me:
+        return []
+    with closing(db()) as conn:
+        rows = conn.execute("SELECT * FROM registers WHERE owner_user_id=? ORDER BY id DESC",
+                            (me["id"],)).fetchall()
+    return [dict(r) for r in rows]
+
+
+@app.route("/alertes", methods=["GET", "POST"])
+def alertes():
+    me = current_user()
+    if request.method == "POST":
+        if not me:
+            return redirect(url_for("connexion", next=url_for("alertes")))
+        title = (request.form.get("title") or "").strip()[:120]
+        context = (request.form.get("context") or "").strip()[:200]
+        try:
+            threshold = int(request.form.get("threshold") or "3")
+        except ValueError:
+            threshold = 3
+        threshold = max(2, min(threshold, 10))
+        targets = [t.strip()[:80] for t in (request.form.get("targets") or "").splitlines() if t.strip()]
+        targets = targets[:fhe.capacity()]
+        if not title or len(targets) < 2:
+            flash("Donne un intitulé et au moins 2 cibles (une par ligne).")
+            return render_template("alertes.html", registers=_my_registers(me), me=me,
+                                   title=title, context=context, threshold=threshold,
+                                   targets="\n".join(targets), register=None)
+        with closing(db()) as conn, conn:
+            rid = _insert_returning_id(conn,
+                "INSERT INTO registers (owner_user_id, title, context, threshold, closed, "
+                "created_at) VALUES (?,?,?,?,0,?)",
+                (me["id"], title, context, threshold, int(time.time())))
+            for i, tname in enumerate(targets):
+                conn.execute("INSERT INTO register_targets (register_id, position, name) VALUES (?,?,?)",
+                             (rid, i, tname))
+        return redirect(url_for("alerte_voir", rid=rid))
+    return render_template("alertes.html", registers=_my_registers(me), me=me,
+                           title="", context="", threshold=3, targets="", register=None)
+
+
+@app.route("/alertes/<int:rid>")
+def alerte_voir(rid):
+    r = _register(rid)
+    if not r:
+        abort(404)
+    r = dict(r)
+    me = current_user()
+    targets = _register_targets(rid)
+    with closing(db()) as conn:
+        n = conn.execute("SELECT COUNT(*) c FROM register_alerts WHERE register_id=?", (rid,)).fetchone()["c"]
+        already = False
+        if me:
+            already = conn.execute("SELECT 1 FROM register_participants WHERE register_id=? AND user_id=?",
+                                   (rid, me["id"])).fetchone() is not None
+    r["n_alerts"] = n
+    r["is_owner"] = bool(me and me["id"] == r["owner_user_id"])
+    r["already"] = already
+    r["capacity"] = fhe.capacity()
+    r["full"] = n >= fhe.capacity()
+    r["revealed"] = None
+    if r["closed"] and r["results"]:
+        import json
+        counts = json.loads(r["results"])
+        # ne montre QUE les cibles ayant franchi le seuil (compte > 0)
+        r["revealed"] = [{"name": targets[i]["name"], "count": counts[i]}
+                         for i in range(len(targets)) if i < len(counts) and counts[i] > 0]
+    return render_template("alertes.html", registers=_my_registers(me), me=me,
+                           title="", context="", threshold=3, targets="",
+                           register=r, target_list=targets)
+
+
+@app.route("/alertes/<int:rid>/signaler", methods=["POST"])
+def alerte_signaler(rid):
+    r = _register(rid)
+    if not r:
+        abort(404)
+    r = dict(r)
+    me = current_user()
+    if not me:
+        return redirect(url_for("connexion", next=url_for("alerte_voir", rid=rid)))
+    if r["closed"]:
+        flash("Ce registre est clos : on ne peut plus signaler.")
+        return redirect(url_for("alerte_voir", rid=rid))
+    try:
+        target_pos = int(request.form.get("target_pos"))
+    except (TypeError, ValueError):
+        target_pos = None
+    targets = _register_targets(rid)
+    if target_pos is None or target_pos < 0 or target_pos >= len(targets):
+        flash("Choisis une cible dans la liste.")
+        return redirect(url_for("alerte_voir", rid=rid))
+    with closing(db()) as conn, conn:
+        # un seul signalement par compte (sans lier le compte à la cible choisie)
+        dup = conn.execute("SELECT 1 FROM register_participants WHERE register_id=? AND user_id=?",
+                           (rid, me["id"])).fetchone()
+        if dup:
+            flash("Tu as déjà déposé une alerte dans ce registre.")
+            return redirect(url_for("alerte_voir", rid=rid))
+        n = conn.execute("SELECT COUNT(*) c FROM register_alerts WHERE register_id=?", (rid,)).fetchone()["c"]
+        if n >= fhe.capacity():
+            flash("Nombre maximum d'alertes atteint pour ce registre.")
+            return redirect(url_for("alerte_voir", rid=rid))
+        slot = n
+        # 1 bit chiffré (=1) sur la cible choisie. La cible en clair n'est PAS
+        # stockée côté compte : seul ce bit chiffré l'est.
+        blob = fhe.encrypt_alert(r["threshold"], slot, 1)
+        conn.execute("INSERT INTO register_alerts (register_id, target_pos, slot, blob) VALUES (?,?,?,?)",
+                     (rid, target_pos, slot, blob))
+        conn.execute("INSERT INTO register_participants (register_id, user_id) VALUES (?,?)",
+                     (rid, me["id"]))
+    flash("Ton alerte est chiffrée. Tant que le seuil n'est pas atteint, personne — pas même "
+          "l'organisateur — ne peut la voir. Tu n'es jamais le signaleur isolé.")
+    return redirect(url_for("alerte_voir", rid=rid))
+
+
+@app.route("/alertes/<int:rid>/evaluer", methods=["POST"])
+def alerte_evaluer(rid):
+    r = _register(rid)
+    if not r:
+        abort(404)
+    r = dict(r)
+    me = current_user()
+    if not me or me["id"] != r["owner_user_id"]:
+        abort(403)
+    if r["closed"]:
+        return redirect(url_for("alerte_voir", rid=rid))
+    import json
+    targets = _register_targets(rid)
+    counts = []
+    with closing(db()) as conn, conn:
+        for tg in targets:
+            rows = conn.execute("SELECT blob FROM register_alerts WHERE register_id=? AND target_pos=?",
+                               (rid, tg["position"])).fetchall()
+            blobs = [row["blob"] for row in rows]
+            # révélation à seuil : renvoie le compte SI >= seuil, sinon 0
+            counts.append(fhe.alert_reveal(r["threshold"], blobs) if blobs else 0)
+        conn.execute("UPDATE registers SET closed=1, results=? WHERE id=?", (json.dumps(counts), rid))
+    revealed = sum(1 for c in counts if c > 0)
+    if revealed:
+        flash("Évaluation terminée : %d cible(s) ont atteint le seuil. Les autres n'ont rien révélé." % revealed)
+    else:
+        flash("Évaluation terminée : aucune cible n'a atteint le seuil. Aucune alerte n'est révélée.")
+    return redirect(url_for("alerte_voir", rid=rid))
 
 
 @app.errorhandler(Exception)
