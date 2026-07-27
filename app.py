@@ -354,6 +354,327 @@ TRANSLATIONS = {
                       "one bid only). Blocks fake bids and duplicates.",
         "off.invites": "Invited companies (one per line)",
         "off.create": "Create the tender",
+        # --- Tontine (tableau de bord) ---
+        "tdet.back": "My tontines", "tdet.kicker": "Tontine", "tdet.round_unit": "round",
+        "tdet.finished": "Tontine finished — all rounds are done",
+        "tdet.benef": "Beneficiary this round",
+        "tdet.ledger_ok": "Ledger intact", "tdet.ledger_bad": "Ledger tampered!",
+        "tdet.fingerprint": "Ledger fingerprint",
+        "tdet.settle_h": "Final settlement", "tdet.dissolved_tag": "tontine dissolved",
+        "tdet.settle_note": "Net = received − contributed. To settle between members (outside the "
+                            "app, mobile money). Sealed in the ledger.",
+        "tdet.left": "left", "tdet.contributed": "contributed", "tdet.received": "received",
+        "tdet.owes": "owes", "tdet.owed": "is owed", "tdet.uptodate": "settled",
+        "tdet.dissolve_vote": "Dissolution vote in progress",
+        "tdet.dissolve_p": "Proposal to <b>stop the tontine</b>. Members vote in <b>secret</b>; you "
+                           "(organizer) don't vote.",
+        "tdet.turn_req": "Turn request in progress",
+        "tdet.turn_p": "asks to take the pot this round. Members vote in <b>secret</b>; you "
+                       "(organizer) don't vote.",
+        "tdet.votes_cast": "vote(s) cast.",
+        "tdet.close_confirm": "Close the vote and count (FHE tally)?",
+        "tdet.close_btn": "Close the vote & count",
+        "tdet.members_h": "Members & contributions",
+        "tdet.receives": "receives this round", "tdet.validated": "validated",
+        "tdet.member": "member", "tdet.benef_short": "benef", "tdet.mark_paid": "Mark contributed",
+        "tdet.pending": "pending",
+        "tdet.next_confirm": "Not all members are validated yet. Move to the next round anyway?",
+        "tdet.close_round": "Close this round & go to the next", "tdet.next_round": "Go to the next round",
+        "tdet.links_h": "Members' private links",
+        "tdet.links_p": "Send each member <b>their</b> link (via WhatsApp). Everyone confirms their "
+                        "own contributions — you can no longer validate for them.",
+        "tdet.manage_h": "Manage",
+        "tdet.manage_p": "Removing a member computes and seals their settlement (owed / debt). "
+                         "Stopping the tontine goes through a member vote.",
+        "tdet.remove_confirm": "Remove this member from the tontine?", "tdet.remove": "Remove",
+        "tdet.dissolve_confirm": "Stop the tontine? Members will vote in secret.",
+        "tdet.dissolve_btn": "Propose stopping the tontine (member vote)",
+        "tdet.ledger_h": "Ledger (append-only)",
+        "tdet.ledger_p": "Each entry is sealed by a fingerprint linked to the previous one. "
+                         "Impossible to change the past without breaking the chain.",
+        "tdet.k_contribution": "contribution", "tdet.k_member_paid": "the member confirmed paying",
+        "tdet.k_benef_received": "the beneficiary confirmed receiving",
+        "tdet.k_payout": "payout to the beneficiary", "tdet.k_turn_granted": "turn request GRANTED",
+        "tdet.k_turn_denied": "turn request denied", "tdet.k_member_left": "a member left",
+        "tdet.k_dissolved": "TONTINE DISSOLVED (member vote)", "tdet.k_dissolve_denied": "dissolution denied",
+        # --- Tontine (page membre) ---
+        "tmem.title": "My tontine", "tmem.hello": "Hello", "tmem.finished": "This tontine is finished.",
+        "tmem.dissolve_h": "Dissolution vote",
+        "tmem.dissolve_p": "The organizer proposes to <b>stop the tontine</b>. The group decides by a "
+                           "<b>secret vote</b> (the organizer doesn't vote).",
+        "tmem.turn_p": "asks to take the pot this round. The group decides by a <b>secret vote</b> "
+                       "(the organizer doesn't vote).",
+        "tmem.your_req": "This is your request — awaiting the other members' vote.",
+        "tmem.yes": "Yes, grant", "tmem.no": "No",
+        "tmem.vote_note": "Your vote is <b>encrypted</b>: no one will know what you chose, only the "
+                          "total will be revealed.",
+        "tmem.voted": "You voted (secret)",
+        "tmem.request_p": "Urgent need? You can ask to take the pot this round — the other members "
+                          "will vote (secret vote).",
+        "tmem.request_btn": "Ask to take this round",
+        "tmem.your_turn": "It's your turn — you receive the pot",
+        "tmem.confirm_h": "Confirm the contributions received",
+        "tmem.confirm_p": "Click « I received » for each member who paid you. A contribution is only "
+                          "<b>validated</b> if the member confirmed « paid » AND you « received ».",
+        "tmem.paid_ok": "confirmed paying", "tmem.paid_no": "hasn't confirmed yet",
+        "tmem.received": "received", "tmem.i_received": "I received",
+        "tmem.you_paid": "You confirmed paying for this round",
+        "tmem.await_benef": "Awaiting the beneficiary's confirmation to validate definitively.",
+        "tmem.did_you_pay": "Did you pay your contribution to", "tmem.the_benef": "the beneficiary",
+        "tmem.this_round": "for this round?", "tmem.i_paid": "I paid my contribution",
+        "tmem.money_note": "The money is paid outside the app (mobile money). Here you only confirm.",
+        "tmem.done": "Tontine finished — thank you!",
+        "tmem.leave_confirm": "Leave the tontine? Your settlement will be computed and sealed in the ledger.",
+        "tmem.leave": "Leave the tontine", "tmem.see_ledger": "See the public ledger",
+        # --- Admin (tableau de bord d'un vote) ---
+        "adm.title": "Dashboard", "adm.owner": "Organizer", "adm.votes": "vote(s) received",
+        "adm.closed": "Closed", "adm.open": "Open", "adm.result_visible": "result visible",
+        "adm.ongoing": "in progress", "adm.gen_link": "General link to share with voters",
+        "adm.limit": "Limit to your members (1 vote each)",
+        "adm.tokens_p": "personal link(s). Send <b>a different one</b> to each member: each link "
+                        "votes <b>only once</b>.",
+        "adm.voted_tag": "voted",
+        "adm.default_p": "By default, anyone with the general link can vote. For a serious ballot, "
+                         "generate a <b>unique link per member</b>: each can only vote once.",
+        "adm.howmany": "How many?", "adm.generate": "Generate",
+        "adm.max_pre": "Maximum", "adm.max_post": "voters in total for this vote.",
+        "adm.close_confirm": "Close the vote and reveal the result? This action is final.",
+        "adm.close_btn": "Close the vote and reveal the result",
+        "adm.close_note": "While the vote is open, even you see no result — only the <b>number</b> of voters.",
+        # --- Offre (invitation) ---
+        "oinv.title": "Submit a bid", "oinv.invite": "Invitation",
+        "oinv.closed": "Submissions are closed for this tender.", "oinv.see": "See the tender",
+        "oinv.used": "A bid has already been submitted with this link. One bid per company.",
+        "oinv.deposit_h": "Submit your bid",
+        "oinv.fhe_note": "Your price is <b>encrypted</b> (FHE): no one, not even the organizer, sees "
+                         "it. If you don't win, it stays <b>secret forever</b>. Choose a value from the grid.",
+        "oinv.classic_note": "Your amount is <b>not</b> stored: only a fingerprint is. Note your "
+                             "<b>amount</b> and your <b>secret word</b> carefully for the reveal.",
+        "oinv.company": "Company", "oinv.price_grid": "Your price (a value from the grid)",
+        "oinv.amount": "Your amount (FCFA, integer)", "oinv.amount.ph": "e.g. 850000",
+        "oinv.secret": "Secret word (keep it)", "oinv.secret.ph": "e.g. lion2026",
+        "oinv.deposit_btn": "Submit my bid",
+        # --- Offre (tableau de bord) ---
+        "odet.tender": "Tender", "odet.back": "My tenders",
+        "odet.kicker_fhe": "Encrypted tender (FHE)", "odet.kicker_sealed": "Sealed tender",
+        "odet.fhe_sub": "Blind auction — lowest-bid. The winner is computed on the <b>encrypted</b> "
+                        "bids: losers <b>never</b> reveal their price.",
+        "odet.criterion": "Criterion", "odet.cancelled": "Cancelled — not enough bids",
+        "odet.subs_closed": "Submissions closed", "odet.reveal_phase": "reveal phase",
+        "odet.n_sealed": "bid(s) submitted", "odet.deadline": "Deadline",
+        "odet.min_pre": "Minimum required", "odet.min_post": "bid(s) — otherwise the tender is cancelled.",
+        "odet.invite_only": "By invitation only.",
+        "odet.invites_h": "Private links for invited companies",
+        "odet.invites_p": "Send each company <b>their</b> link. One bid per link.",
+        "odet.submitted": "submitted", "odet.pending": "pending",
+        "odet.grid": "Accepted price grid (choose one of these values)",
+        "odet.invite_notice": "<b>By-invitation</b> tender: invited companies submit their bid via "
+                              "their <b>private link</b>.",
+        "odet.deposit_fhe_h": "Submit an encrypted bid",
+        "odet.deposit_fhe_p": "Your price is <b>encrypted</b> (FHE): no one, not even the organizer, "
+                              "sees it. If you don't win, it stays <b>secret forever</b>. ⚠️ Note "
+                              "your <b>amount</b> and <b>secret word</b> to prove your win.",
+        "odet.your_name": "Your name / your company", "odet.your_name.ph": "e.g. Diallo Company",
+        "odet.your_price": "Your price (choose a value from the grid)",
+        "odet.secret": "Secret word (keep it)", "odet.secret.ph": "e.g. lion2026",
+        "odet.encrypt_deposit": "Encrypt & submit my bid",
+        "odet.bids_h": "Submitted bids", "odet.encrypted_tag": "encrypted", "odet.no_bids": "No bid yet.",
+        "odet.close_fhe_confirm": "Close and count (FHE computation of the winning price)?",
+        "odet.close_fhe_btn": "Close & count (FHE)",
+        "odet.winning_price": "Winning price (computed on the encrypted bids)", "odet.winner": "Winner",
+        "odet.winner_declare": "The winner can now come forward below.",
+        "odet.losers_secret": "The losers' prices were <b>never</b> decrypted — they stay secret forever.",
+        "odet.no_winner": "No valid bid — no winner",
+        "odet.prove_h": "Are you the winner? Prove it",
+        "odet.prove_p": "If you offered the winning price, enter it with your secret word. The system "
+                        "checks your fingerprint. Losers do nothing — their price stays secret.",
+        "odet.the_winning_price": "The winning price", "odet.secret_word": "Your secret word",
+        "odet.confirm_win": "Confirm my win & verify",
+        "odet.deposit_sealed_h": "Submit a sealed bid",
+        "odet.deposit_sealed_p": "Your amount is <b>not</b> stored: only a fingerprint is. ⚠️ Note "
+                                 "your <b>amount</b> and <b>secret word</b> — you'll need them to "
+                                 "reveal after closing.",
+        "odet.your_amount": "Your amount (FCFA, integer)", "odet.your_amount.ph": "e.g. 850000",
+        "odet.seal_btn": "Seal my bid", "odet.sealed_tag": "sealed",
+        "odet.close_sealed_confirm": "Close submissions and open the reveal?",
+        "odet.close_sealed_btn": "Close submissions",
+        "odet.reveal_h": "Reveal your bid",
+        "odet.reveal_p": "Enter exactly the same amount and secret word as at submission. The system "
+                         "checks the fingerprint: cheating is impossible.",
+        "odet.reveal_amount": "Your amount (FCFA)", "odet.secret_word2": "Secret word",
+        "odet.reveal_btn": "Reveal & verify", "odet.results_h": "Results", "odet.winner_tag": "winner",
+        "odet.no_reveal": "No bid revealed yet. Bidders must reveal above.",
+        "odet.awaiting_reveal": "Awaiting reveal",
+        "odet.js_in": "in", "odet.js_days": "d", "odet.js_hours": "h", "odet.js_reached": "deadline reached",
+        # --- Guide ---
+        "gd.kicker": "Guide",
+        "gd.lead": "Kaddu isn't just a voting tool: it's a trust toolkit for your communities. They "
+                   "all rest on the same principle — secrecy guaranteed by <b>mathematics</b> "
+                   "(Zama's FHE encryption), not by trust. No technical skills.",
+        "gd.services": "5 services online",
+        "gd.choose": "Choose the tool that fits your need. Each takes a few minutes, free, no account "
+                     "to take part.",
+        "gd.vote_h": "Decide together, in secret",
+        "gd.demo_alt": "Demo: create a vote, share, vote, result",
+        "gd.v1t": "Create the vote", "gd.v1d": "A title, a question, choices. Kaddu gives you a link + a QR code.",
+        "gd.v2t": "Share on WhatsApp",
+        "gd.v2d": "Everyone opens the link, chooses and seals their ballot — encrypted instantly, invisible to all.",
+        "gd.v3t": "Close and reveal",
+        "gd.v3d": "The result is computed on the encrypted ballots then shown, verifiable by all.",
+        "gd.vote_tip": "Tip: generate a <b>unique link per member</b> so each votes only once.",
+        "gd.tont_h": "Save together, with no all-powerful manager",
+        "gd.t1t": "Create the tontine",
+        "gd.t1d": "The members, the amount per round, the order. Each member gets their private link.",
+        "gd.t2t": "Double validation each round",
+        "gd.t2d": "A payment only counts if the <b>payer</b> AND the <b>beneficiary</b> confirm. The "
+                  "manager can't falsify anything alone.",
+        "gd.t3t": "Tamper-proof ledger",
+        "gd.t3d": "Each operation is sealed in a chain of fingerprints: impossible to rewrite "
+                  "history. The money flows <b>outside the app</b> — Kaddu is only the referee.",
+        "gd.t4t": "Priority decided in secret",
+        "gd.t4d": "A member asks to go earlier? The others decide by an <b>encrypted vote</b> — no "
+                  "one sees who voted what.",
+        "gd.tont_btn": "Open tontines",
+        "gd.off_h": "Award without corruption",
+        "gd.o1t": "Create the tender",
+        "gd.o1d": "Two modes: <b>sealed</b> (amounts stay hidden until opening) or <b>encrypted</b> (blind auction).",
+        "gd.o2t": "Everyone submits their bid",
+        "gd.o2d": "The bid is sealed at submission: no one, not even the organizer, sees the prices before the time.",
+        "gd.o3t": "The winner, proven",
+        "gd.o3d": "In encrypted mode, the winner is computed <b>on the encrypted bids</b>: losers "
+                  "<b>never</b> reveal their price.",
+        "gd.off_btn": "Open tenders",
+        "gd.idea_h": "Surface the best ideas",
+        "gd.idea_p": "Anyone posts an idea for the community or for Kaddu. Members vote, and the "
+                     "best-rated rise to the top. Simple and transparent.",
+        "gd.idea_btn": "Open the idea wall",
+        "gd.place_h": "Discover and take part",
+        "gd.place_p": "Browse votes open to the public, take part and exchange with the Kaddu community.",
+        "gd.place_btn": "See the public square",
+        "gd.why_h": "Why it's truly secret",
+        "gd.why_p": "Your data is <b>encrypted</b> the moment you click. Kaddu computes (counts "
+                    "votes, determines a winner…) <b>without ever opening it</b>, thanks to Zama's "
+                    "FHE encryption. Neither the organizer, nor the server, nor a hacker can read an "
+                    "individual piece of data — only the final result is revealed.",
+        "gd.faq_h": "Frequently asked questions",
+        "gd.a1": "No. The ballot is encrypted on the spot; the organizer only sees the final result.",
+        "gd.q2": "Does Kaddu touch the tontine money?",
+        "gd.a2": "No. The money flows <b>outside the app</b> (mobile money, cash…). Kaddu is only the "
+                 "impartial referee and the tamper-proof ledger.",
+        "gd.q3": "Do I need an account to take part?",
+        "gd.a3": "No. A simple link is enough. The account is only for organizing (creating votes, "
+                 "managing a tontine, suggesting ideas).",
+        "gd.a4": "Yes, entirely free.",
+        "gd.see_comm": "See the community",
+        # --- Mentions légales ---
+        "ml.updated": "Last updated", "ml.editor_h": "Site publisher",
+        "ml.editor_p": "The <b>Kaddu</b> service is published by Pape Alamine Sarr, in Dakar (Senegal).",
+        "ml.contact": "Contact",
+        "ml.editor_note": "If Kaddu is run by an association or an organization, replace this section "
+                          "with its name, address and, where applicable, its registration number.",
+        "ml.pub_h": "Publication director", "ml.host_h": "Hosting",
+        "ml.host_p": "The application is hosted by <b>Render Services, Inc.</b> (render.com) and its "
+                     "database by <b>Neon, Inc.</b> (neon.tech). The application servers are located "
+                     "in the United States (Oregon region).",
+        "ml.ip_h": "Intellectual property",
+        "ml.ip_p": "The name « Kaddu », the visual identity and the site content are the property of "
+                   "their publisher. Fully homomorphic encryption (FHE) is provided by <b>Zama</b>'s "
+                   "technology (Concrete library), under its own licenses.",
+        "ml.resp_h": "Liability",
+        "ml.resp_p": "Kaddu is provided « as is », with no guarantee of continuous availability. The "
+                     "publisher strives to ensure the accuracy of information but cannot be held "
+                     "responsible for any use made of it by vote organizers.",
+        "ml.model_note": "This document is a basic template. For official use, have it adapted to "
+                         "your situation and applicable regulations.",
+        # --- Confidentialité ---
+        "pc.title": "Privacy",
+        "pc.intro": "Kaddu is built around a simple principle: <b>collect the strict minimum</b>. "
+                    "There is no account to create, no profile, no advertising, no commercial tracking.",
+        "pc.secret_h": "The secrecy of your vote",
+        "pc.secret_p": "Each ballot is <b>encrypted on your device or on the server before "
+                       "storage</b>, thanks to Zama's fully homomorphic encryption (FHE). The tally "
+                       "is computed on encrypted data: neither the server, nor the organizer, nor "
+                       "the publisher can read an individual vote. Only the <b>total result</b> is "
+                       "revealed, once the vote is closed.",
+        "pc.data_h": "Data processed",
+        "pc.data_p": "To run a vote, Kaddu keeps: the <b>title, question and choices</b> you enter; "
+                     "the <b>encrypted ballots</b>; and, if you enable member links, <b>anonymous "
+                     "tokens</b> (no identity is associated). A small <b>technical cookie</b> is "
+                     "placed on the voter's device to prevent double voting — it contains no "
+                     "personal data. Like any site, the host may keep temporary <b>technical "
+                     "logs</b> (IP address, timestamp) for security.",
+        "pc.not_h": "What Kaddu does not do",
+        "pc.not_p": "No request for name, email or phone to vote. No selling of data. No advertising "
+                    "cookies or third-party trackers.",
+        "pc.keep_h": "Retention",
+        "pc.keep_p": "A vote's data is kept for the duration of its organization. You can request "
+                     "the deletion of a vote you created by writing to us.",
+        "pc.sub_h": "Technical subcontractors",
+        "pc.sub_p": "The application and its database are hosted by Render and Neon (see the",
+        "pc.sub_p2": "), which act only as hosting providers.",
+        "pc.rights_h": "Your rights & contact",
+        "pc.rights_p": "You can request access, correction or deletion of data concerning you by writing to",
+        # --- Messages flash (serveur) ---
+        "flash.1": "Give a title, a question and at least 2 choices.",
+        "flash.2": "This vote has reached its maximum capacity.",
+        "flash.3": "Choose an option to vote.",
+        "flash.4": "This link has already been used to vote.",
+        "flash.5": "Code not found. Check and try again.",
+        "flash.6": "Name, valid email and password (6 characters min.) required.",
+        "flash.7": "An account already exists with this email. Please sign in.",
+        "flash.8": "Incorrect email or password.",
+        "flash.9": "Give a name and at least 2 members (one per line).",
+        "flash.10": "Voting capacity reached.",
+        "flash.11": "Give the tender a title.",
+        "flash.12": "Provide a valid min price, max price and step for the encrypted auction.",
+        "flash.13": "Submissions are closed.",
+        "flash.14": "This tender is by invitation: use your valid private link.",
+        "flash.15": "This invitation has already been used to submit a bid.",
+        "flash.16": "Name, amount (positive integer) and secret word are required.",
+        "flash.17": "Your amount must be an exact value from the price grid shown.",
+        "flash.18": "This name has already submitted a bid.",
+        "flash.19": "Bid sealed. Keep your amount + secret word for the reveal. ",
+        "flash.20": "A deadline is set: the count will open automatically at the deadline.",
+        "flash.21": "Tender closed: fewer than %d bid(s) received, no winner.",
+        "flash.22": "The reveal opens after submissions close.",
+        "flash.23": "No winner (no valid bid).",
+        "flash.24": "The winner is already confirmed.",
+        "flash.25": "To declare yourself the winner, enter EXACTLY the winning price shown.",
+        "flash.26": "Name + amount + secret word don't match any submitted bid.",
+        "flash.27": "Win confirmed and verified! The others' prices stay secret.",
+        "flash.28": "No bid under this name.",
+        "flash.29": "This bid is already revealed.",
+        "flash.30": "Amount + secret word don't match the sealed bid.",
+        "flash.31": "Bid revealed and verified.",
+        "flash.32": "Give the pool a title.",
+        "flash.33": "This pool is closed: you can no longer add a figure.",
+        "flash.34": "Enter a positive integer amount.",
+        "flash.35": "The amount exceeds the allowed maximum (%d).",
+        "flash.36": "You have already contributed to this pool.",
+        "flash.37": "Maximum number of participants reached for this pool.",
+        "flash.38": "Your figure has been encrypted and added. No one can read it — only the total will be revealed.",
+        "flash.39": "Give a title and a valid range (max greater than min).",
+        "flash.40": "This comparator is closed.",
+        "flash.41": "Enter your figure.",
+        "flash.42": "You have already answered this comparator.",
+        "flash.43": "Maximum number of participants reached.",
+        "flash.44": "Your answer is encrypted. Your bracket: %s–%s %s. No one sees your exact figure.",
+        "flash.45": "Comparator closed: the distribution was computed on the encrypted data.",
+        "flash.46": "Give a title and at least 2 targets (one per line).",
+        "flash.47": "This register is closed: you can no longer report.",
+        "flash.48": "Choose a target from the list.",
+        "flash.49": "You have already filed an alert in this register.",
+        "flash.50": "Maximum number of alerts reached for this register.",
+        "flash.51": "Evaluation complete: %d target(s) reached the threshold. The others revealed nothing.",
+        "flash.52": "Evaluation complete: no target reached the threshold. No alert is revealed.",
+        "flash.recu": "Receipt: fingerprint %s… filed on %s — keep it, it proves your submission.",
+        "flash.53": "The price grid must have between 2 and 30 levels (adjust the step or the min–max range).",
+        "flash.54": "Encrypted bid submitted. If you don't win, your price stays secret forever. "
+                    "Keep your amount + secret word to prove your win. ",
+        "flash.55": "Pool closed: the total was computed on the encrypted data, without any individual "
+                    "figure ever being decrypted.",
+        "flash.56": "Your alert is encrypted. Until the threshold is reached, no one — not even the "
+                    "organizer — can see it. You are never the lone reporter.",
         "mod.idea.h3": "An idea for your community?",
         "mod.idea.p": "Post it on the idea wall: the community votes, the best ones rise.",
         "mod.idea.go": "Open the idea wall &#8594;",
@@ -984,7 +1305,7 @@ def creer():
         question = (request.form.get("question") or "").strip()
         options = [o.strip() for o in request.form.getlist("option") if o.strip()]
         if not title or not question or len(options) < 2:
-            flash("Donne un titre, une question et au moins 2 choix.")
+            flash(t_srv("flash.1", "Donne un titre, une question et au moins 2 choix."))
             return render_template("creer.html", title=title, question=question,
                                    options=options or ["", ""])
         options = options[:8]
@@ -1050,14 +1371,14 @@ def voter(poll_id):
         if not restricted and already:
             return redirect(url_for("merci", poll_id=poll_id))
         if full:
-            flash("Ce vote a atteint sa capacité maximale.")
+            flash(t_srv("flash.2", "Ce vote a atteint sa capacité maximale."))
             return page()
         try:
             choice = int(request.form.get("choice", "-1"))
         except ValueError:
             choice = -1
         if choice < 0 or choice >= len(options):
-            flash("Choisis une option pour voter.")
+            flash(t_srv("flash.3", "Choisis une option pour voter."))
             return page()
         n = voter_count(poll_id)
         rows = [(poll_id, n, m, fhe.encrypt_ballot(n, 1 if m == choice else 0))
@@ -1068,7 +1389,7 @@ def voter(poll_id):
                     "UPDATE tokens SET used = 1 WHERE poll_id = ? AND token = ? AND used = 0",
                     (poll_id, tok))
                 if cur.rowcount == 0:
-                    flash("Ce lien a déjà servi à voter.")
+                    flash(t_srv("flash.4", "Ce lien a déjà servi à voter."))
                     return page(token_bad=True)
             conn.executemany("INSERT INTO ballots (poll_id, voter, option_idx, blob) "
                              "VALUES (?,?,?,?)", rows)
@@ -1198,7 +1519,7 @@ def rejoindre():
             code = code.rstrip("/").rsplit("/", 1)[-1]
         if code and get_poll(code):
             return redirect(url_for("voter", poll_id=code))
-        flash("Code introuvable. Vérifie et réessaie.")
+        flash(t_srv("flash.5", "Code introuvable. Vérifie et réessaie."))
     return render_template("rejoindre.html")
 
 
@@ -1212,10 +1533,10 @@ def inscription():
         email = (request.form.get("email") or "").strip().lower()
         pw = request.form.get("password") or ""
         if not name or "@" not in email or "." not in email or len(pw) < 6:
-            flash("Nom, e-mail valide et mot de passe (6 caractères min.) requis.")
+            flash(t_srv("flash.6", "Nom, e-mail valide et mot de passe (6 caractères min.) requis."))
             return render_template("inscription.html", name=name, email=email)
         if get_user_by_email(email):
-            flash("Un compte existe déjà avec cet e-mail. Connectez-vous.")
+            flash(t_srv("flash.7", "Un compte existe déjà avec cet e-mail. Connectez-vous."))
             return redirect(url_for("connexion"))
         with closing(db()) as conn, conn:
             conn.execute(
@@ -1236,7 +1557,7 @@ def connexion():
         pw = request.form.get("password") or ""
         u = get_user_by_email(email)
         if not u or not check_password_hash(u["pw_hash"], pw):
-            flash("E-mail ou mot de passe incorrect.")
+            flash(t_srv("flash.8", "E-mail ou mot de passe incorrect."))
             return render_template("connexion.html", email=email)
         session["uid"] = u["id"]
         return redirect(request.args.get("next") or url_for("communaute"))
@@ -1448,7 +1769,7 @@ def tontines():
         frequency = (request.form.get("frequency") or "").strip()[:40]
         members = [m.strip()[:60] for m in (request.form.get("members") or "").splitlines() if m.strip()]
         if not name or len(members) < 2:
-            flash("Donne un nom et au moins 2 membres (un par ligne).")
+            flash(t_srv("flash.9", "Donne un nom et au moins 2 membres (un par ligne)."))
             return render_template("tontines.html", tontines=_my_tontines(me), name=name,
                                    amount=amount, frequency=frequency, members="\n".join(members))
         members = members[:60]
@@ -1696,7 +2017,7 @@ def tontine_voter_tour(tid, token):
         return redirect(url_for("tontine_membre", tid=tid, token=token))
     n = _votes_cast(rid)
     if n >= fhe.capacity():
-        flash("Capacité de vote atteinte.")
+        flash(t_srv("flash.10", "Capacité de vote atteinte."))
         return redirect(url_for("tontine_membre", tid=tid, token=token))
     bit = 1 if request.form.get("choice") == "oui" else 0
     blob = fhe.encrypt_ballot(n, bit)
@@ -1968,7 +2289,7 @@ def offres():
         direction = "high" if request.form.get("direction") == "high" else "low"
         mode = "fhe" if request.form.get("mode") == "fhe" else "reveal"
         if not title:
-            flash("Donne un intitulé à l'appel d'offres.")
+            flash(t_srv("flash.11", "Donne un intitulé à l'appel d'offres."))
             return render_template("offres.html", tenders=_my_tenders(me),
                                    title=title, description=description)
         price_min = price_step = n_levels = 0
@@ -1982,13 +2303,13 @@ def offres():
             except ValueError:
                 price_min = price_max = price_step = -1
             if price_min < 0 or price_step <= 0 or price_max < price_min:
-                flash("Renseigne un prix min, un prix max et un pas valides pour l'enchère chiffrée.")
+                flash(t_srv("flash.12", "Renseigne un prix min, un prix max et un pas valides pour l'enchère chiffrée."))
                 return render_template("offres.html", tenders=_my_tenders(me),
                                        title=title, description=description)
             n_levels = (price_max - price_min) // price_step + 1
             if n_levels < 2 or n_levels > 30:
-                flash("La grille de prix doit compter entre 2 et 30 paliers "
-                      "(ajuste le pas ou l'écart min–max).")
+                flash(t_srv("flash.53", "La grille de prix doit compter entre 2 et 30 paliers "
+                      "(ajuste le pas ou l'écart min–max)."))
                 return render_template("offres.html", tenders=_my_tenders(me),
                                        title=title, description=description)
         closes_at = _parse_deadline(request.form.get("deadline"))
@@ -2059,7 +2380,7 @@ def offre_soumettre(tid):
         abort(404)
     t = _maybe_autoclose(dict(t))
     if not _subs_open(t):
-        flash("Les soumissions sont closes.")
+        flash(t_srv("flash.13", "Les soumissions sont closes."))
         return redirect(url_for("offre", tid=tid))
     invite = None
     if t["invite_only"]:
@@ -2068,10 +2389,10 @@ def offre_soumettre(tid):
             invite = conn.execute("SELECT * FROM tender_invites WHERE tender_id=? AND token=?",
                                   (tid, token)).fetchone()
         if not token or not invite:
-            flash("Cet appel d'offres est sur invitation : utilise ton lien privé valide.")
+            flash(t_srv("flash.14", "Cet appel d'offres est sur invitation : utilise ton lien privé valide."))
             return redirect(url_for("offre", tid=tid))
         if invite["used"]:
-            flash("Cette invitation a déjà servi à déposer une offre.")
+            flash(t_srv("flash.15", "Cette invitation a déjà servi à déposer une offre."))
             return redirect(url_for("offre", tid=tid))
     if invite:
         name = (invite["name"] or "").strip()[:60]
@@ -2083,21 +2404,21 @@ def offre_soumettre(tid):
     except ValueError:
         amount = None
     if not name or not secret or amount is None or amount < 0:
-        flash("Nom, montant (entier positif) et mot secret sont requis.")
+        flash(t_srv("flash.16", "Nom, montant (entier positif) et mot secret sont requis."))
         return redirect(url_for("offre", tid=tid))
 
     level = None
     if t["mode"] == "fhe":
         level = _price_level(t, amount)
         if level is None:
-            flash("Ton montant doit être une valeur exacte de la grille de prix affichée.")
+            flash(t_srv("flash.17", "Ton montant doit être une valeur exacte de la grille de prix affichée."))
             return redirect(url_for("offre", tid=tid))
 
     with closing(db()) as conn, conn:
         r = conn.execute("SELECT COUNT(*) c FROM bids WHERE tender_id=? AND bidder_name=?",
                          (tid, name)).fetchone()
         if r["c"] > 0:
-            flash("Ce nom a déjà soumis une offre.")
+            flash(t_srv("flash.18", "Ce nom a déjà soumis une offre."))
             return redirect(url_for("offre", tid=tid))
         last = conn.execute("SELECT hash FROM bids WHERE tender_id=? ORDER BY id DESC LIMIT 1",
                             (tid,)).fetchone()
@@ -2120,13 +2441,13 @@ def offre_soumettre(tid):
                              (bid_id, j, blob))
         if invite:
             conn.execute("UPDATE tender_invites SET used=1 WHERE id=?", (invite["id"],))
-    recu = ("Reçu : empreinte %s… déposée le %s — garde-le, il prouve ton dépôt."
+    recu = (t_srv("flash.recu", "Reçu : empreinte %s… déposée le %s — garde-le, il prouve ton dépôt.")
             % (h[:16], time.strftime("%d/%m/%Y %H:%M", time.localtime(ts))))
     if t["mode"] == "fhe":
-        flash("Offre chiffrée déposée. Si tu ne gagnes pas, ton prix reste secret à vie. "
-              "Garde ton montant + mot secret pour prouver ta victoire. " + recu)
+        flash(t_srv("flash.54", "Offre chiffrée déposée. Si tu ne gagnes pas, ton prix reste secret à vie. "
+              "Garde ton montant + mot secret pour prouver ta victoire. ") + recu)
     else:
-        flash("Offre scellée. Garde ton montant + mot secret pour la révélation. " + recu)
+        flash(t_srv("flash.19", "Offre scellée. Garde ton montant + mot secret pour la révélation. ")+ recu)
     return redirect(url_for("offre", tid=tid))
 
 
@@ -2156,11 +2477,11 @@ def offre_clore(tid):
     if not me or me["id"] != t["owner_user_id"]:
         abort(403)
     if t["closes_at"] and int(time.time()) < t["closes_at"]:
-        flash("Une échéance est fixée : le dépouillement s'ouvrira automatiquement à la date limite.")
+        flash(t_srv("flash.20", "Une échéance est fixée : le dépouillement s'ouvrira automatiquement à la date limite."))
         return redirect(url_for("offre", tid=tid))
     _finalize_tender(tid)
     if dict(_tender(tid))["cancelled"]:
-        flash("Appel d'offres clos : moins de %d offre(s) reçue(s), aucun gagnant." % t["min_bids"])
+        flash(t_srv("flash.21", "Appel d'offres clos : moins de %d offre(s) reçue(s), aucun gagnant.")% t["min_bids"])
     return redirect(url_for("offre", tid=tid))
 
 
@@ -2170,7 +2491,7 @@ def offre_reveler(tid):
     if not t:
         abort(404)
     if t["status"] != "closed":
-        flash("La révélation ouvre après la clôture des soumissions.")
+        flash(t_srv("flash.22", "La révélation ouvre après la clôture des soumissions."))
         return redirect(url_for("offre", tid=tid))
     name = (request.form.get("name") or "").strip()[:60]
     secret = (request.form.get("secret") or "").strip()
@@ -2182,39 +2503,39 @@ def offre_reveler(tid):
     # Les perdants ne révèlent jamais leur montant.
     if t["mode"] == "fhe":
         if t["winning_price"] is None:
-            flash("Aucun gagnant (aucune offre valide).")
+            flash(t_srv("flash.23", "Aucun gagnant (aucune offre valide)."))
             return redirect(url_for("offre", tid=tid))
         if t["winner_name"]:
-            flash("Le gagnant est déjà confirmé.")
+            flash(t_srv("flash.24", "Le gagnant est déjà confirmé."))
             return redirect(url_for("offre", tid=tid))
         if amount is None or amount != t["winning_price"]:
-            flash("Pour te déclarer gagnant, indique EXACTEMENT le prix gagnant affiché.")
+            flash(t_srv("flash.25", "Pour te déclarer gagnant, indique EXACTEMENT le prix gagnant affiché."))
             return redirect(url_for("offre", tid=tid))
         with closing(db()) as conn, conn:
             b = conn.execute("SELECT * FROM bids WHERE tender_id=? AND bidder_name=?",
                              (tid, name)).fetchone()
             if not b or _bid_commitment(amount, secret) != b["commitment"]:
-                flash("Nom + montant + mot secret ne correspondent pas à une offre déposée.")
+                flash(t_srv("flash.26", "Nom + montant + mot secret ne correspondent pas à une offre déposée."))
                 return redirect(url_for("offre", tid=tid))
             conn.execute("UPDATE bids SET revealed=1, amount=? WHERE id=?", (amount, b["id"]))
             conn.execute("UPDATE tenders SET winner_name=? WHERE id=?", (name, tid))
-        flash("Victoire confirmée et vérifiée ! Les prix des autres restent secrets.")
+        flash(t_srv("flash.27", "Victoire confirmée et vérifiée ! Les prix des autres restent secrets."))
         return redirect(url_for("offre", tid=tid))
 
     with closing(db()) as conn, conn:
         b = conn.execute("SELECT * FROM bids WHERE tender_id=? AND bidder_name=?",
                          (tid, name)).fetchone()
         if not b:
-            flash("Aucune offre à ce nom.")
+            flash(t_srv("flash.28", "Aucune offre à ce nom."))
             return redirect(url_for("offre", tid=tid))
         if b["revealed"]:
-            flash("Cette offre est déjà révélée.")
+            flash(t_srv("flash.29", "Cette offre est déjà révélée."))
             return redirect(url_for("offre", tid=tid))
         if amount is None or _bid_commitment(amount, secret) != b["commitment"]:
-            flash("Montant + mot secret ne correspondent pas à l'offre scellée.")
+            flash(t_srv("flash.30", "Montant + mot secret ne correspondent pas à l'offre scellée."))
             return redirect(url_for("offre", tid=tid))
         conn.execute("UPDATE bids SET revealed=1, amount=? WHERE id=?", (amount, b["id"]))
-    flash("Offre révélée et vérifiée.")
+    flash(t_srv("flash.31", "Offre révélée et vérifiée."))
     return redirect(url_for("offre", tid=tid))
 
 
@@ -2248,7 +2569,7 @@ def commun():
         title = (request.form.get("title") or "").strip()[:120]
         question = (request.form.get("question") or "").strip()[:200]
         if not title:
-            flash("Donne un intitulé à la mise en commun.")
+            flash(t_srv("flash.32", "Donne un intitulé à la mise en commun."))
             return render_template("commun.html", pools=_my_pools(me), me=me,
                                    title=title, question=question, pool=None,
                                    pool_max=fhe.pool_max())
@@ -2289,7 +2610,7 @@ def commun_ajouter(pid):
     if not me:   # anti-bourrage : connexion requise
         return redirect(url_for("connexion", next=url_for("commun_voir", pid=pid)))
     if p["closed"]:
-        flash("Cette mise en commun est close : on ne peut plus ajouter de chiffre.")
+        flash(t_srv("flash.33", "Cette mise en commun est close : on ne peut plus ajouter de chiffre."))
         return redirect(url_for("commun_voir", pid=pid))
     contributor = (request.form.get("contributor") or "").strip()[:60]
     try:
@@ -2297,21 +2618,21 @@ def commun_ajouter(pid):
     except ValueError:
         value = None
     if value is None or value < 0:
-        flash("Entre un montant entier positif.")
+        flash(t_srv("flash.34", "Entre un montant entier positif."))
         return redirect(url_for("commun_voir", pid=pid))
     if value > fhe.pool_max():
-        flash("Le montant dépasse le maximum autorisé (%d)." % fhe.pool_max())
+        flash(t_srv("flash.35", "Le montant dépasse le maximum autorisé (%d).")% fhe.pool_max())
         return redirect(url_for("commun_voir", pid=pid))
     with closing(db()) as conn, conn:
         # une seule contribution par compte (sans lier le montant au compte)
         dup = conn.execute("SELECT 1 FROM pool_participants WHERE pool_id=? AND user_id=?",
                            (pid, me["id"])).fetchone()
         if dup:
-            flash("Tu as déjà contribué à cette mise en commun.")
+            flash(t_srv("flash.36", "Tu as déjà contribué à cette mise en commun."))
             return redirect(url_for("commun_voir", pid=pid))
         n = conn.execute("SELECT COUNT(*) c FROM pool_items WHERE pool_id=?", (pid,)).fetchone()["c"]
         if n >= fhe.capacity():
-            flash("Nombre maximum de participants atteint pour cette mise en commun.")
+            flash(t_srv("flash.37", "Nombre maximum de participants atteint pour cette mise en commun."))
             return redirect(url_for("commun_voir", pid=pid))
         slot = n
         blob = fhe.encrypt_value(slot, value)   # le montant en clair n'est PAS stocké
@@ -2319,7 +2640,7 @@ def commun_ajouter(pid):
                      (pid, slot, contributor, blob))
         conn.execute("INSERT INTO pool_participants (pool_id, user_id) VALUES (?,?)", (pid, me["id"]))
         conn.execute("UPDATE pools SET n_contrib=? WHERE id=?", (n + 1, pid))
-    flash("Ton chiffre a été chiffré et ajouté. Personne ne peut le lire — seul le total sera révélé.")
+    flash(t_srv("flash.38", "Ton chiffre a été chiffré et ajouté. Personne ne peut le lire — seul le total sera révélé."))
     return redirect(url_for("commun_voir", pid=pid))
 
 
@@ -2339,8 +2660,8 @@ def commun_cloturer(pid):
         total = fhe.pool_sum(blobs) if blobs else 0   # somme calculée sur les chiffrés
         conn.execute("UPDATE pools SET closed=1, total=?, n_contrib=? WHERE id=?",
                      (total, len(blobs), pid))
-    flash("Mise en commun close : le total a été calculé sur les données chiffrées, "
-          "sans qu'aucun chiffre individuel ne soit jamais déchiffré.")
+    flash(t_srv("flash.55", "Mise en commun close : le total a été calculé sur les données chiffrées, "
+          "sans qu'aucun chiffre individuel ne soit jamais déchiffré."))
     return redirect(url_for("commun_voir", pid=pid))
 
 
@@ -2404,7 +2725,7 @@ def comparer():
             vmin, vmax, n_levels = 0, 0, 5
         n_levels = max(2, min(n_levels, 10))
         if not title or vmax <= vmin:
-            flash("Donne un intitulé et une fourchette valide (max supérieur au min).")
+            flash(t_srv("flash.39", "Donne un intitulé et une fourchette valide (max supérieur au min)."))
             return render_template("comparer.html", compares=_my_compares(me), me=me,
                                    title=title, unit=unit, vmin=vmin, vmax=vmax,
                                    n_levels=n_levels, compare=None)
@@ -2451,14 +2772,14 @@ def comparer_ajouter(cid):
     if not me:   # anti-bourrage : connexion requise
         return redirect(url_for("connexion", next=url_for("comparer_voir", cid=cid)))
     if c["closed"]:
-        flash("Ce comparateur est clos.")
+        flash(t_srv("flash.40", "Ce comparateur est clos."))
         return redirect(url_for("comparer_voir", cid=cid))
     try:
         value = int(request.form.get("value") or "")
     except ValueError:
         value = None
     if value is None:
-        flash("Entre ton chiffre.")
+        flash(t_srv("flash.41", "Entre ton chiffre."))
         return redirect(url_for("comparer_voir", cid=cid))
     level = _level_of(c, value)   # tranche calculée en clair, JAMAIS stockée
     with closing(db()) as conn, conn:
@@ -2466,12 +2787,12 @@ def comparer_ajouter(cid):
         dup = conn.execute("SELECT 1 FROM compare_participants WHERE compare_id=? AND user_id=?",
                            (cid, me["id"])).fetchone()
         if dup:
-            flash("Tu as déjà répondu à ce comparateur.")
+            flash(t_srv("flash.42", "Tu as déjà répondu à ce comparateur."))
             return redirect(url_for("comparer_voir", cid=cid))
         n = conn.execute("SELECT COUNT(DISTINCT slot) c FROM compare_items WHERE compare_id=?",
                          (cid,)).fetchone()["c"]
         if n >= fhe.capacity():
-            flash("Nombre maximum de participants atteint.")
+            flash(t_srv("flash.43", "Nombre maximum de participants atteint."))
             return redirect(url_for("comparer_voir", cid=cid))
         slot = n
         # Encodage one-hot chiffré : bit=1 sur ma tranche, 0 sur les autres.
@@ -2483,8 +2804,7 @@ def comparer_ajouter(cid):
         conn.execute("INSERT INTO compare_participants (compare_id, user_id) VALUES (?,?)",
                      (cid, me["id"]))
     lo, hi = _level_bounds(c)[level]
-    flash("Ta réponse est chiffrée. Ta tranche : %s–%s %s. Personne ne voit ton chiffre exact."
-          % ("{:,}".format(lo).replace(",", " "), "{:,}".format(hi).replace(",", " "), c["unit"]))
+    flash(t_srv("flash.44", "Ta réponse est chiffrée. Ta tranche : %s–%s %s. Personne ne voit ton chiffre exact.")% ("{:,}".format(lo).replace(",", " "), "{:,}".format(hi).replace(",", " "), c["unit"]))
     return redirect(url_for("comparer_voir", cid=cid))
 
 
@@ -2509,7 +2829,7 @@ def comparer_cloturer(cid):
             histo.append(fhe.tally(blobs) if blobs else 0)   # décompte par tranche sur les chiffrés
         conn.execute("UPDATE compares SET closed=1, results=? WHERE id=?",
                      (json.dumps(histo), cid))
-    flash("Comparateur clos : la distribution a été calculée sur les données chiffrées.")
+    flash(t_srv("flash.45", "Comparateur clos : la distribution a été calculée sur les données chiffrées."))
     return redirect(url_for("comparer_voir", cid=cid))
 
 
@@ -2561,7 +2881,7 @@ def alertes():
         targets = [t.strip()[:80] for t in (request.form.get("targets") or "").splitlines() if t.strip()]
         targets = targets[:fhe.capacity()]
         if not title or len(targets) < 2:
-            flash("Donne un intitulé et au moins 2 cibles (une par ligne).")
+            flash(t_srv("flash.46", "Donne un intitulé et au moins 2 cibles (une par ligne)."))
             return render_template("alertes.html", registers=_my_registers(me), me=me,
                                    title=title, context=context, threshold=threshold,
                                    targets="\n".join(targets), register=None)
@@ -2619,7 +2939,7 @@ def alerte_signaler(rid):
     if not me:
         return redirect(url_for("connexion", next=url_for("alerte_voir", rid=rid)))
     if r["closed"]:
-        flash("Ce registre est clos : on ne peut plus signaler.")
+        flash(t_srv("flash.47", "Ce registre est clos : on ne peut plus signaler."))
         return redirect(url_for("alerte_voir", rid=rid))
     try:
         target_pos = int(request.form.get("target_pos"))
@@ -2627,18 +2947,18 @@ def alerte_signaler(rid):
         target_pos = None
     targets = _register_targets(rid)
     if target_pos is None or target_pos < 0 or target_pos >= len(targets):
-        flash("Choisis une cible dans la liste.")
+        flash(t_srv("flash.48", "Choisis une cible dans la liste."))
         return redirect(url_for("alerte_voir", rid=rid))
     with closing(db()) as conn, conn:
         # un seul signalement par compte (sans lier le compte à la cible choisie)
         dup = conn.execute("SELECT 1 FROM register_participants WHERE register_id=? AND user_id=?",
                            (rid, me["id"])).fetchone()
         if dup:
-            flash("Tu as déjà déposé une alerte dans ce registre.")
+            flash(t_srv("flash.49", "Tu as déjà déposé une alerte dans ce registre."))
             return redirect(url_for("alerte_voir", rid=rid))
         n = conn.execute("SELECT COUNT(*) c FROM register_alerts WHERE register_id=?", (rid,)).fetchone()["c"]
         if n >= fhe.capacity():
-            flash("Nombre maximum d'alertes atteint pour ce registre.")
+            flash(t_srv("flash.50", "Nombre maximum d'alertes atteint pour ce registre."))
             return redirect(url_for("alerte_voir", rid=rid))
         slot = n
         # 1 bit chiffré (=1) sur la cible choisie. La cible en clair n'est PAS
@@ -2648,8 +2968,8 @@ def alerte_signaler(rid):
                      (rid, target_pos, slot, blob))
         conn.execute("INSERT INTO register_participants (register_id, user_id) VALUES (?,?)",
                      (rid, me["id"]))
-    flash("Ton alerte est chiffrée. Tant que le seuil n'est pas atteint, personne — pas même "
-          "l'organisateur — ne peut la voir. Tu n'es jamais le signaleur isolé.")
+    flash(t_srv("flash.56", "Ton alerte est chiffrée. Tant que le seuil n'est pas atteint, personne — pas même "
+          "l'organisateur — ne peut la voir. Tu n'es jamais le signaleur isolé."))
     return redirect(url_for("alerte_voir", rid=rid))
 
 
@@ -2677,9 +2997,9 @@ def alerte_evaluer(rid):
         conn.execute("UPDATE registers SET closed=1, results=? WHERE id=?", (json.dumps(counts), rid))
     revealed = sum(1 for c in counts if c > 0)
     if revealed:
-        flash("Évaluation terminée : %d cible(s) ont atteint le seuil. Les autres n'ont rien révélé." % revealed)
+        flash(t_srv("flash.51", "Évaluation terminée : %d cible(s) ont atteint le seuil. Les autres n'ont rien révélé.")% revealed)
     else:
-        flash("Évaluation terminée : aucune cible n'a atteint le seuil. Aucune alerte n'est révélée.")
+        flash(t_srv("flash.52", "Évaluation terminée : aucune cible n'a atteint le seuil. Aucune alerte n'est révélée."))
     return redirect(url_for("alerte_voir", rid=rid))
 
 
