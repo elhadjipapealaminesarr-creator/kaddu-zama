@@ -2,14 +2,14 @@
 {% block title %}{{ poll['title'] }} — Kaddu{% endblock %}
 {% block content %}
 <div class="card pad-lg">
-  <span class="pill pill-green">&#128274; Vote confidentiel</span>
+  <span class="pill pill-green">&#128274; {{ tr('mod.vote.h3', 'Vote confidentiel') }}</span>
   <h1 style="font-size:1.4rem;margin-top:14px">{{ poll['title'] }}</h1>
   <p style="font-weight:600;margin-bottom:18px">{{ poll['question'] }}</p>
 
   {% if closed %}
     <div class="flash" style="background:#fbf0dc;color:#8f5a11;border-color:#eeddb8">
-      Ce vote est clôturé. Merci !</div>
-    <a href="{{ url_for('resultat', poll_id=poll['id']) }}" class="btn btn-primary">Voir le résultat</a>
+      {{ tr('vote.closed', 'Ce vote est clôturé. Merci !') }}</div>
+    <a href="{{ url_for('resultat', poll_id=poll['id']) }}" class="btn btn-primary">{{ tr('vote.see_result', 'Voir le résultat') }}</a>
   {% elif already %}
     <div class="seal-lock">
       <svg width="46" height="46" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -17,12 +17,11 @@
         <path d="M15 24.5l6 6 12-13" stroke="#0E5A4A" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
     </div>
-    <p class="center" style="font-weight:600">Vous avez déjà voté sur cet appareil.</p>
-    <p class="center muted small">Votre bulletin est scellé. Merci de votre participation.</p>
+    <p class="center" style="font-weight:600">{{ tr('vote.already', 'Vous avez déjà voté sur cet appareil.') }}</p>
+    <p class="center muted small">{{ tr('vote.already2', 'Votre bulletin est scellé. Merci de votre participation.') }}</p>
   {% elif token_bad %}
     <div class="flash" style="background:#fbf0dc;color:#8f5a11;border-color:#eeddb8">
-      Ce vote est réservé aux membres. Utilisez le <b>lien personnel</b> qui vous a été envoyé —
-      il ne fonctionne qu'une seule fois. S'il ne marche pas, c'est qu'il a <b>déjà servi à voter</b>.</div>
+      {{ tr('vote.token_bad', "Ce vote est réservé aux membres. Utilisez le <b>lien personnel</b> qui vous a été envoyé — il ne fonctionne qu'une seule fois. S'il ne marche pas, c'est qu'il a <b>déjà servi à voter</b>.") }}</div>
   {% else %}
     <form method="post">
       {% if restricted %}<input type="hidden" name="k" value="{{ token }}">{% endif %}
@@ -33,15 +32,15 @@
       </label>
       {% endfor %}
       <div style="margin-top:18px"></div>
-      <button type="submit" class="btn btn-primary">Sceller mon vote &#128274;</button>
+      <button type="submit" class="btn btn-primary">{{ tr('vote.seal', 'Sceller mon vote') }} &#128274;</button>
       <p class="center muted small" style="margin-top:12px">
-        Votre choix sera chiffré avant d'être enregistré. Personne ne pourra le lire.</p>
+        {{ tr('vote.seal_note', "Votre choix sera chiffré avant d'être enregistré. Personne ne pourra le lire.") }}</p>
     </form>
   {% endif %}
 </div>
 
 <div class="card" id="discussion">
-  <h2 style="font-size:1.15rem">&#128172; Discussion</h2>
+  <h2 style="font-size:1.15rem">&#128172; {{ tr('vote.discussion', 'Discussion') }}</h2>
   {% if comments %}
     {% for c in comments %}
     <div style="padding:10px 0;border-top:1px solid var(--line-2)">
@@ -50,17 +49,17 @@
     </div>
     {% endfor %}
   {% else %}
-    <p class="muted small">Aucun commentaire. Lancez la discussion !</p>
+    <p class="muted small">{{ tr('vote.no_comments', 'Aucun commentaire. Lancez la discussion !') }}</p>
   {% endif %}
   {% if me %}
   <form method="post" action="{{ url_for('commenter', poll_id=poll['id']) }}" style="margin-top:12px">
-    <textarea name="body" maxlength="1000" placeholder="Votre commentaire…" required></textarea>
-    <button type="submit" class="btn btn-primary" style="margin-top:10px">Commenter</button>
+    <textarea name="body" maxlength="1000" placeholder="{{ tr('vote.comment_ph', 'Votre commentaire…') }}" required></textarea>
+    <button type="submit" class="btn btn-primary" style="margin-top:10px">{{ tr('vote.comment_btn', 'Commenter') }}</button>
   </form>
   {% else %}
   <p class="muted small" style="margin-top:12px">
-    <a href="{{ url_for('connexion', next=url_for('voter', poll_id=poll['id'])) }}">Connectez-vous</a>
-    pour rejoindre la discussion.</p>
+    <a href="{{ url_for('connexion', next=url_for('voter', poll_id=poll['id'])) }}">{{ tr('vote.login_link', 'Connectez-vous') }}</a>
+    {{ tr('vote.login_link2', 'pour rejoindre la discussion.') }}</p>
   {% endif %}
 </div>
 {% endblock %}

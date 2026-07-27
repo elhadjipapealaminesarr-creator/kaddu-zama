@@ -1,40 +1,40 @@
 {% extends "base.html" %}
-{% block title %}Créer un vote — Kaddu{% endblock %}
+{% block title %}{{ tr('creer.h', 'Créer un vote') }} — Kaddu{% endblock %}
 {% block content %}
-<a href="{{ url_for('index') }}" class="back">&#8592; Retour</a>
+<a href="{{ url_for('index') }}" class="back">&#8592; {{ tr('nav.back', 'Retour') }}</a>
 <div class="card pad-lg">
-  <h1 style="font-size:1.5rem">Créer un vote</h1>
-  <p class="muted small" style="margin-top:-4px">Une clé de chiffrement unique sera générée pour ce vote.</p>
+  <h1 style="font-size:1.5rem">{{ tr('creer.h', 'Créer un vote') }}</h1>
+  <p class="muted small" style="margin-top:-4px">{{ tr('creer.sub', 'Une clé de chiffrement unique sera générée pour ce vote.') }}</p>
   <form method="post">
-    <label class="fld" for="title">Titre du vote</label>
+    <label class="fld" for="title">{{ tr('creer.title', 'Titre du vote') }}</label>
     <input type="text" id="title" name="title" value="{{ title }}"
-           placeholder="Ex. Assemblée de l'amicale 2026" required>
+           placeholder="{{ tr('creer.title.ph', 'Ex. Assemblée de l&#39;amicale 2026') }}" required>
 
-    <label class="fld" for="question">Question posée</label>
+    <label class="fld" for="question">{{ tr('creer.q', 'Question posée') }}</label>
     <input type="text" id="question" name="question" value="{{ question }}"
-           placeholder="Ex. Qui élire au poste de président ?" required>
+           placeholder="{{ tr('creer.q.ph', 'Ex. Qui élire au poste de président ?') }}" required>
 
-    <label class="fld">Les choix</label>
+    <label class="fld">{{ tr('creer.choices', 'Les choix') }}</label>
     <div id="opts">
       {% for o in options %}
       <div class="opt-row">
-        <input type="text" name="option" value="{{ o }}" placeholder="Choix {{ loop.index }}">
-        <button type="button" class="opt-del" onclick="delOpt(this)" aria-label="Supprimer">&times;</button>
+        <input type="text" name="option" value="{{ o }}" placeholder="{{ tr('creer.choice', 'Choix') }} {{ loop.index }}">
+        <button type="button" class="opt-del" onclick="delOpt(this)" aria-label="{{ tr('creer.del', 'Supprimer') }}">&times;</button>
       </div>
       {% endfor %}
     </div>
-    <button type="button" class="addopt" onclick="addOpt()">&#43; Ajouter un choix</button>
+    <button type="button" class="addopt" onclick="addOpt()">&#43; {{ tr('creer.add', 'Ajouter un choix') }}</button>
 
     <label class="choice" style="margin-top:18px">
       <input type="checkbox" name="public" value="1">
       <span class="box"><span class="dot"></span>
-        <span>Rendre ce vote <b>public</b><br>
-          <span class="muted small">Il apparaîtra sur la place publique. Les votes restent secrets.</span>
+        <span>{{ tr('creer.public', 'Rendre ce vote <b>public</b>') }}<br>
+          <span class="muted small">{{ tr('creer.public.note', 'Il apparaîtra sur la place publique. Les votes restent secrets.') }}</span>
         </span></span>
     </label>
 
     <div style="margin-top:14px"></div>
-    <button type="submit" class="btn btn-primary">Générer le vote &#128274;</button>
+    <button type="submit" class="btn btn-primary">{{ tr('creer.generate', 'Générer le vote') }} &#128274;</button>
   </form>
 </div>
 {% endblock %}
@@ -44,8 +44,8 @@ function addOpt(){
   const box=document.getElementById('opts');
   if(box.querySelectorAll('.opt-row').length>=8) return;
   const row=document.createElement('div');row.className='opt-row';
-  row.innerHTML='<input type="text" name="option" placeholder="Autre choix">'+
-    '<button type="button" class="opt-del" onclick="delOpt(this)" aria-label="Supprimer">&times;</button>';
+  row.innerHTML='<input type="text" name="option" placeholder="{{ tr('creer.choice', 'Choix') }}">'+
+    '<button type="button" class="opt-del" onclick="delOpt(this)" aria-label="{{ tr('creer.del', 'Supprimer') }}">&times;</button>';
   box.appendChild(row);row.querySelector('input').focus();
 }
 function delOpt(b){

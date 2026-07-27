@@ -1,15 +1,15 @@
 {% extends "base.html" %}
-{% block title %}Rejoindre un vote — Kaddu{% endblock %}
+{% block title %}{{ tr('join.h', 'Rejoindre un vote') }} — Kaddu{% endblock %}
 {% block content %}
-<a href="{{ url_for('index') }}" class="back">&#8592; Retour</a>
+<a href="{{ url_for('index') }}" class="back">&#8592; {{ tr('nav.back', 'Retour') }}</a>
 <div class="card pad-lg">
-  <h1 style="font-size:1.5rem">Rejoindre un vote</h1>
-  <p class="muted small" style="margin-top:-4px">Collez le lien reçu, ou saisissez le code du vote.</p>
+  <h1 style="font-size:1.5rem">{{ tr('join.h', 'Rejoindre un vote') }}</h1>
+  <p class="muted small" style="margin-top:-4px">{{ tr('join.sub', 'Collez le lien reçu, ou saisissez le code du vote.') }}</p>
   <form method="post">
-    <label class="fld" for="code">Lien ou code</label>
-    <input type="text" id="code" name="code" placeholder="ex. https://…/v/aB3xY  ou  aB3xY" required>
+    <label class="fld" for="code">{{ tr('join.field', 'Lien ou code') }}</label>
+    <input type="text" id="code" name="code" placeholder="{{ tr('join.ph', 'ex. https://…/v/aB3xY  ou  aB3xY') }}" required>
     <div style="margin-top:18px"></div>
-    <button type="submit" class="btn btn-primary">Continuer</button>
+    <button type="submit" class="btn btn-primary">{{ tr('join.continue', 'Continuer') }}</button>
   </form>
 </div>
 {% endblock %}

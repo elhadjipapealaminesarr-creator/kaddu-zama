@@ -79,6 +79,8 @@ section{padding:70px 0}
 .h2{font-size:clamp(1.7rem,3.6vw,2.5rem);font-weight:700}
 .sub{color:var(--muted);font-size:1.08rem;max-width:640px;margin-top:12px}
 .center{text-align:center}.center .sub{margin-left:auto;margin-right:auto}
+.chip{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:9px 16px;font-family:'Sora';font-weight:600;font-size:.92rem;color:var(--ink,#16261F);white-space:nowrap}
+.chip .muted{font-family:'Inter';font-weight:500}
 .tools{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:44px}
 .tool{background:var(--card);border:1px solid var(--line);border-radius:18px;overflow:hidden;transition:.2s;color:inherit}
 .tool:hover{transform:translateY(-4px);box-shadow:0 22px 44px rgba(22,38,31,.1)}
@@ -128,7 +130,7 @@ footer .brand{color:#fff}footer .brand b{color:var(--gold)}
   <div>
     <span class="kick">{{ tr('hero.kick', '&#128274; Protégé par le chiffrement FHE de Zama') }}</span>
     <h1>{{ tr('hero.title_pre', 'La confiance collective, garantie par les ') }}<span class="hl">{{ tr('hero.title_hl', 'mathématiques') }}</span></h1>
-    <p class="lead">{{ tr('hero.lead2', "Kaddu outille les communautés d'Afrique francophone — associations, coopératives, tontines, syndicats — pour décider, épargner et s'organiser sans que personne, pas même l'organisateur, ne puisse voir ou trafiquer les choix.") }}</p>
+    <p class="lead">{{ tr('hero.lead2', "Kaddu outille les communautés du monde entier — associations, coopératives, tontines et groupes d'épargne, syndicats — pour décider, épargner et s'organiser sans que personne, pas même l'organisateur, ne puisse voir ou trafiquer les choix.") }}</p>
     <div class="cta">
       <a href="#outils" class="btn btn-gold">{{ tr('hero.cta_tools', 'Découvrir nos outils') }}</a>
       <a href="{{ url_for('rejoindre') }}" class="btn btn-light">{{ tr('hero.cta_code', "J'ai un code pour participer") }}</a>
@@ -159,6 +161,27 @@ footer .brand{color:#fff}footer .brand b{color:var(--gold)}
     <div><h3>{{ tr('pil.pool.h', 'Mutualiser') }}</h3><p>{{ tr('pil.pool.p', 'Mettre en commun des chiffres sans les exposer.') }}</p></div>
   </div>
 </div></div>
+
+<section id="monde"><div class="wrap center">
+  <div class="eyebrow">{{ tr('world.eyebrow', 'Un problème universel') }}</div>
+  <h2 class="h2" style="margin:0 auto">{{ tr('world.h2', "La même confiance à protéger, partout dans le monde") }}</h2>
+  <p class="sub">{{ tr('world.sub', "L'épargne communautaire et les décisions collectives existent sur tous les continents — un immense marché informel, largement ignoré. Kaddu parle leur langue.") }}</p>
+  <div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center;max-width:820px;margin:26px auto 0">
+    <span class="chip">&#127467;&#127479; Tontines <span class="muted">— Afrique</span></span>
+    <span class="chip">&#127474;&#127485; Tandas <span class="muted">— Mexique</span></span>
+    <span class="chip">&#127470;&#127475; Chit funds <span class="muted">— Inde</span></span>
+    <span class="chip">&#127468;&#127469; Susu <span class="muted">— Afrique de l'Ouest</span></span>
+    <span class="chip">&#127464;&#127475; Hui <span class="muted">— Chine</span></span>
+    <span class="chip">&#127477;&#127469; Paluwagan <span class="muted">— Philippines</span></span>
+  </div>
+  <div style="max-width:760px;margin:26px auto 0;padding:20px 22px;border-radius:18px;background:var(--soft);border:1px solid var(--line);text-align:left;display:flex;gap:14px;align-items:flex-start">
+    <div style="font-size:1.8rem;line-height:1">&#127477;&#127475;</div>
+    <div>
+      <div style="font-family:'Sora';font-weight:700;margin-bottom:2px">{{ tr('world.flag.h', "Notre point de départ : l'Afrique francophone") }}</div>
+      <p class="muted" style="margin:0">{{ tr('world.flag.p', "Kaddu est né à Dakar, pensé d'abord pour les tontines, associations et coopératives d'Afrique francophone — sur téléphone, en français, sans compte bancaire. C'est notre terrain de preuve avant le reste du monde.") }}</p>
+    </div>
+  </div>
+</div></section>
 
 <section id="outils"><div class="wrap center">
   <div class="eyebrow">{{ tr('mod.eyebrow', 'Une plateforme, plusieurs usages') }}</div>
@@ -221,7 +244,7 @@ footer .brand{color:#fff}footer .brand b{color:var(--gold)}
   <div class="impact">
     <div class="eyebrow" style="color:#F7CD8A">{{ tr('mis.eyebrow', 'Notre mission') }}</div>
     <h2>{{ tr('mis.h2', 'Rendre la confiance indépendante des personnes') }}</h2>
-    <p class="lead">{{ tr('mis.p', 'Partout où des communautés décident et épargnent ensemble, la confiance est fragile. Kaddu la remplace par une garantie mathématique — gratuite, sur téléphone, en français.') }}</p>
+    <p class="lead">{{ tr('mis.p', "Partout dans le monde, là où des communautés décident et épargnent ensemble, la confiance est fragile. Kaddu la remplace par une garantie mathématique — gratuite, sur téléphone, accessible à tous.") }}</p>
     <div class="stats">
       <div class="stat"><div class="n">100%</div><div class="l">{{ tr('mis.s1', 'des votes chiffrés de bout en bout') }}</div></div>
       <div class="stat"><div class="n">0</div><div class="l">{{ tr('mis.s2', 'choix individuel jamais exposé') }}</div></div>
@@ -254,7 +277,7 @@ footer .brand{color:#fff}footer .brand b{color:var(--gold)}
   <div style="max-width:760px;margin:40px auto 0;display:flex;flex-direction:column;gap:12px">
     <details><summary>{{ tr('faq.q1', "L'organisateur peut-il voir mon vote ?") }}</summary><p style="color:var(--muted);margin-top:10px">{{ tr('faq.a1', 'Non. Votre bulletin est chiffré sur-le-champ. Même la personne qui a créé le vote ne voit que le résultat final, jamais les choix individuels.') }}</p></details>
     <details><summary>{{ tr('faq.q4', 'Est-ce vraiment sécurisé ?') }}</summary><p style="color:var(--muted);margin-top:10px">{{ tr('faq.a4', "Oui. Kaddu s'appuie sur le chiffrement homomorphe (FHE) de Zama : on calcule sur des données chiffrées sans jamais les déchiffrer. Le secret est garanti par les mathématiques.") }}</p></details>
-    <details><summary>{{ tr('faq.q5', 'Pour qui est fait Kaddu ?') }}</summary><p style="color:var(--muted);margin-top:10px">{{ tr('faq.a5', "Pour les associations, coopératives, tontines, syndicats, amicales, bureaux d'étudiants — partout où l'on prend des décisions à plusieurs et où la confiance compte.") }}</p></details>
+    <details><summary>{{ tr('faq.q5', 'Pour qui est fait Kaddu ?') }}</summary><p style="color:var(--muted);margin-top:10px">{{ tr('faq.a5', "Pour les associations, coopératives, tontines, groupes d'épargne, syndicats, amicales et bureaux d'étudiants — sur tous les continents, partout où l'on décide à plusieurs et où la confiance compte.") }}</p></details>
     <details><summary>{{ tr('faq.q3', "Est-ce que c'est payant ?") }}</summary><p style="color:var(--muted);margin-top:10px">{{ tr('faq.a3', "Non, c'est gratuit. Kaddu est pensé pour être accessible à toutes les communautés.") }}</p></details>
   </div>
 </div></section>
