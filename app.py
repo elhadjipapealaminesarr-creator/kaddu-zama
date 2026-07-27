@@ -84,6 +84,276 @@ TRANSLATIONS = {
         "mod.alert.h3": "Alert vault",
         "mod.alert.p": "Report corruption or harassment without being alone: an alert only surfaces "
                        "once several people flag the same target. Below the threshold, it stays invisible.",
+        # --- Accueil international : héros, piliers, monde, mission, final ---
+        "index.tagline": "Confidentiality in service of communities",
+        "hero.lead2": "Kaddu gives communities everywhere — associations, cooperatives, savings "
+                      "circles and unions — the tools to decide, save and organize, so no one, "
+                      "not even the organizer, can see or tamper with the choices.",
+        "hero.cta_tools": "Discover our tools",
+        "hero.cap": "Every voice protected",
+        "pil.decide.h": "Decide", "pil.decide.p": "Truly secret, verifiable votes.",
+        "pil.save.h": "Save", "pil.save.p": "Tamper-proof savings circles, with no all-powerful manager.",
+        "pil.attrib.h": "Award", "pil.attrib.p": "Sealed-bid tenders — anti-corruption.",
+        "pil.pool.h": "Pool", "pil.pool.p": "Combine figures without exposing them.",
+        "world.eyebrow": "A universal problem",
+        "world.h2": "The same trust to protect, everywhere in the world",
+        "world.sub": "Community savings and collective decisions exist on every continent — a vast "
+                     "informal market, largely overlooked. Kaddu speaks their language.",
+        "world.flag.h": "Where we start: French-speaking Africa",
+        "world.flag.p": "Kaddu was born in Dakar, built first for the savings circles, associations "
+                        "and cooperatives of French-speaking Africa — on any phone, in French, with "
+                        "no bank account. It's our proving ground before the rest of the world.",
+        "mis.eyebrow": "Our mission",
+        "mis.h2": "Making trust independent of people",
+        "mis.p": "Everywhere in the world, wherever communities decide and save together, trust is "
+                 "fragile. Kaddu replaces it with a mathematical guarantee — free, on any phone, for everyone.",
+        "mis.s1": "of votes encrypted end-to-end",
+        "mis.s2": "individual choice ever exposed",
+        "mis.s3": "civic tools in a single app",
+        "mis.s4": "Zama's encryption, for real",
+        "mod.offres.p2": "Each bid is sealed at submission. In encrypted mode, losers never reveal "
+                         "their price. Anti-corruption through mathematics.",
+        "mod.idea.h3b": "Idea wall",
+        "mod.idea.p2": "Anyone posts an idea for the community or for Kaddu. Members vote, the best rise.",
+        "mod.place.h3": "Public square",
+        "mod.place.p": "Discover votes open to the public, take part and exchange with the Kaddu community.",
+        "mod.place.go": "Explore &#8594;",
+        "final.eyebrow": "Get started now",
+        "final.h2b": "Your first protected decision, in 2 minutes",
+        "final.p2": "Free, no account. Create a vote, a savings circle or a tender and invite your community.",
+        "final.cta1b": "Open Kaddu for free",
+        # --- Comptes (partagé) ---
+        "auth.signin": "Sign in", "auth.signup": "Create an account",
+        # --- Mise en commun protégée (pool.*) ---
+        "pool.title": "Protected pooling",
+        "pool.view.note": "Each figure is <b>encrypted on the phone</b> before it's sent. The server "
+                          "adds up the encrypted data: only the <b>total</b> is revealed, never an individual amount.",
+        "pool.contribs": "Contributions", "pool.closed": "Closed", "pool.open": "Open",
+        "pool.total.label": "Total pooled (computed on the encrypted data)",
+        "pool.avg.label": "Average per participant",
+        "pool.total.note": "No individual figure was decrypted to get this total.",
+        "pool.add.h": "Add my figure",
+        "pool.full": "The maximum number of participants has been reached.",
+        "pool.name": "Your name (optional)", "pool.name.ph": "e.g. Awa",
+        "pool.amount": "Your amount (FCFA)", "pool.amount.ph": "e.g. 25000",
+        "pool.add.btn": "Encrypt and add",
+        "pool.add.note": "Your amount is encrypted <b>before</b> being stored. Even the organizer "
+                         "can't read it: they'll only see the final total.",
+        "pool.close.confirm": "Close and reveal the total? No new contribution will be possible.",
+        "pool.close.btn": "Close and reveal the total",
+        "pool.close.note": "As the organizer, you can close whenever you like. The total is computed "
+                           "by homomorphic addition on the encrypted data.",
+        "pool.all": "All my pools",
+        "pool.hero.h": "Add up without exposing",
+        "pool.hero.lead": "Combine sensitive figures — budgets, contributions, donations — to get a "
+                          "<b>total and an average</b>, without anyone, not even the organizer, "
+                          "seeing anyone else's figure.",
+        "pool.login": "Sign in to create a pool.",
+        "pool.contrib.count": "contribution(s)", "pool.total.short": "total",
+        "pool.new": "New pool",
+        "pool.field.title": "Title", "pool.field.title.ph": "e.g. Association's forecast budget",
+        "pool.field.q": "Detail (optional)", "pool.field.q.ph": "e.g. How much can each person commit this quarter?",
+        "pool.create": "Create",
+        "pool.new.note": "You get a link to share. Everyone adds their figure, encrypted. At closing, "
+                         "Kaddu reveals only the total and the average.",
+        # --- Comparateur privé (cmp.*) ---
+        "cmp.title": "Private comparator",
+        "cmp.view.note": "Everyone submits their <b>bracket</b>, encrypted. Only the group "
+                         "<b>distribution</b> is revealed: you see where you stand, never anyone's exact figure.",
+        "cmp.contribs": "Participations", "cmp.closed": "Closed", "cmp.open": "Open",
+        "cmp.distrib": "Group distribution (computed on the encrypted data)",
+        "cmp.distrib.note": "No individual figure was decrypted. Only the number of people per bracket is known.",
+        "cmp.situate.h": "Place myself",
+        "cmp.full": "The maximum number of participants has been reached.",
+        "cmp.your": "Your figure", "cmp.range": "e.g.",
+        "cmp.situate.btn": "Encrypt and place me",
+        "cmp.situate.note": "Your exact figure is never stored: only your bracket is encrypted. You "
+                            "learn your position without exposing your amount.",
+        "cmp.close.confirm": "Close and reveal the distribution?",
+        "cmp.close.btn": "Close and reveal the distribution",
+        "cmp.all": "All my comparators",
+        "cmp.hero.h": "Know where I stand",
+        "cmp.hero.lead": "Compare <b>salaries, prices or contributions</b> within a group and know "
+                         "where you stand — without anyone seeing anyone else's figure.",
+        "cmp.login": "Sign in to create a comparator.",
+        "cmp.levels": "brackets", "cmp.new": "New comparator",
+        "cmp.field.title": "Title", "cmp.field.title.ph": "e.g. Salaries in the team",
+        "cmp.field.unit": "Unit (optional)", "cmp.field.unit.ph": "e.g. FCFA",
+        "cmp.field.min": "Minimum", "cmp.field.max": "Maximum",
+        "cmp.field.levels": "Number of brackets (2 to 10)",
+        "cmp.create": "Create",
+        "cmp.new.note": "You get a link to share. Everyone submits their figure (encrypted), and at "
+                        "closing Kaddu reveals only how many people per bracket.",
+        # --- Coffre-fort d'alertes (alr.*) ---
+        "alr.title": "Alert vault",
+        "alr.view.note": "An alert stays <b>invisible as long as it's alone</b>. It only appears when",
+        "alr.people": "people",
+        "alr.view.note2": "independently report the same target. You are never the lone reporter.",
+        "alr.threshold.label": "Reveal threshold", "alr.concordant": "matching alerts",
+        "alr.evaluated": "Evaluated", "alr.open": "Open",
+        "alr.reached": "Targets that reached the threshold",
+        "alr.signal.note": "A signal, not a verdict. This case must be handed to a trusted third "
+                           "party / the appropriate channel. Reporters stay anonymous.",
+        "alr.none.reached": "No target reached the threshold.",
+        "alr.none.revealed": "No alert is revealed.",
+        "alr.deposited": "Alerts filed (content invisible)",
+        "alr.eval.confirm": "Evaluate the register? Only targets reaching the threshold will be revealed.",
+        "alr.eval.btn": "Evaluate (reveal what passes the threshold)",
+        "alr.eval.note": "Even you, the organizer, see nothing before evaluation — and nothing about "
+                         "targets below the threshold.",
+        "alr.deposit.h": "File an alert",
+        "alr.login": "Sign in to file an alert (one per person).",
+        "alr.already": "You have already filed an alert in this register. Thank you.",
+        "alr.full": "Maximum number of alerts reached.",
+        "alr.whom": "Who are you reporting?",
+        "alr.deposit.btn": "Encrypt and file",
+        "alr.deposit.note1": "Your choice is encrypted. Until",
+        "alr.deposit.note2": "people have named the same target, it stays completely invisible. No "
+                             "tool guarantees absolute safety: in case of immediate danger, contact "
+                             "emergency services or someone you trust.",
+        "alr.all": "All my registers",
+        "alr.hero.h": "Report without being alone",
+        "alr.hero.lead": "Corruption, harassment, abuse of authority: an alert stays invisible as "
+                         "long as one person carries it. It only appears when several people report "
+                         "the same target, independently.",
+        "alr.login.open": "Sign in to open a register.",
+        "alr.disclaimer": "A register is opened by a <b>trusted third party</b> (union, NGO, "
+                          "mediator). Targets are a list of roles/functions, not a free text field. "
+                          "Kaddu reveals a collective signal — it does not pass judgment.",
+        "alr.threshold.short": "Threshold",
+        "alr.open.h": "Open a register",
+        "alr.field.title": "Title", "alr.field.title.ph": "e.g. Anti-corruption reporting — town hall of X",
+        "alr.field.ctx": "Context (optional)", "alr.field.ctx.ph": "e.g. reserved for service users",
+        "alr.field.threshold": "Reveal threshold (2 to 10)",
+        "alr.field.targets": "Possible targets — one per line (roles / functions)",
+        "alr.field.targets.ph": "Counter agent A&#10;Service head B&#10;Manager C",
+        "alr.open.btn": "Open the register",
+        "alr.open.note": "You get a link to share. Each person files at most one alert. At "
+                         "evaluation, only targets that reached the threshold appear — the others reveal nothing.",
+        # --- Lot 1 : navigation, comptes, communauté, idées, vote, partage ---
+        "nav.back": "Back", "nav.home": "Home",
+        "auth.email": "Email", "auth.email.ph": "you@example.com",
+        "auth.pw": "Password", "auth.pw.ph": "Your password", "auth.pw.min": "6 characters minimum",
+        "auth.no_account": "No account yet?", "auth.have_account": "Already registered?",
+        "auth.new_account": "New account", "auth.join_h": "Join the community",
+        "auth.join_p": "An account lets you take part in the public square, comment and suggest "
+                       "ideas. Free, and your vote always stays secret.",
+        "auth.name": "Display name", "auth.name.ph": "e.g. Awa D.",
+        "auth.signup.btn": "Create my account",
+        "comm.h": "The Kaddu community",
+        "comm.lead": "Discover votes open to the public, take part and exchange.",
+        "comm.create": "Create a vote", "comm.closed": "Closed", "comm.open": "Open",
+        "comm.votes": "vote(s)",
+        "comm.empty": "No public vote yet.",
+        "comm.empty2": "Be the first: create a vote and tick « Make public » so it shows up here.",
+        "idea.h": "Suggest, vote, push to the top",
+        "idea.lead": "An idea for your community or for Kaddu? Share it. The best-rated rise to the top.",
+        "idea.your": "Your idea", "idea.your.ph": "e.g. A digital savings circle for our cooperative",
+        "idea.body": "Details (optional)", "idea.body.ph": "Explain in a few words…",
+        "idea.publish": "Post the idea",
+        "idea.login": "Sign in to suggest an idea and vote.",
+        "idea.for": "For", "idea.against": "Against", "idea.by": "by",
+        "idea.empty": "No ideas yet. Post the first one!",
+        "idea.back": "Back to the community",
+        "creer.h": "Create a vote",
+        "creer.sub": "A unique encryption key will be generated for this vote.",
+        "creer.title": "Vote title", "creer.title.ph": "e.g. Association general assembly 2026",
+        "creer.q": "The question", "creer.q.ph": "e.g. Who should we elect as president?",
+        "creer.choices": "The choices", "creer.choice": "Choice", "creer.del": "Remove",
+        "creer.add": "Add a choice",
+        "creer.public": "Make this vote <b>public</b>",
+        "creer.public.note": "It will appear on the public square. Votes stay secret.",
+        "creer.generate": "Generate the vote",
+        "vote.closed": "This vote is closed. Thank you!",
+        "vote.see_result": "See the result",
+        "vote.already": "You have already voted on this device.",
+        "vote.already2": "Your ballot is sealed. Thank you for taking part.",
+        "vote.token_bad": "This vote is members-only. Use the <b>personal link</b> that was sent to "
+                          "you — it works only once. If it doesn't work, it has <b>already been used to vote</b>.",
+        "vote.seal": "Seal my vote",
+        "vote.seal_note": "Your choice will be encrypted before being stored. No one will be able to read it.",
+        "vote.discussion": "Discussion",
+        "vote.no_comments": "No comments yet. Start the discussion!",
+        "vote.comment_ph": "Your comment…", "vote.comment_btn": "Comment",
+        "vote.login_link": "Sign in", "vote.login_link2": "to join the discussion.",
+        "res.title": "Result",
+        "res.pending": "Vote in progress. The result will appear after the organizer closes it.",
+        "res.voted": "person(s) have already voted.",
+        "res.pending2": "Totals stay encrypted until closing — secrecy is preserved even during the vote.",
+        "res.none": "No vote was recorded.",
+        "res.final_pre": "Final tally over", "res.final_post": "vote(s).",
+        "res.wins": "wins", "res.proof": "confidentiality proof",
+        "res.proof2": "These totals were obtained by adding up the <b>encrypted</b> ballots, then "
+                      "decrypting only the sum. No individual vote was read.",
+        "merci.title": "Vote recorded", "merci.h": "Your vote is sealed",
+        "merci.p": "It has been encrypted and recorded. No one — not even the organizer — can know "
+                   "what you chose.",
+        "merci.b1": "Encrypted ballot", "merci.b2": "Anonymous", "merci.result": "See the result page",
+        "join.h": "Join a vote", "join.sub": "Paste the link you received, or enter the vote code.",
+        "join.field": "Link or code", "join.ph": "e.g. https://…/v/aB3xY  or  aB3xY",
+        "join.continue": "Continue",
+        "err.oops": "Oops", "err.home": "Back to home",
+        "partage.title": "Vote created", "partage.created": "Vote created",
+        "partage.scan": "Have this code scanned, or share the link below.",
+        "partage.copy": "Copy", "partage.copied": "Copied", "partage.share": "Share…",
+        "partage.direct": "Or share directly:", "partage.email": "Email", "partage.done": "Done",
+        "partage.mail_subj": "Kaddu vote: ",
+        "partage.msg_pre": "Take part in the vote « ",
+        "partage.msg_post": " » on Kaddu — a 100% secret vote: ",
+        "partage.msg_post_short": " » on Kaddu — 100% secret",
+        "partage.admin_h": "Your private organizer link",
+        "partage.admin_p": "Keep this link for yourself. It lets you <b>track participation</b> and "
+                           "<b>close the vote</b> to reveal the result. Don't share it with voters.",
+        "partage.admin_btn": "Open my dashboard",
+        # --- Lot 2 : tontines + appels d'offres (listes/création) ---
+        "tont.h": "Your tontines",
+        "tont.lead": "A <b>tamper-proof ledger</b>: contributions, order of beneficiaries and proofs "
+                     "— each entry is sealed by a fingerprint linked to the previous one.",
+        "tont.login": "Sign in to create and manage a tontine.",
+        "tont.members": "members", "tont.done": "Finished", "tont.round": "Round",
+        "tont.new": "New tontine",
+        "tont.name": "Tontine name", "tont.name.ph": "e.g. Grand-Yoff mothers' tontine",
+        "tont.amount": "Amount per round (FCFA, optional)", "tont.amount.ph": "e.g. 10000",
+        "tont.freq": "Frequency (optional)", "tont.freq.ph": "e.g. every month",
+        "tont.members_lbl": "Members — one per line, in order of beneficiaries",
+        "tont.validation": "Contribution validation",
+        "tont.mode_simple": "<b>Simple</b> — the organizer marks the contributions (small trusted group)",
+        "tont.mode_p2p": "<b>Double validation (P2P)</b> — the member confirms « I paid » AND the "
+                         "beneficiary confirms « I received ». The organizer can no longer validate "
+                         "alone. Each member gets a private link.",
+        "tont.create": "Create the tontine",
+        "tont.note": "The money flows between you (mobile money, hand to hand). Kaddu only keeps the "
+                     "<b>tamper-proof ledger</b>: who contributed, whose turn it is, and the proof "
+                     "that nothing was changed.",
+        "off.h": "Your tenders",
+        "off.lead": "Anti-corruption: each bid is <b>sealed</b> at submission (fingerprint of the "
+                    "amount + secret word). No one — not even the organizer — sees the amounts before opening.",
+        "off.login": "Sign in to create and manage a tender.",
+        "off.high": "highest-bid (highest amount)", "off.low": "lowest-bid (lowest amount)",
+        "off.st_reveal": "Open (reveal)", "off.st_open": "Submissions open",
+        "off.new": "New tender",
+        "off.title": "Title", "off.title.ph": "e.g. Supply of 100 tables for the school",
+        "off.desc": "Description (optional)", "off.desc.ph": "Details, criteria, deadline…",
+        "off.type": "Tender type",
+        "off.mode_reveal": "<b>Classic (sealed)</b> — bids are opened at the end; everyone reveals their amount.",
+        "off.mode_fhe": "<b>Encrypted (FHE)</b> — the winner is computed on the <b>encrypted</b> bids. "
+                        "<b>Losers never reveal</b> their price. (Lowest-bid.)",
+        "off.criterion": "Winning criterion",
+        "off.crit_low": "Lowest-bid — the <b>lowest</b> amount wins",
+        "off.crit_high": "Highest-bid — the <b>highest</b> amount wins",
+        "off.grid": "Price grid: bidders will propose a price on this grid (from min to max, by "
+                    "step). 2 to 30 levels.",
+        "off.pmin": "Min price (FCFA)", "off.pmax": "Max price (FCFA)", "off.pstep": "Step (FCFA)",
+        "off.deadline": "Submission deadline (optional)",
+        "off.deadline_note": "After this date, no more bids are accepted and the count opens "
+                             "automatically. The timing becomes indisputable.",
+        "off.minbids": "Minimum number of bids (optional)",
+        "off.minbids_note": "Below this number at closing, the tender is cancelled (no winner) — "
+                            "guarantees real competition.",
+        "off.invite": "<b>By invitation</b> — only listed companies can submit (1 private link each, "
+                      "one bid only). Blocks fake bids and duplicates.",
+        "off.invites": "Invited companies (one per line)",
+        "off.create": "Create the tender",
         "mod.idea.h3": "An idea for your community?",
         "mod.idea.p": "Post it on the idea wall: the community votes, the best ones rise.",
         "mod.idea.go": "Open the idea wall &#8594;",
@@ -155,18 +425,20 @@ TRANSLATIONS = {
 
 
 def pick_lang():
-    """Choix explicite (session) > langue du navigateur (Accept-Language) > français."""
+    """Choix explicite (session) > détection automatique. Kaddu vise le monde :
+    le français est servi aux visiteurs francophones (Afrique francophone, France,
+    diaspora), l'anglais est la langue par défaut pour tous les autres."""
     chosen = session.get("lang")
     if chosen in SUPPORTED_LANGS:
         return chosen
     accept = (request.headers.get("Accept-Language") or "").lower()
     for part in accept.replace(" ", "").split(","):
         code = part.split(";")[0][:2]
-        if code in SUPPORTED_LANGS:
-            return code
-        if code:            # première langue déclarée non supportée -> défaut français
-            break
-    return "fr"
+        if code == "fr":      # navigateur francophone -> français
+            return "fr"
+        if code == "en":      # navigateur anglophone -> anglais
+            return "en"
+    return "en"               # défaut international : anglais
 
 
 @app.context_processor
@@ -181,6 +453,16 @@ def inject_i18n():
     # Exposé sous le nom "tr" (et pas "t") pour ne pas entrer en collision avec les
     # variables "t" (objet tontine / appel d'offres) passées par certaines pages.
     return {"LANG": lang, "tr": t}
+
+
+def t_srv(key, default_fr):
+    """Traduction côté serveur, pour les messages flash. Même logique que le `tr`
+    des gabarits : en français on renvoie le texte source ; sinon la traduction
+    (repli sur le français si la clé manque)."""
+    lang = pick_lang()
+    if lang == "fr":
+        return default_fr
+    return TRANSLATIONS.get(lang, {}).get(key, default_fr)
 
 
 @app.route("/lang/<code>")
