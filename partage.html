@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}{{ tr('partage.title', 'Vote créé') }} — Kaddu{% endblock %}
+{% block content %}
+<div class="card pad-lg center">
+  <span class="pill pill-green">&#10004; {{ tr('partage.created', 'Vote créé') }}</span>
+  <h1 style="font-size:1.5rem;margin-top:14px">{{ poll['title'] }}</h1>
+  <p class="muted" style="margin-top:-4px">{{ poll['question'] }}</p>
+
+  <div class="qr" id="qr" style="margin-top:6px"></div>
+  <p class="small muted" style="margin-top:10px">{{ tr('partage.scan', 'Faites scanner ce code, ou partagez le lien ci-dessous.') }}</p>
+
+  <div class="copybox">
+    <input type="text" id="voteurl" value="{{ vote_url }}" readonly>
+    <button type="button" onclick="cp('voteurl',this)">{{ tr('partage.copy', 'Copier') }}</button>
+  </div>
+
+  {% set share_text = tr('partage.msg_pre', 'Participez au vote « ') ~ poll['title'] ~ tr('partage.msg_post', ' » sur Kaddu — un vote 100% secret : ') ~ vote_url %}
+  {% set txt = share_text | urlencode %}
+  {% set u = vote_url | urlencode %}
+  {% set ttl = poll['title'] | urlencode %}
+
+  <button type="button" id="nativeShare" onclick="kShare()" class="btn btn-gold" style="margin-top:12px;display:none;width:100%;justify-content:center">
+    &#128228;&nbsp; {{ tr('partage.share', 'Partager…') }}</button>
+
+  <p class="small muted" style="margin:14px 0 8px">{{ tr('partage.direct', 'Ou partagez directement :') }}</p>
+  <div class="share-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px">
+    <a href="https://wa.me/?text={{ txt }}" target="_blank" rel="noopener" class="btn shr" style="background:#25D366;color:#0b3d25">&#128241;&nbsp;WhatsApp</a>
+    <a href="https://t.me/share/url?url={{ u }}&text={{ (tr('partage.msg_pre', 'Participez au vote « ') ~ poll['title'] ~ tr('partage.msg_post_short', ' » sur Kaddu — 100% secret')) | urlencode }}" target="_blank" rel="noopener" class="btn shr" style="background:#229ED9;color:#fff">&#9992;&#65039;&nbsp;Telegram</a>
+    <a href="https://www.facebook.com/sharer/sharer.php?u={{ u }}" target="_blank" rel="noopener" class="btn shr" style="background:#1877F2;color:#fff">&#128077;&nbsp;Facebook</a>
+    <a href="https://twitter.com/intent/tweet?text={{ (tr('partage.msg_pre', 'Participez au vote « ') ~ poll['title'] ~ tr('partage.msg_post', ' » sur Kaddu — un vote 100% secret : ')) | urlencode }}&url={{ u }}" target="_blank" rel="noopener" class="btn shr" style="background:#0f1419;color:#fff">&#120143;&nbsp;X</a>
+    <a href="sms:?&body={{ txt }}" class="btn shr" style="background:#5E6B64;color:#fff">&#128172;&nbsp;SMS</a>
+    <a href="mailto:?subject={{ (tr('partage.mail_subj', 'Vote Kaddu : ') ~ poll['title']) | urlencode }}&body={{ txt }}" class="btn shr" style="background:#B87A28;color:#fff">&#9993;&#65039;&nbsp;{{ tr('partage.email', 'E-mail') }}</a>
+  </div>
+</div>
+
+{% if admin_url %}
+<div class="card">
+  <h2 style="font-size:1.1rem">&#128273; {{ tr('partage.admin_h', "Votre lien privé d'organisateur") }}</h2>
+  <p class="muted small">{{ tr('partage.admin_p', 'Gardez ce lien pour vous. Il permet de <b>suivre la participation</b> et de <b>clore le vote</b> pour révéler le résultat. Ne le partagez pas avec les votants.') }}</p>
+  <div class="copybox">
+    <input type="text" id="adminurl" value="{{ admin_url }}" readonly>
+    <button type="button" onclick="cp('adminurl',this)">{{ tr('partage.copy', 'Copier') }}</button>
+  </div>
+  <a href="{{ admin_url }}" class="btn btn-gold" style="margin-top:8px">{{ tr('partage.admin_btn', 'Ouvrir mon tableau de bord') }}</a>
+</div>
+{% endif %}
+
+<a href="{{ url_for('index') }}" class="btn btn-ghost">{{ tr('partage.done', 'Terminé') }}</a>
+{% endblock %}
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+new QRCode(document.getElementById('qr'),{text:"{{ vote_url }}",width:168,height:168,
+  colorDark:"#0E5A4A",colorLight:"#ffffff"});
+function cp(id,btn){
+  const el=document.getElementById(id);el.select();el.setSelectionRange(0,9999);
+  navigator.clipboard.writeText(el.value).then(()=>{const t=btn.textContent;btn.textContent="{{ tr('partage.copied', 'Copié') }} ✓";
+    setTimeout(()=>btn.textContent=t,1400);});
+}
+var K_URL="{{ vote_url }}", K_TITLE="{{ poll['title'] }}";
+function kShare(){
+  if(navigator.share){navigator.share({title:"Kaddu — "+K_TITLE,
+    text:"{{ tr('partage.msg_pre', 'Participez au vote « ') }}"+K_TITLE+"{{ tr('partage.msg_post_short', ' » sur Kaddu — 100% secret') }}",url:K_URL}).catch(function(){});}
+}
+if(navigator.share){var b=document.getElementById('nativeShare');if(b)b.style.display='inline-flex';}
+</script>
+<style>.shr{font-size:.9rem;padding:11px 10px;justify-content:center;white-space:nowrap}</style>
+{% endblock %}

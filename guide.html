@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block title %}{{ tr('nav.comment', 'Comment ça marche') }} — Kaddu{% endblock %}
+{% block content %}
+<a href="{{ url_for('index') }}" class="back">&#8592; {{ tr('nav.home', 'Accueil') }}</a>
+
+<div class="hero">
+  <span class="kicker">&#10067; {{ tr('gd.kicker', 'Guide') }}</span>
+  <h1>{{ tr('nav.comment', 'Comment ça marche') }}</h1>
+  <p class="lead">{{ tr('gd.lead', "Kaddu, ce n'est pas qu'un outil de vote : c'est une boîte à outils de confiance pour vos communautés. Tous reposent sur un même principe — le secret garanti par les <b>mathématiques</b> (chiffrement FHE de Zama), pas par la confiance. Aucune compétence technique.") }}</p>
+</div>
+
+<div class="card center">
+  <span class="pill pill-green">&#9679; {{ tr('gd.services', '5 services en ligne') }}</span>
+  <p class="muted small" style="margin-top:10px">{{ tr('gd.choose', "Choisissez l'outil qui correspond à votre besoin. Chacun s'utilise en quelques minutes, gratuitement, sans compte pour participer.") }}</p>
+</div>
+
+<!-- VOTE -->
+<div class="card">
+  <span class="pill pill-gold">&#128499;&#65039; {{ tr('mod.vote.h3', 'Vote confidentiel') }}</span>
+  <h2 style="margin-top:12px">{{ tr('gd.vote_h', 'Décider ensemble, en secret') }}</h2>
+  <img src="/static/demo.gif" alt="{{ tr('gd.demo_alt', 'Démo : créer un vote, partager, voter, résultat') }}"
+       style="display:block;width:100%;max-width:320px;margin:8px auto 14px;border-radius:12px">
+  <ul class="steps">
+    <li><span class="n">1</span><div><div class="t">{{ tr('gd.v1t', 'Créez le vote') }}</div>
+      <div class="d">{{ tr('gd.v1d', 'Un titre, une question, des choix. Kaddu vous donne un lien + un QR code.') }}</div></div></li>
+    <li><span class="n">2</span><div><div class="t">{{ tr('gd.v2t', 'Partagez sur WhatsApp') }}</div>
+      <div class="d">{{ tr('gd.v2d', 'Chacun ouvre le lien, choisit et scelle son bulletin — chiffré aussitôt, invisible pour tous.') }}</div></div></li>
+    <li><span class="n">3</span><div><div class="t">{{ tr('gd.v3t', 'Clôturez et révélez') }}</div>
+      <div class="d">{{ tr('gd.v3d', 'Le résultat est calculé sur les bulletins chiffrés puis affiché, vérifiable par tous.') }}</div></div></li>
+  </ul>
+  <p class="muted small">{{ tr('gd.vote_tip', "Astuce : générez un <b>lien unique par membre</b> pour qu'on ne vote qu'une fois.") }}</p>
+  <a href="{{ url_for('creer') }}" class="btn btn-primary">{{ tr('comm.create', 'Créer un vote') }}</a>
+</div>
+
+<!-- TONTINE -->
+<div class="card">
+  <span class="pill pill-gold">&#129534; {{ tr('mod.tontine.h3', 'Tontine inviolable') }}</span>
+  <h2 style="margin-top:12px">{{ tr('gd.tont_h', 'Épargner à plusieurs, sans gérant tout-puissant') }}</h2>
+  <ul class="steps">
+    <li><span class="n">1</span><div><div class="t">{{ tr('gd.t1t', 'Créez la tontine') }}</div>
+      <div class="d">{{ tr('gd.t1d', "Les membres, le montant par tour, l'ordre de passage. Chaque membre reçoit son lien privé.") }}</div></div></li>
+    <li><span class="n">2</span><div><div class="t">{{ tr('gd.t2t', 'Double validation à chaque tour') }}</div>
+      <div class="d">{{ tr('gd.t2d', 'Un versement ne compte que si le <b>payeur</b> ET le <b>bénéficiaire</b> confirment. Le gérant ne peut rien falsifier seul.') }}</div></div></li>
+    <li><span class="n">3</span><div><div class="t">{{ tr('gd.t3t', 'Registre infalsifiable') }}</div>
+      <div class="d">{{ tr('gd.t3d', "Chaque opération est scellée dans une chaîne d'empreintes : impossible de réécrire l'histoire. L'argent circule <b>hors de l'app</b> — Kaddu n'est que l'arbitre.") }}</div></div></li>
+    <li><span class="n">4</span><div><div class="t">{{ tr('gd.t4t', 'Priorité décidée en secret') }}</div>
+      <div class="d">{{ tr('gd.t4d', 'Un membre demande à passer plus tôt ? Les autres tranchent par un <b>vote chiffré</b> — personne ne voit qui a voté quoi.') }}</div></div></li>
+  </ul>
+  <a href="{{ url_for('tontines') }}" class="btn btn-primary">{{ tr('gd.tont_btn', 'Ouvrir les tontines') }}</a>
+</div>
+
+<!-- OFFRES -->
+<div class="card">
+  <span class="pill pill-gold">&#128273; {{ tr('mod.offres.h3', "Appels d'offres scellés") }}</span>
+  <h2 style="margin-top:12px">{{ tr('gd.off_h', 'Attribuer sans corruption') }}</h2>
+  <ul class="steps">
+    <li><span class="n">1</span><div><div class="t">{{ tr('gd.o1t', "Créez l'appel d'offres") }}</div>
+      <div class="d">{{ tr('gd.o1d', "Deux modes : <b>scellé</b> (les montants restent cachés jusqu'à l'ouverture) ou <b>chiffré</b> (enchère aveugle).") }}</div></div></li>
+    <li><span class="n">2</span><div><div class="t">{{ tr('gd.o2t', 'Chacun dépose son offre') }}</div>
+      <div class="d">{{ tr('gd.o2d', "L'offre est scellée à la soumission : personne, pas même l'organisateur, ne voit les prix avant l'heure.") }}</div></div></li>
+    <li><span class="n">3</span><div><div class="t">{{ tr('gd.o3t', 'Le gagnant, prouvé') }}</div>
+      <div class="d">{{ tr('gd.o3d', 'En mode chiffré, le gagnant est calculé <b>sur les offres chiffrées</b> : les perdants ne révèlent <b>jamais</b> leur prix.') }}</div></div></li>
+  </ul>
+  <a href="{{ url_for('offres') }}" class="btn btn-primary">{{ tr('gd.off_btn', "Ouvrir les appels d'offres") }}</a>
+</div>
+
+<!-- IDÉES + PLACE PUBLIQUE -->
+<div class="card">
+  <span class="pill pill-green">&#128161; {{ tr('mod.idea.h3b', "Mur d'idées") }}</span>
+  <h2 style="margin-top:12px">{{ tr('gd.idea_h', 'Faire remonter les meilleures idées') }}</h2>
+  <p class="muted small">{{ tr('gd.idea_p', 'Chacun propose une idée pour la communauté ou pour Kaddu. Les membres votent, et les mieux notées remontent en haut. Simple et transparent.') }}</p>
+  <a href="{{ url_for('idees') }}" class="btn btn-ghost">{{ tr('gd.idea_btn', "Ouvrir le mur d'idées") }}</a>
+</div>
+
+<div class="card">
+  <span class="pill pill-green">&#127760; {{ tr('mod.place.h3', 'Place publique') }}</span>
+  <h2 style="margin-top:12px">{{ tr('gd.place_h', 'Découvrir et participer') }}</h2>
+  <p class="muted small">{{ tr('gd.place_p', 'Parcourez les votes ouverts au public, participez et échangez avec la communauté Kaddu.') }}</p>
+  <a href="{{ url_for('communaute') }}" class="btn btn-ghost">{{ tr('gd.place_btn', 'Voir la place publique') }}</a>
+</div>
+
+<!-- POURQUOI SECRET -->
+<div class="card">
+  <div class="seal-lock">
+    <svg width="50" height="50" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <circle cx="24" cy="24" r="22" fill="#E4EFEA"/>
+      <path d="M18 22v-3a6 6 0 0112 0v3" stroke="#0E5A4A" stroke-width="2.4" stroke-linecap="round"/>
+      <rect x="15" y="22" width="18" height="14" rx="3.5" fill="#0E5A4A"/>
+      <circle cx="24" cy="28.5" r="2.2" fill="#E4A24C"/><rect x="23" y="29.5" width="2" height="4" rx="1" fill="#E4A24C"/>
+    </svg>
+  </div>
+  <h2 class="center">{{ tr('gd.why_h', "Pourquoi c'est vraiment secret") }}</h2>
+  <p class="muted small center">{{ tr('gd.why_p', "Vos données sont <b>chiffrées</b> dès que vous cliquez. Kaddu calcule (compte les votes, détermine un gagnant…) <b>sans jamais les ouvrir</b>, grâce au chiffrement FHE de Zama. Ni l'organisateur, ni le serveur, ni un pirate ne peut lire une donnée individuelle — seul le résultat final est révélé.") }}</p>
+</div>
+
+<!-- FAQ -->
+<div class="card">
+  <h2>{{ tr('gd.faq_h', 'Questions fréquentes') }}</h2>
+  <div style="display:flex;flex-direction:column;gap:8px;margin-top:6px">
+    <details style="border:1px solid var(--line);border-radius:12px;padding:12px 14px">
+      <summary style="font-weight:600;cursor:pointer">{{ tr('faq.q1', "L'organisateur peut-il voir mon vote ?") }}</summary>
+      <p class="muted small" style="margin-top:8px">{{ tr('gd.a1', "Non. Le bulletin est chiffré sur-le-champ ; l'organisateur ne voit que le résultat final.") }}</p></details>
+    <details style="border:1px solid var(--line);border-radius:12px;padding:12px 14px">
+      <summary style="font-weight:600;cursor:pointer">{{ tr('gd.q2', "Kaddu touche-t-il à l'argent des tontines ?") }}</summary>
+      <p class="muted small" style="margin-top:8px">{{ tr('gd.a2', "Non. L'argent circule <b>hors de l'app</b> (mobile money, espèces…). Kaddu est seulement l'arbitre impartial et le registre infalsifiable.") }}</p></details>
+    <details style="border:1px solid var(--line);border-radius:12px;padding:12px 14px">
+      <summary style="font-weight:600;cursor:pointer">{{ tr('gd.q3', 'Faut-il un compte pour participer ?') }}</summary>
+      <p class="muted small" style="margin-top:8px">{{ tr('gd.a3', 'Non. Un simple lien suffit. Le compte sert seulement à organiser (créer des votes, gérer une tontine, proposer des idées).') }}</p></details>
+    <details style="border:1px solid var(--line);border-radius:12px;padding:12px 14px">
+      <summary style="font-weight:600;cursor:pointer">{{ tr('faq.q3', "Est-ce que c'est payant ?") }}</summary>
+      <p class="muted small" style="margin-top:8px">{{ tr('gd.a4', 'Oui, entièrement gratuit.') }}</p></details>
+  </div>
+</div>
+
+<a href="{{ url_for('creer') }}" class="btn btn-primary">&#10133; {{ tr('nav.ouvrir', 'Ouvrir Kaddu') }}</a>
+<a href="{{ url_for('communaute') }}" class="btn btn-ghost">{{ tr('gd.see_comm', 'Voir la communauté') }}</a>
+{% endblock %}

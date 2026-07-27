@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}{{ tr('auth.signin', 'Se connecter') }} — Kaddu{% endblock %}
+{% block content %}
+<a href="{{ url_for('communaute') }}" class="back">&#8592; {{ tr('nav.communaute', 'Communauté') }}</a>
+<div class="card pad-lg">
+  <span class="pill pill-green">&#128272; {{ tr('auth.signin', 'Se connecter') }}</span>
+  <h1 style="font-size:1.4rem;margin-top:14px">{{ tr('auth.signin', 'Se connecter') }}</h1>
+  <form method="post">
+    <label class="fld" for="email">{{ tr('auth.email', 'E-mail') }}</label>
+    <input type="email" id="email" name="email" value="{{ email }}" placeholder="{{ tr('auth.email.ph', 'vous@exemple.com') }}" required>
+    <label class="fld" for="password">{{ tr('auth.pw', 'Mot de passe') }}</label>
+    <input type="password" id="password" name="password" placeholder="{{ tr('auth.pw.ph', 'Votre mot de passe') }}" required>
+    <div style="margin-top:20px"></div>
+    <button type="submit" class="btn btn-primary">{{ tr('auth.signin', 'Se connecter') }}</button>
+  </form>
+  <p class="center muted small" style="margin-top:14px">{{ tr('auth.no_account', 'Pas encore de compte ?') }}
+    <a href="{{ url_for('inscription') }}">{{ tr('auth.signup', 'Créer un compte') }}</a></p>
+</div>
+{% endblock %}

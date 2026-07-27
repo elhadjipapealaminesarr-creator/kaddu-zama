@@ -1,0 +1,226 @@
+{% extends "base.html" %}
+{% block title %}{{ t['title'] }} — {{ tr('odet.tender', "Appel d'offres") }} Kaddu{% endblock %}
+{% block content %}
+<a href="{{ url_for('offres') }}" class="back">&#8592; {{ tr('odet.back', "Mes appels d'offres") }}</a>
+
+<div class="hero">
+  {% if t['mode'] == 'fhe' %}
+    <span class="kicker">&#128274; {{ tr('odet.kicker_fhe', "Appel d'offres chiffré (FHE)") }}</span>
+  {% else %}
+    <span class="kicker">&#128274; {{ tr('odet.kicker_sealed', "Appel d'offres scellé") }}</span>
+  {% endif %}
+  <h1>{{ t['title'] }}</h1>
+  {% if t['description'] %}<p class="lead">{{ t['description'] }}</p>{% endif %}
+  {% if t['mode'] == 'fhe' %}
+    <p class="muted small">{{ tr('odet.fhe_sub', "Enchère aveugle — moins-disant. Le gagnant est calculé sur les offres <b>chiffrées</b> : les perdants ne révèlent <b>jamais</b> leur prix.") }}</p>
+  {% else %}
+    <p class="muted small">{{ tr('odet.criterion', 'Critère') }} : {% if t['direction']=='high' %}{{ tr('off.high', 'mieux-disant (montant le plus haut)') }}{% else %}{{ tr('off.low', 'moins-disant (montant le plus bas)') }}{% endif %}</p>
+  {% endif %}
+</div>
+
+<div class="card center">
+  {% if subs_open %}
+    <span class="pill pill-green">{{ tr('off.st_open', 'Soumissions ouvertes') }}</span>
+  {% elif t['cancelled'] %}
+    <span class="pill" style="background:#7a2e2e;color:#fff">{{ tr('odet.cancelled', "Annulé — pas assez d'offres") }}</span>
+  {% else %}
+    <span class="pill pill-gold">{{ tr('odet.subs_closed', 'Soumissions closes') }}{% if t['mode']!='fhe' %} &mdash; {{ tr('odet.reveal_phase', 'phase de révélation') }}{% endif %}</span>
+  {% endif %}
+  <div class="small" style="margin-top:10px">
+    {% if integrity %}<span class="pill pill-green">&#128274; {{ tr('tdet.ledger_ok', 'Registre intègre') }}</span>
+    {% else %}<span class="pill" style="background:#c0392b;color:#fff">&#9888;&#65039; {{ tr('tdet.ledger_bad', 'Registre altéré !') }}</span>{% endif %}
+    <span class="muted small" style="margin-left:8px">{{ n_sealed }} {{ tr('odet.n_sealed', 'offre(s) déposée(s)') }}</span>
+  </div>
+  {% if t['closes_at'] %}<div class="muted small" style="margin-top:8px">&#9200;&#65039; {{ tr('odet.deadline', 'Date limite') }} : <b data-dl="{{ t['closes_at'] }}">&hellip;</b></div>{% endif %}
+  {% if t['min_bids'] %}<div class="muted small" style="margin-top:4px">{{ tr('odet.min_pre', 'Minimum requis') }} : <b>{{ t['min_bids'] }}</b> {{ tr('odet.min_post', "offre(s) — sinon l'appel d'offres est annulé.") }}</div>{% endif %}
+  {% if t['invite_only'] %}<div class="muted small" style="margin-top:4px">&#128273; {{ tr('odet.invite_only', 'Sur invitation uniquement.') }}</div>{% endif %}
+</div>
+
+{% if t['invite_only'] and is_owner %}
+<div class="card">
+  <h2 style="font-family:'Sora';font-size:1.15rem">&#128273; {{ tr('odet.invites_h', 'Liens privés des sociétés invitées') }}</h2>
+  <p class="muted small">{{ tr('odet.invites_p', 'Envoie à chaque société <b>son</b> lien. Une seule offre par lien.') }}</p>
+  {% for iv in invites %}
+  <div style="margin-top:10px">
+    <div class="small"><b>{{ iv['name'] }}</b> {% if iv['used'] %}<span class="pill pill-gold">{{ tr('odet.submitted', 'a soumis') }} &#10004;</span>{% else %}<span class="pill pill-green">{{ tr('odet.pending', 'en attente') }}</span>{% endif %}</div>
+    <div class="copybox" style="margin-top:4px">
+      <input type="text" id="iv{{ iv['id'] }}" value="{{ base_url }}{{ url_for('offre_invite', tid=t['id'], token=iv['token']) }}" readonly>
+      <button type="button" onclick="cpv('iv{{ iv['id'] }}',this)">{{ tr('partage.copy', 'Copier') }}</button>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if t['mode'] == 'fhe' %}
+  {# ---------------- MODE CHIFFRÉ (enchère aveugle FHE) ---------------- #}
+  <div class="card">
+    <p class="muted small">{{ tr('odet.grid', 'Grille de prix acceptée (choisis une de ces valeurs)') }} :</p>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">
+      {% for p in levels %}<span class="pill" style="background:var(--primary-soft);color:var(--primary-d)">{{ p }}</span>{% endfor %}
+    </div>
+  </div>
+
+  {% if subs_open %}
+    {% if t['invite_only'] %}
+    <div class="card center"><p class="muted small">&#128273; {{ tr('odet.invite_notice', "Appel d'offres <b>sur invitation</b> : les sociétés invitées déposent leur offre via leur <b>lien privé</b>.") }}</p></div>
+    {% else %}
+    <div class="card pad-lg">
+      <h2 style="font-family:'Sora';font-size:1.2rem">{{ tr('odet.deposit_fhe_h', 'Déposer une offre chiffrée') }}</h2>
+      <p class="muted small">{{ tr('odet.deposit_fhe_p', "Ton prix est <b>chiffré</b> (FHE) : personne, pas même l'organisateur, ne le voit. Si tu ne gagnes pas, il restera <b>secret à vie</b>. ⚠️ Note bien ton <b>montant</b> et ton <b>mot secret</b> pour prouver ta victoire.") }}</p>
+      <form method="post" action="{{ url_for('offre_soumettre', tid=t['id']) }}">
+        <label class="fld" for="name">{{ tr('odet.your_name', 'Ton nom / ta société') }}</label>
+        <input type="text" id="name" name="name" required placeholder="{{ tr('odet.your_name.ph', 'Ex. Entreprise Diallo') }}">
+        <label class="fld" for="amount">{{ tr('odet.your_price', 'Ton prix (choisis une valeur de la grille)') }}</label>
+        <input type="number" id="amount" name="amount" list="grid" min="{{ t['price_min'] }}" step="{{ t['price_step'] }}" required placeholder="{{ t['price_min'] }}">
+        <datalist id="grid">{% for p in levels %}<option value="{{ p }}">{% endfor %}</datalist>
+        <label class="fld" for="secret">{{ tr('odet.secret', 'Mot secret (à garder)') }}</label>
+        <input type="text" id="secret" name="secret" required placeholder="{{ tr('odet.secret.ph', 'Ex. lion2026') }}">
+        <div style="margin-top:14px"></div>
+        <button type="submit" class="btn btn-primary">{{ tr('odet.encrypt_deposit', 'Chiffrer & déposer mon offre') }} &#128274;</button>
+      </form>
+    </div>
+    {% endif %}
+
+    <div class="card">
+      <h2 style="font-family:'Sora';font-size:1.2rem">{{ tr('odet.bids_h', 'Offres déposées') }}</h2>
+      {% for b in bids %}
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.07)">
+        <b>{{ b['bidder_name'] }}</b>
+        <span class="pill pill-green">{{ tr('odet.encrypted_tag', 'chiffrée') }} &#128274;</span>
+      </div>
+      {% else %}
+        <p class="muted small">{{ tr('odet.no_bids', "Aucune offre pour l'instant.") }}</p>
+      {% endfor %}
+    </div>
+
+    {% if is_owner %}
+    <form method="post" action="{{ url_for('offre_clore', tid=t['id']) }}" class="center" style="margin-top:6px">
+      <button class="btn btn-gold" type="submit" onclick="return confirm('{{ tr('odet.close_fhe_confirm', 'Clore et dépouiller (calcul FHE du prix gagnant) ?') }}')">{{ tr('odet.close_fhe_btn', 'Clore & dépouiller (FHE)') }}</button>
+    </form>
+    {% endif %}
+
+  {% else %}
+    {# clos : résultat FHE #}
+    <div class="card center">
+      {% if t['winning_price'] is not none %}
+        <div class="muted small">{{ tr('odet.winning_price', 'Prix gagnant (calculé sur les offres chiffrées)') }}</div>
+        <div style="font-family:'Sora';font-weight:700;font-size:2rem;color:var(--primary-d)">{{ t['winning_price'] }} FCFA</div>
+        {% if t['winner_name'] %}
+          <div style="margin-top:8px"><span class="pill pill-gold">&#127942; {{ tr('odet.winner', 'Gagnant') }} : {{ t['winner_name'] }}</span></div>
+        {% else %}
+          <p class="muted small" style="margin-top:8px">{{ tr('odet.winner_declare', 'Le gagnant peut maintenant se déclarer ci-dessous.') }}</p>
+        {% endif %}
+        <p class="muted small" style="margin-top:10px">&#128274; {{ tr('odet.losers_secret', "Les prix des perdants n'ont <b>jamais</b> été déchiffrés — ils restent secrets à vie.") }}</p>
+      {% else %}
+        <span class="pill" style="background:#7a2e2e;color:#fff">{{ tr('odet.no_winner', 'Aucune offre valide — pas de gagnant') }}</span>
+      {% endif %}
+    </div>
+
+    {% if t['winning_price'] is not none and not t['winner_name'] %}
+    <div class="card pad-lg">
+      <h2 style="font-family:'Sora';font-size:1.2rem">{{ tr('odet.prove_h', 'Es-tu le gagnant ? Prouve-le') }}</h2>
+      <p class="muted small">{{ tr('odet.prove_p', "Si tu as proposé le prix gagnant, entre-le avec ton mot secret. Le système vérifie ton empreinte. Les perdants n'ont rien à faire — leur prix reste secret.") }}</p>
+      <form method="post" action="{{ url_for('offre_reveler', tid=t['id']) }}">
+        <label class="fld" for="rname">{{ tr('odet.your_name', 'Ton nom / ta société') }}</label>
+        <input type="text" id="rname" name="name" required placeholder="{{ tr('odet.your_name.ph', 'Ex. Entreprise Diallo') }}">
+        <label class="fld" for="ramount">{{ tr('odet.the_winning_price', 'Le prix gagnant') }}</label>
+        <input type="number" id="ramount" name="amount" value="{{ t['winning_price'] }}" required>
+        <label class="fld" for="rsecret">{{ tr('odet.secret_word', 'Ton mot secret') }}</label>
+        <input type="text" id="rsecret" name="secret" required>
+        <div style="margin-top:14px"></div>
+        <button type="submit" class="btn btn-primary">{{ tr('odet.confirm_win', 'Confirmer ma victoire & vérifier') }}</button>
+      </form>
+    </div>
+    {% endif %}
+  {% endif %}
+
+{% else %}
+  {# ---------------- MODE CLASSIQUE (engagement–révélation) ---------------- #}
+  {% if subs_open %}
+    {% if t['invite_only'] %}
+    <div class="card center"><p class="muted small">&#128273; {{ tr('odet.invite_notice', "Appel d'offres <b>sur invitation</b> : les sociétés invitées déposent leur offre via leur <b>lien privé</b>.") }}</p></div>
+    {% else %}
+    <div class="card pad-lg">
+      <h2 style="font-family:'Sora';font-size:1.2rem">{{ tr('odet.deposit_sealed_h', 'Soumettre une offre scellée') }}</h2>
+      <p class="muted small">{{ tr('odet.deposit_sealed_p', "Ton montant n'est <b>pas</b> enregistré : seule une empreinte l'est. ⚠️ Note bien ton <b>montant</b> et ton <b>mot secret</b> — ils te serviront à révéler après la clôture.") }}</p>
+      <form method="post" action="{{ url_for('offre_soumettre', tid=t['id']) }}">
+        <label class="fld" for="name">{{ tr('odet.your_name', 'Ton nom / ta société') }}</label>
+        <input type="text" id="name" name="name" required placeholder="{{ tr('odet.your_name.ph', 'Ex. Entreprise Diallo') }}">
+        <label class="fld" for="amount">{{ tr('odet.your_amount', 'Ton montant (FCFA, entier)') }}</label>
+        <input type="number" id="amount" name="amount" min="0" required placeholder="{{ tr('odet.your_amount.ph', 'Ex. 850000') }}">
+        <label class="fld" for="secret">{{ tr('odet.secret', 'Mot secret (à garder)') }}</label>
+        <input type="text" id="secret" name="secret" required placeholder="{{ tr('odet.secret.ph', 'Ex. lion2026') }}">
+        <div style="margin-top:14px"></div>
+        <button type="submit" class="btn btn-primary">{{ tr('odet.seal_btn', 'Sceller mon offre') }} &#128274;</button>
+      </form>
+    </div>
+    {% endif %}
+
+    <div class="card">
+      <h2 style="font-family:'Sora';font-size:1.2rem">{{ tr('odet.bids_h', 'Offres déposées') }}</h2>
+      {% for b in bids %}
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.07)">
+        <b>{{ b['bidder_name'] }}</b>
+        <span class="pill pill-green">{{ tr('odet.sealed_tag', 'scellée') }} &#128274;</span>
+      </div>
+      {% else %}
+        <p class="muted small">{{ tr('odet.no_bids', "Aucune offre pour l'instant.") }}</p>
+      {% endfor %}
+    </div>
+
+    {% if is_owner %}
+    <form method="post" action="{{ url_for('offre_clore', tid=t['id']) }}" class="center" style="margin-top:6px">
+      <button class="btn btn-gold" type="submit" onclick="return confirm('{{ tr('odet.close_sealed_confirm', 'Clore les soumissions et ouvrir la révélation ?') }}')">{{ tr('odet.close_sealed_btn', 'Clore les soumissions') }}</button>
+    </form>
+    {% endif %}
+
+  {% else %}
+    <div class="card pad-lg">
+      <h2 style="font-family:'Sora';font-size:1.2rem">{{ tr('odet.reveal_h', 'Révéler ton offre') }}</h2>
+      <p class="muted small">{{ tr('odet.reveal_p', "Entre exactement le même montant et mot secret qu'à la soumission. Le système vérifie l'empreinte : impossible de tricher.") }}</p>
+      <form method="post" action="{{ url_for('offre_reveler', tid=t['id']) }}">
+        <label class="fld" for="rname">{{ tr('odet.your_name', 'Ton nom / ta société') }}</label>
+        <input type="text" id="rname" name="name" required placeholder="{{ tr('odet.your_name.ph', 'Ex. Entreprise Diallo') }}">
+        <label class="fld" for="ramount">{{ tr('odet.reveal_amount', 'Ton montant (FCFA)') }}</label>
+        <input type="number" id="ramount" name="amount" min="0" required>
+        <label class="fld" for="rsecret">{{ tr('odet.secret_word2', 'Mot secret') }}</label>
+        <input type="text" id="rsecret" name="secret" required>
+        <div style="margin-top:14px"></div>
+        <button type="submit" class="btn btn-primary">{{ tr('odet.reveal_btn', 'Révéler & vérifier') }}</button>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2 style="font-family:'Sora';font-size:1.2rem">{{ tr('odet.results_h', 'Résultats') }}</h2>
+      {% if results %}
+        {% for b in results %}
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.07)">
+          <div><b>{{ b['bidder_name'] }}</b>{% if loop.first %}<span class="pill pill-gold" style="margin-left:6px">{{ tr('odet.winner_tag', 'gagnant') }}</span>{% endif %}</div>
+          <div style="font-family:'Sora';font-weight:600">{{ b['amount'] }} FCFA</div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <p class="muted small">{{ tr('odet.no_reveal', 'Aucune offre révélée pour l\'instant. Les soumissionnaires doivent révéler ci-dessus.') }}</p>
+      {% endif %}
+      {% set unrev = bids | selectattr('revealed', 'equalto', 0) | list %}
+      {% if unrev %}<p class="muted small" style="margin-top:8px">{{ tr('odet.awaiting_reveal', 'En attente de révélation') }} : {% for b in unrev %}{{ b['bidder_name'] }}{% if not loop.last %}, {% endif %}{% endfor %}.</p>{% endif %}
+    </div>
+  {% endif %}
+{% endif %}
+
+<script>
+(function(){
+  var el=document.querySelector('[data-dl]');
+  if(el){var ts=parseInt(el.getAttribute('data-dl'),10)*1000;var d=new Date(ts);
+    el.textContent=d.toLocaleString();
+    var diff=ts-Date.now();
+    if(diff>0){var days=Math.floor(diff/86400000),h=Math.floor(diff/3600000)%24;
+      el.textContent+=' ({{ tr('odet.js_in', 'dans') }} '+(days>0?days+' {{ tr('odet.js_days', 'j') }} ':'')+h+' {{ tr('odet.js_hours', 'h') }})';}
+    else{el.textContent+=' — {{ tr('odet.js_reached', 'échéance atteinte') }}';}}
+})();
+function cpv(id,btn){var el=document.getElementById(id);el.select();el.setSelectionRange(0,9999);
+  navigator.clipboard.writeText(el.value).then(function(){var t=btn.textContent;btn.textContent='{{ tr('partage.copied', 'Copié') }} ✓';
+    setTimeout(function(){btn.textContent=t;},1400);});}
+</script>
+{% endblock %}

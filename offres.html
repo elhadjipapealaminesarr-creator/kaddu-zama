@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}{{ tr('mod.offres.h3', "Appels d'offres scellés") }} — Kaddu{% endblock %}
+{% block content %}
+<div class="hero">
+  <span class="kicker">&#128274; {{ tr('mod.offres.h3', "Appels d'offres scellés") }}</span>
+  <h1>{{ tr('off.h', "Tes appels d'offres") }}</h1>
+  <p class="lead">{{ tr('off.lead', "Anti-corruption : chaque offre est <b>scellée</b> à la soumission (empreinte du montant + mot secret). Personne — pas même l'organisateur — ne voit les montants avant l'ouverture.") }}</p>
+</div>
+
+{% if not me %}
+  <div class="card center">
+    <p>{{ tr('off.login', "Connecte-toi pour créer et gérer un appel d'offres.") }}</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:8px">
+      <a href="{{ url_for('connexion', next=url_for('offres')) }}" class="btn btn-primary" style="width:auto">{{ tr('auth.signin', 'Se connecter') }}</a>
+      <a href="{{ url_for('inscription', next=url_for('offres')) }}" class="btn" style="width:auto">{{ tr('auth.signup', 'Créer un compte') }}</a>
+    </div>
+  </div>
+{% else %}
+  {% if tenders %}
+    {% for t in tenders %}
+    <a href="{{ url_for('offre', tid=t['id']) }}" class="card" style="display:block;text-decoration:none;color:inherit">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+        <div>
+          <div style="font-family:'Sora';font-weight:600;font-size:1.08rem">{{ t['title'] }}</div>
+          <div class="muted small" style="margin-top:2px">{% if t['direction']=='high' %}{{ tr('off.high', 'mieux-disant (montant le plus haut)') }}{% else %}{{ tr('off.low', 'moins-disant (montant le plus bas)') }}{% endif %}</div>
+        </div>
+        <span class="pill {% if t['status']=='closed' %}pill-gold{% else %}pill-green{% endif %}" style="flex:none">
+          {% if t['status']=='closed' %}{{ tr('off.st_reveal', 'Ouvert (révélation)') }}{% else %}{{ tr('off.st_open', 'Soumissions ouvertes') }}{% endif %}</span>
+      </div>
+    </a>
+    {% endfor %}
+  {% endif %}
+
+  <div class="card pad-lg">
+    <h2 style="font-family:'Sora';font-size:1.25rem">&#10133; {{ tr('off.new', "Nouvel appel d'offres") }}</h2>
+    <form method="post">
+      <label class="fld" for="title">{{ tr('off.title', 'Intitulé') }}</label>
+      <input type="text" id="title" name="title" value="{{ title }}" placeholder="{{ tr('off.title.ph', 'Ex. Fourniture de 100 tables pour l&#39;école') }}" required>
+
+      <label class="fld" for="description">{{ tr('off.desc', 'Description (optionnel)') }}</label>
+      <textarea id="description" name="description" rows="3" placeholder="{{ tr('off.desc.ph', 'Détails, critères, délai…') }}">{{ description }}</textarea>
+
+      <label class="fld">{{ tr('off.type', "Type d'appel d'offres") }}</label>
+      <label class="choice"><input type="radio" name="mode" value="reveal" checked onchange="kadduMode()">
+        <span class="box"><span class="dot"></span><span>{{ tr('off.mode_reveal', '<b>Classique (scellé)</b> — les offres sont ouvertes à la fin ; chacun révèle son montant.') }}</span></span></label>
+      <label class="choice"><input type="radio" name="mode" value="fhe" onchange="kadduMode()">
+        <span class="box"><span class="dot"></span><span>&#128274; {{ tr('off.mode_fhe', '<b>Chiffré (FHE)</b> — le gagnant est calculé sur les offres <b>chiffrées</b>. Les <b>perdants ne révèlent jamais</b> leur prix. (Moins-disant.)') }}</span></span></label>
+
+      <div id="revealFields">
+        <label class="fld">{{ tr('off.criterion', 'Critère gagnant') }}</label>
+        <label class="choice"><input type="radio" name="direction" value="low" checked>
+          <span class="box"><span class="dot"></span><span>{{ tr('off.crit_low', 'Moins-disant — le montant le plus <b>bas</b> gagne') }}</span></span></label>
+        <label class="choice"><input type="radio" name="direction" value="high">
+          <span class="box"><span class="dot"></span><span>{{ tr('off.crit_high', 'Mieux-disant — le montant le plus <b>haut</b> gagne') }}</span></span></label>
+      </div>
+
+      <div id="fheFields" style="display:none">
+        <p class="muted small" style="margin-top:14px">{{ tr('off.grid', 'Grille de prix : les soumissionnaires proposeront un prix sur cette grille (du min au max, par pas). 2 à 30 paliers.') }}</p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <div style="flex:1;min-width:120px"><label class="fld" for="price_min">{{ tr('off.pmin', 'Prix min (FCFA)') }}</label>
+            <input type="number" id="price_min" name="price_min" min="0" step="1" placeholder="100000"></div>
+          <div style="flex:1;min-width:120px"><label class="fld" for="price_max">{{ tr('off.pmax', 'Prix max (FCFA)') }}</label>
+            <input type="number" id="price_max" name="price_max" min="0" step="1" placeholder="500000"></div>
+          <div style="flex:1;min-width:120px"><label class="fld" for="price_step">{{ tr('off.pstep', 'Pas (FCFA)') }}</label>
+            <input type="number" id="price_step" name="price_step" min="1" step="1" placeholder="50000"></div>
+        </div>
+      </div>
+
+      <label class="fld" for="deadline">{{ tr('off.deadline', 'Date limite de soumission (optionnel)') }}</label>
+      <input type="datetime-local" id="deadline" name="deadline">
+      <p class="muted small">{{ tr('off.deadline_note', "Après cette date, plus aucune offre n'est acceptée et le dépouillement s'ouvre automatiquement. Le timing devient incontestable.") }}</p>
+
+      <label class="fld" for="min_bids">{{ tr('off.minbids', "Nombre minimum d'offres (optionnel)") }}</label>
+      <input type="number" id="min_bids" name="min_bids" min="0" step="1" placeholder="0" value="0">
+      <p class="muted small">{{ tr('off.minbids_note', "En dessous de ce nombre à la clôture, l'appel d'offres est annulé (aucun gagnant) — garantit une vraie concurrence.") }}</p>
+
+      <label style="display:flex;gap:9px;align-items:flex-start;margin-top:14px;cursor:pointer">
+        <input type="checkbox" name="invite_only" value="1" onchange="kadduInvite()" style="margin-top:4px;width:auto">
+        <span class="small">{{ tr('off.invite', '<b>Sur invitation</b> — seules les sociétés listées peuvent soumettre (1 lien privé chacune, une seule offre). Bloque les fausses offres et les doublons.') }}</span></label>
+      <div id="inviteFields" style="display:none">
+        <label class="fld" for="invites">{{ tr('off.invites', 'Sociétés invitées (une par ligne)') }}</label>
+        <textarea id="invites" name="invites" rows="4" placeholder="Entreprise Diallo&#10;SARL Ndiaye&#10;Ets Fall"></textarea>
+      </div>
+
+      <div style="margin-top:14px"></div>
+      <button type="submit" class="btn btn-primary">{{ tr('off.create', "Créer l'appel d'offres") }} &#128274;</button>
+    </form>
+  </div>
+{% endif %}
+<script>
+function kadduMode(){
+  var fhe = document.querySelector('input[name=mode][value=fhe]').checked;
+  document.getElementById('fheFields').style.display = fhe ? 'block' : 'none';
+  document.getElementById('revealFields').style.display = fhe ? 'none' : 'block';
+}
+function kadduInvite(){
+  var on = document.querySelector('input[name=invite_only]').checked;
+  document.getElementById('inviteFields').style.display = on ? 'block' : 'none';
+}
+kadduMode();
+</script>
+{% endblock %}

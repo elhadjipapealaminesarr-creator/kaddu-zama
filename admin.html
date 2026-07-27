@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}{{ tr('adm.title', 'Tableau de bord') }} — {{ poll['title'] }}{% endblock %}
+{% block content %}
+<div class="card pad-lg">
+  <span class="pill pill-gold">&#128273; {{ tr('adm.owner', 'Organisateur') }}</span>
+  <h1 style="font-size:1.4rem;margin-top:14px">{{ poll['title'] }}</h1>
+  <p class="muted" style="margin-top:-4px">{{ poll['question'] }}</p>
+
+  <div style="display:flex;gap:12px;text-align:center;margin:18px 0">
+    <div style="flex:1;background:var(--primary-soft);border-radius:var(--r-sm);padding:16px 8px">
+      <div style="font-family:'Sora';font-size:1.9rem;font-weight:700;color:var(--primary-d)">{{ participants }}</div>
+      <div class="small muted">{{ tr('adm.votes', 'vote(s) reçu(s)') }}</div>
+    </div>
+    <div style="flex:1;background:{% if poll['closed'] %}#fbf0dc{% else %}#eef7f3{% endif %};border-radius:var(--r-sm);padding:16px 8px">
+      <div style="font-family:'Sora';font-size:1.1rem;font-weight:700;margin-top:8px;color:{% if poll['closed'] %}#8f5a11{% else %}var(--primary-d){% endif %}">
+        {% if poll['closed'] %}{{ tr('adm.closed', 'Clôturé') }}{% else %}{{ tr('adm.open', 'Ouvert') }}{% endif %}</div>
+      <div class="small muted">{% if poll['closed'] %}{{ tr('adm.result_visible', 'résultat visible') }}{% else %}{{ tr('adm.ongoing', 'en cours') }}{% endif %}</div>
+    </div>
+  </div>
+
+  <label class="fld">{{ tr('adm.gen_link', 'Lien général à partager aux votants') }}</label>
+  <div class="copybox">
+    <input type="text" id="vurl" value="{{ vote_url }}" readonly>
+    <button type="button" onclick="cp('vurl',this)">{{ tr('partage.copy', 'Copier') }}</button>
+  </div>
+
+  <label class="fld" style="margin-top:18px">&#128100; {{ tr('adm.limit', 'Limiter à vos membres (1 vote chacun)') }}</label>
+  {% if tokens %}
+    <p class="muted small">{{ tokens|length }} {{ tr('adm.tokens_p', "lien(s) personnel(s). Envoyez-en <b>un différent</b> à chaque membre : chaque lien ne vote qu'<b>une seule fois</b>.") }}</p>
+    <div style="max-height:230px;overflow:auto;border:1px solid var(--line);border-radius:var(--r-sm);padding:8px;margin:8px 0">
+      {% for tk in tokens %}
+      <div class="copybox" style="margin:5px 0">
+        <input type="text" id="tk{{ loop.index }}" readonly value="{{ vote_url }}?k={{ tk['token'] }}"
+               style="{% if tk['used'] %}color:var(--muted);text-decoration:line-through{% endif %}">
+        <button type="button" onclick="cp('tk{{ loop.index }}',this)">{% if tk['used'] %}&#10004; {{ tr('adm.voted_tag', 'voté') }}{% else %}{{ tr('partage.copy', 'Copier') }}{% endif %}</button>
+      </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="muted small">{{ tr('adm.default_p', "Par défaut, toute personne avec le lien général peut voter. Pour un scrutin sérieux, génère un <b>lien unique par membre</b> : chacun ne pourra voter qu'une fois.") }}</p>
+  {% endif %}
+  {% if not poll['closed'] and (tokens|length) < capacity %}
+  <form method="post" action="{{ url_for('gen_tokens', poll_id=poll['id']) }}" style="display:flex;gap:8px;margin-top:8px">
+    <input type="hidden" name="t" value="{{ token }}">
+    <input type="number" name="n" min="1" max="{{ capacity - (tokens|length) }}" value="10" placeholder="{{ tr('adm.howmany', 'Combien ?') }}">
+    <button type="submit" class="btn btn-ghost" style="width:auto;white-space:nowrap">{{ tr('adm.generate', 'Générer') }}</button>
+  </form>
+  <p class="muted small" style="margin-top:6px">{{ tr('adm.max_pre', 'Maximum') }} {{ capacity }} {{ tr('adm.max_post', 'votants au total pour ce vote.') }}</p>
+  {% endif %}
+
+  {% if not poll['closed'] %}
+  <form method="post" action="{{ url_for('clore', poll_id=poll['id']) }}"
+        onsubmit="return confirm('{{ tr('adm.close_confirm', 'Clore le vote et révéler le résultat ? Cette action est définitive.') }}');">
+    <input type="hidden" name="t" value="{{ token }}">
+    <button type="submit" class="btn btn-gold" style="margin-top:8px">{{ tr('adm.close_btn', 'Clore le vote et révéler le résultat') }}</button>
+  </form>
+  <p class="muted small center" style="margin-top:10px">{{ tr('adm.close_note', 'Tant que le vote est ouvert, même vous ne voyez aucun résultat — seulement le <b>nombre</b> de votants.') }}</p>
+  {% else %}
+  <a href="{{ url_for('resultat', poll_id=poll['id']) }}" class="btn btn-primary" style="margin-top:8px">{{ tr('vote.see_result', 'Voir le résultat') }}</a>
+  {% endif %}
+</div>
+<a href="{{ url_for('index') }}" class="btn btn-ghost">{{ tr('nav.home', 'Accueil') }}</a>
+{% endblock %}
+{% block scripts %}
+<script>
+function cp(id,btn){const el=document.getElementById(id);el.select();el.setSelectionRange(0,9999);
+  navigator.clipboard.writeText(el.value).then(()=>{const t=btn.textContent;btn.textContent="{{ tr('partage.copied', 'Copié') }} ✓";
+  setTimeout(()=>btn.textContent=t,1400);});}
+</script>
+{% endblock %}
