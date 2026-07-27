@@ -91,6 +91,7 @@ TRANSLATIONS = {
                       "not even the organizer, can see or tamper with the choices.",
         "hero.cta_tools": "Discover our tools",
         "hero.cap": "Every voice protected",
+        "hero.img_alt": "Communities everywhere, coming together to decide",
         "pil.decide.h": "Decide", "pil.decide.p": "Truly secret, verifiable votes.",
         "pil.save.h": "Save", "pil.save.p": "Tamper-proof savings circles, with no all-powerful manager.",
         "pil.attrib.h": "Award", "pil.attrib.p": "Sealed-bid tenders — anti-corruption.",
