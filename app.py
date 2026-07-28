@@ -1555,6 +1555,14 @@ def ping():
     return "ok", 200
 
 
+@app.route("/google15918f869752315e.html")
+def google_site_verification():
+    """Fichier de validation de propriété Google Search Console."""
+    return app.response_class(
+        "google-site-verification: google15918f869752315e.html",
+        mimetype="text/html")
+
+
 @app.route("/robots.txt")
 def robots_txt():
     lines = [
