@@ -1467,10 +1467,55 @@ def _count_visit(resp):
     return resp
 
 
+# --- SEO --------------------------------------------------------------------
+# URL canonique de production (surchargée par la variable d'env SITE_URL si un
+# domaine personnalisé est branché plus tard).
+SEO_SITE_URL = os.environ.get("SITE_URL", "https://kaddu-zama.onrender.com").rstrip("/")
+
+# Pages publiques à indexer (marketing / outils). Tout le reste — liens à jeton,
+# tableaux de bord, instances privées, pages de compte — reste en noindex.
+SEO_INDEXABLE = {
+    "/", "/creer", "/guide", "/communaute", "/tontines", "/offres",
+    "/commun", "/comparer", "/alertes", "/idees", "/preuve", "/rejoindre",
+    "/mentions-legales", "/confidentialite",
+}
+
+
 @app.context_processor
 def inject_stats():
+    path = request.path or "/"
+    lang = pick_lang()
+    if lang == "fr":
+        desc = ("Kaddu : votes 100 % secrets et vérifiables, tontines inviolables "
+                "et appels d'offres scellés pour associations, coopératives, "
+                "syndicats et communautés. Chiffrement FHE, mobile, gratuit.")
+    else:
+        desc = ("Kaddu: fully secret, verifiable community votes, tamper-proof "
+                "tontines and sealed-bid tenders for associations, cooperatives "
+                "and unions. FHE encryption, mobile-first, free.")
+    jsonld = json.dumps({
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Kaddu",
+        "url": SEO_SITE_URL + "/",
+        "applicationCategory": "GovernmentApplication",
+        "operatingSystem": "Web",
+        "browserRequirements": "Requires JavaScript",
+        "inLanguage": ["fr", "en"],
+        "isAccessibleForFree": True,
+        "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"},
+        "description": desc,
+        "image": SEO_SITE_URL + "/static/og.png",
+        "author": {"@type": "Person", "name": "El Hadji Pape Alamine Sarr"},
+        "creator": {"@type": "Person", "name": "El Hadji Pape Alamine Sarr"},
+    }, ensure_ascii=False)
     return {"SITE_VISITORS": _stat_get_cached("visitors"),
-            "SITE_VIEWS": _stat_get_cached("views")}
+            "SITE_VIEWS": _stat_get_cached("views"),
+            "SEO_SITE_URL": SEO_SITE_URL,
+            "SEO_CANONICAL": SEO_SITE_URL + path,
+            "SEO_INDEX": path in SEO_INDEXABLE,
+            "META_DESC": desc,
+            "SEO_JSONLD": Markup(jsonld)}
 
 
 def get_poll(poll_id):
@@ -1508,6 +1553,56 @@ def base_url():
 @app.route("/ping")
 def ping():
     return "ok", 200
+
+
+@app.route("/robots.txt")
+def robots_txt():
+    lines = [
+        "User-agent: *",
+        # Instances privées et liens à jeton : jamais indexés
+        "Disallow: /v/",
+        "Disallow: /r/",
+        "Disallow: /admin/",
+        "Disallow: /partage/",
+        "Disallow: /offre/",
+        "Disallow: /tontine/",
+        "Disallow: /commun/",
+        "Disallow: /comparer/",
+        "Disallow: /alertes/",
+        "Disallow: /connexion",
+        "Disallow: /inscription",
+        "Disallow: /deconnexion",
+        "Disallow: /lang/",
+        "Disallow: /preuve?",
+        "",
+        "Sitemap: %s/sitemap.xml" % SEO_SITE_URL,
+        "",
+    ]
+    resp = make_response("\n".join(lines))
+    resp.headers["Content-Type"] = "text/plain; charset=utf-8"
+    resp.headers["Cache-Control"] = "public, max-age=86400"
+    return resp
+
+
+@app.route("/sitemap.xml")
+def sitemap_xml():
+    pages = ["/", "/creer", "/guide", "/tontines", "/offres", "/commun",
+             "/comparer", "/alertes", "/communaute", "/idees", "/preuve",
+             "/confidentialite", "/mentions-legales"]
+    today = time.strftime("%Y-%m-%d")
+    urls = "".join(
+        "<url><loc>%s%s</loc><lastmod>%s</lastmod>"
+        "<changefreq>weekly</changefreq><priority>%s</priority></url>"
+        % (SEO_SITE_URL, p, today, "1.0" if p == "/" else "0.7")
+        for p in pages
+    )
+    xml = ('<?xml version="1.0" encoding="UTF-8"?>'
+           '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+           + urls + "</urlset>")
+    resp = make_response(xml)
+    resp.headers["Content-Type"] = "application/xml; charset=utf-8"
+    resp.headers["Cache-Control"] = "public, max-age=86400"
+    return resp
 
 
 @app.route("/sw.js")
