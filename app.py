@@ -30,6 +30,30 @@ app.jinja_env.globals["ANNEE"] = time.strftime("%Y")
 app.jinja_env.globals["ZAMA"] = True
 app.jinja_env.filters["dateh"] = lambda ts: time.strftime("%d/%m/%Y", time.localtime(int(ts)))
 
+
+def _timeago(ts):
+    """Affichage relatif court, bilingue (« il y a 3 h » / « 3 h ago »)."""
+    try:
+        s = max(0, int(time.time()) - int(ts))
+    except Exception:
+        return ""
+    en = pick_lang() != "fr"
+    if s < 60:
+        return "à l'instant" if not en else "just now"
+    m = s // 60
+    if m < 60:
+        return (f"il y a {m} min" if not en else f"{m} min ago")
+    h = m // 60
+    if h < 24:
+        return (f"il y a {h} h" if not en else f"{h} h ago")
+    d = h // 24
+    if d < 7:
+        return (f"il y a {d} j" if not en else f"{d} d ago")
+    return time.strftime("%d/%m/%Y", time.localtime(int(ts)))
+
+
+app.jinja_env.filters["timeago"] = _timeago
+
 # --- Langue : détection automatique (navigateur) + choix manuel FR/EN --------
 SUPPORTED_LANGS = ("fr", "en")
 
@@ -382,7 +406,7 @@ TRANSLATIONS = {
         "tdet.next_confirm": "Not all members are validated yet. Move to the next round anyway?",
         "tdet.close_round": "Close this round & go to the next", "tdet.next_round": "Go to the next round",
         "tdet.links_h": "Members' private links",
-        "tdet.links_p": "Send each member <b>their</b> link (via WhatsApp). Everyone confirms their "
+        "tdet.links_p": "Send each member <b>their</b> link (via WhatsApp, Telegram, SMS…). Everyone confirms their "
                         "own contributions — you can no longer validate for them.",
         "tdet.manage_h": "Manage",
         "tdet.manage_p": "Removing a member computes and seals their settlement (owed / debt). "
@@ -518,7 +542,7 @@ TRANSLATIONS = {
         "gd.vote_h": "Decide together, in secret",
         "gd.demo_alt": "Demo: create a vote, share, vote, result",
         "gd.v1t": "Create the vote", "gd.v1d": "A title, a question, choices. Kaddu gives you a link + a QR code.",
-        "gd.v2t": "Share on WhatsApp",
+        "gd.v2t": "Share on social media",
         "gd.v2d": "Everyone opens the link, chooses and seals their ballot — encrypted instantly, invisible to all.",
         "gd.v3t": "Close and reveal",
         "gd.v3d": "The result is computed on the encrypted ballots then shown, verifiable by all.",
@@ -682,7 +706,7 @@ TRANSLATIONS = {
         # Accueil — comment ça marche
         "how.eyebrow": "Simple for everyone", "how.h2": "Three steps, no technical skills",
         "how.s1.h3": "You create",
-        "how.s1.p": "A question, some choices, and a link + QR code to share with your members on WhatsApp.",
+        "how.s1.p": "A question, some choices, and a link + QR code to share with your members on WhatsApp, Telegram, Facebook and more.",
         "how.s2.h3": "Everyone takes part in secret",
         "how.s2.p": "The choice is encrypted on the spot. Neither the server nor the organizer can read it.",
         "how.s3.h3": "The result, verifiable",
@@ -742,6 +766,61 @@ TRANSLATIONS = {
         "intro.s3.t": "Everyone votes in secret", "intro.s3.d": "The ballot is encrypted. Only the result appears.",
         "intro.cta": "Create a free vote", "intro.explore": "Explore first",
         "intro.guide": "See the full guide &#8594;",
+        # --- Compteur de visiteurs ---
+        "foot.visitors": "visitors", "foot.views": "page views",
+        # --- Communauté (fil social) ---
+        "com.title": "Community", "com.h": "The Kaddu community",
+        "com.sub": "Post, react, discuss — and find the votes open to all. Your votes stay secret; "
+                   "here, you exchange openly.",
+        "com.public_note": "Visible to the community",
+        "com.placeholder": "Share an idea, a question, an announcement…",
+        "com.publish": "Post", "com.login_cta": "Sign in to post, like and comment.",
+        "com.tab.all": "All", "com.tab.posts": "Posts", "com.tab.votes": "Votes",
+        "com.empty": "Nothing yet. Be the first to post!",
+        "com.like": "like", "com.comments": "comments",
+        "com.write_comment": "Write a comment…", "com.send": "Send",
+        "com.a_vote": "A community vote", "com.closed": "closed", "com.open": "open",
+        "com.voters": "participant(s)", "com.see_result": "Result", "com.vote": "Vote",
+        # --- Reçu de vote ---
+        "merci.receipt_h": "Your vote proof",
+        "merci.receipt_p": "Keep this code: it proves your ballot is recorded and will be counted. "
+                           "It never reveals your choice.",
+        "merci.dl_neutral": "Receipt (without my choice)", "merci.dl_perso": "Receipt (with my choice)",
+        "merci.verify_pre": "Verify a receipt:",
+        "merci.pdf_title": "Vote receipt — proof of participation",
+        "merci.pdf_poll": "Vote:", "merci.pdf_date": "Date:", "merci.pdf_choice": "Your choice:",
+        "merci.pdf_code": "Verification code:",
+        "merci.pdf_note_perso": "Personal document — keep it private. The code proves participation; "
+                                "the choice above is your private note.",
+        "merci.pdf_note_neutral": "This receipt proves your ballot is recorded and counted, "
+                                  "without revealing your choice.",
+        "merci.pdf_verify": "Verify:",
+        # --- Vérification de reçu ---
+        "prv.title": "Verify a vote receipt", "prv.h": "Verify a vote receipt",
+        "prv.sub": "Paste a receipt code to confirm a ballot was recorded. "
+                   "The voter’s choice is never revealed.",
+        "prv.placeholder": "Receipt code", "prv.check": "Verify",
+        "prv.ok": "Valid receipt.",
+        "prv.ok_p": "This code matches a ballot properly recorded",
+        "prv.ok_for": "for the vote", "prv.ok_enc": "encrypted and counted in the total. "
+                                                     "The choice stays secret.",
+        "prv.ok_date": "Recorded on",
+        "prv.bad": "No receipt matches this code.",
+        "prv.bad_p": "Check the code is copied exactly (no spaces).",
+        # --- Certificat de résultat ---
+        "res.cert": "official certificate", "res.dl_cert": "Download the certificate (PDF)",
+        "res.hash_label": "Tamper-proof fingerprint",
+        "res.cert_heading": "Vote result certificate",
+        "res.cert_poll": "Vote", "res.cert_question": "Question", "res.cert_date": "Issued on",
+        "res.cert_total": "Total votes", "res.cert_results": "Results",
+        "res.cert_winner": "Leading option", "res.cert_votes": "vote(s)",
+        "res.cert_hashlbl": "Tamper-proof fingerprint",
+        "res.cert_cond": "Terms: this certificate attests the result of a ballot in which each vote was "
+                         "encrypted (Zama FHE homomorphic encryption) then summed without ever being "
+                         "individually decrypted. Only the total was revealed. The fingerprint above lets "
+                         "anyone verify this document has not been altered, by recomputing it from the "
+                         "public results. Automatically generated by Kaddu, with no legal value unless "
+                         "agreed by the parties.",
     }
 }
 
@@ -1147,6 +1226,62 @@ def init_db():
                 PRIMARY KEY (register_id, user_id)
             )
         """)
+        # --- Compteur de visiteurs (clé/valeur) ---
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS stats (
+                key   TEXT PRIMARY KEY,
+                value BIGINT NOT NULL DEFAULT 0
+            )
+        """)
+        # --- Reçus de vote : preuve SANS le choix (secret préservé) ---
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS receipts (
+                code       TEXT PRIMARY KEY,
+                poll_id    TEXT NOT NULL,
+                created_at INTEGER NOT NULL
+            )
+        """)
+        # --- Réactions « j'aime » sur les votes publics (1 par personne) ---
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS reactions (
+                poll_id    TEXT NOT NULL,
+                user_id    INTEGER NOT NULL,
+                created_at INTEGER NOT NULL,
+                PRIMARY KEY (poll_id, user_id)
+            )
+        """)
+        # --- Fil social (façon Facebook/Instagram) : publications ---
+        conn.execute(f"""
+            CREATE TABLE IF NOT EXISTS posts (
+                id         {ID_PK},
+                user_id    INTEGER NOT NULL,
+                body       TEXT NOT NULL,
+                created_at INTEGER NOT NULL,
+                hidden     INTEGER NOT NULL DEFAULT 0
+            )
+        """)
+        conn.execute("CREATE INDEX IF NOT EXISTS ix_posts ON posts(created_at)")
+        # --- Commentaires sur une publication ---
+        conn.execute(f"""
+            CREATE TABLE IF NOT EXISTS post_comments (
+                id         {ID_PK},
+                post_id    INTEGER NOT NULL,
+                user_id    INTEGER NOT NULL,
+                body       TEXT NOT NULL,
+                created_at INTEGER NOT NULL,
+                hidden     INTEGER NOT NULL DEFAULT 0
+            )
+        """)
+        conn.execute("CREATE INDEX IF NOT EXISTS ix_post_comments ON post_comments(post_id, created_at)")
+        # --- « J'aime » sur une publication (1 par personne) ---
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS post_likes (
+                post_id    INTEGER NOT NULL,
+                user_id    INTEGER NOT NULL,
+                created_at INTEGER NOT NULL,
+                PRIMARY KEY (post_id, user_id)
+            )
+        """)
 
     # --- Migrations douces (colonnes ajoutées après coup) ---------------------
     # IMPORTANT : ces ALTER TABLE s'exécutent APRÈS la fermeture du bloc `with`
@@ -1246,6 +1381,68 @@ def current_user():
 @app.context_processor
 def inject_user():
     return {"me": current_user()}
+
+
+# --- Compteur de visiteurs ---------------------------------------------------
+def _stat_incr(key, n=1):
+    """Incrémente un compteur (création à la volée). Silencieux : ne casse jamais une page."""
+    try:
+        with closing(db()) as conn, conn:
+            cur = conn.execute("UPDATE stats SET value = value + ? WHERE key = ?", (n, key))
+            if cur.rowcount == 0:
+                try:
+                    conn.execute("INSERT INTO stats (key, value) VALUES (?, ?)", (key, n))
+                except Exception:
+                    conn.execute("UPDATE stats SET value = value + ? WHERE key = ?", (n, key))
+    except Exception:
+        pass
+
+
+def _stat_get(key):
+    try:
+        with closing(db()) as conn:
+            r = conn.execute("SELECT value FROM stats WHERE key = ?", (key,)).fetchone()
+        return int(r["value"]) if r else 0
+    except Exception:
+        return 0
+
+
+_stat_cache = {}
+
+
+def _stat_get_cached(key, ttl=20):
+    """Lecture mise en cache quelques secondes pour ne pas solliciter la base à chaque page."""
+    now = time.time()
+    hit = _stat_cache.get(key)
+    if hit and now - hit[1] < ttl:
+        return hit[0]
+    val = _stat_get(key)
+    _stat_cache[key] = (val, now)
+    return val
+
+
+@app.after_request
+def _count_visit(resp):
+    try:
+        p = request.path or "/"
+        skip = (p.startswith("/static") or p.startswith("/lang/")
+                or p in ("/ping", "/sw.js", "/favicon.ico"))
+        last = p.rsplit("/", 1)[-1]
+        if (request.method == "GET" and not skip and "." not in last
+                and resp.status_code < 400):
+            _stat_incr("views")
+            if not request.cookies.get("kvid"):
+                _stat_incr("visitors")
+                resp.set_cookie("kvid", "1", max_age=60 * 60 * 24 * 365, samesite="Lax")
+    except Exception:
+        pass
+    return resp
+
+
+@app.context_processor
+def inject_stats():
+    return {"SITE_VISITORS": _stat_get_cached("visitors"),
+            "SITE_VIEWS": _stat_get_cached("views")}
 
 
 def get_poll(poll_id):
@@ -1394,6 +1591,15 @@ def voter(poll_id):
                     return page(token_bad=True)
             conn.executemany("INSERT INTO ballots (poll_id, voter, option_idx, blob) "
                              "VALUES (?,?,?,?)", rows)
+            # Reçu de vote : preuve vérifiable SANS le choix (le secret est préservé).
+            receipt_code = secrets.token_urlsafe(6)
+            conn.execute("INSERT INTO receipts (code, poll_id, created_at) VALUES (?,?,?)",
+                         (receipt_code, poll_id, int(time.time())))
+        # On passe le reçu par la session (jamais stocké en base avec le choix) :
+        # le votant pourra télécharger une version neutre ou personnelle.
+        session["receipt"] = {"code": receipt_code, "poll": poll_id,
+                              "title": poll["title"], "choice": options[choice],
+                              "ts": int(time.time())}
         resp = make_response(redirect(url_for("merci", poll_id=poll_id)))
         if not restricted:
             resp.set_cookie(f"kv_{poll_id}", "1", max_age=60*60*24*365, samesite="Lax")
@@ -1407,7 +1613,23 @@ def merci(poll_id):
     poll = get_poll(poll_id)
     if not poll:
         abort(404)
-    return render_template("merci.html", poll=poll)
+    rec = session.pop("receipt", None)
+    if rec and rec.get("poll") != poll_id:
+        rec = None
+    return render_template("merci.html", poll=poll, receipt=rec, base=base_url())
+
+
+@app.route("/preuve")
+def preuve():
+    """Vérifie un reçu de vote : confirme qu'un bulletin existe, SANS révéler le choix."""
+    code = (request.args.get("code") or "").strip()
+    rec = None
+    if code:
+        with closing(db()) as conn:
+            rec = conn.execute(
+                "SELECT r.code, r.created_at, p.title FROM receipts r "
+                "LEFT JOIN polls p ON p.id = r.poll_id WHERE r.code = ?", (code,)).fetchone()
+    return render_template("preuve.html", code=code, rec=(dict(rec) if rec else None))
 
 
 @app.route("/r/<poll_id>")
@@ -1428,8 +1650,14 @@ def resultat(poll_id):
         rows.append({"label": opt, "n": n, "pct": pct})
     rows_sorted = sorted(rows, key=lambda r: r["n"], reverse=True)
     win = rows_sorted[0]["label"] if rows_sorted and total else None
+    # Empreinte anti-falsification : n'importe qui peut la recalculer depuis les
+    # données publiques (question, options, totaux) pour vérifier le certificat.
+    cert_hash = hashlib.sha256(
+        (str(poll_id) + "|" + poll["options"] + "|" + (poll["results"] or "")).encode("utf-8")
+    ).hexdigest()[:16].upper()
     return render_template("resultat.html", poll=poll, options=options, ready=True,
-                           rows=rows, rows_sorted=rows_sorted, total=total, win=win)
+                           rows=rows, rows_sorted=rows_sorted, total=total, win=win,
+                           cert_hash=cert_hash, base=base_url())
 
 
 @app.route("/admin/<poll_id>")
@@ -1572,14 +1800,113 @@ def deconnexion():
 
 
 # --- Place publique ----------------------------------------------------------
+def _community_feed(me, limit=40):
+    """Fil social : publications des membres + votes publics, entremêlés par date."""
+    uid = me["id"] if me else 0
+    items = []
+    with closing(db()) as conn:
+        posts = conn.execute(
+            "SELECT p.id, p.body, p.created_at, u.display_name AS author, "
+            "(SELECT COUNT(*) FROM post_likes l WHERE l.post_id = p.id) AS likes, "
+            "(SELECT COUNT(*) FROM post_comments c WHERE c.post_id = p.id AND c.hidden = 0) AS ncom, "
+            "(SELECT COUNT(*) FROM post_likes l WHERE l.post_id = p.id AND l.user_id = ?) AS liked "
+            "FROM posts p JOIN users u ON u.id = p.user_id "
+            "WHERE p.hidden = 0 ORDER BY p.created_at DESC LIMIT ?", (uid, limit)).fetchall()
+        for p in posts:
+            d = dict(p); d["kind"] = "post"
+            cc = conn.execute(
+                "SELECT pc.body, u.display_name AS author, pc.created_at "
+                "FROM post_comments pc JOIN users u ON u.id = pc.user_id "
+                "WHERE pc.post_id = ? AND pc.hidden = 0 ORDER BY pc.created_at DESC LIMIT 2",
+                (p["id"],)).fetchall()
+            d["comments"] = [dict(x) for x in reversed(cc)]
+            items.append(d)
+        polls = conn.execute(
+            "SELECT p.id, p.title, p.question, p.closed, p.created_at, "
+            "(SELECT COALESCE(MAX(voter)+1,0) FROM ballots b WHERE b.poll_id = p.id) AS n, "
+            "(SELECT COUNT(*) FROM reactions r WHERE r.poll_id = p.id) AS likes, "
+            "(SELECT COUNT(*) FROM comments c WHERE c.poll_id = p.id AND c.hidden = 0) AS ncom, "
+            "(SELECT COUNT(*) FROM reactions r WHERE r.poll_id = p.id AND r.user_id = ?) AS liked "
+            'FROM polls p WHERE "public" = 1 ORDER BY p.created_at DESC LIMIT ?', (uid, limit)).fetchall()
+        for p in polls:
+            d = dict(p); d["kind"] = "poll"
+            items.append(d)
+    items.sort(key=lambda x: x["created_at"], reverse=True)
+    return items[:limit]
+
+
 @app.route("/communaute")
 def communaute():
-    with closing(db()) as conn:
-        polls = conn.execute(
-            "SELECT id, title, question, closed, created_at, "
-            "(SELECT COALESCE(MAX(voter)+1,0) FROM ballots b WHERE b.poll_id = p.id) n "
-            'FROM polls p WHERE "public" = 1 ORDER BY created_at DESC LIMIT 60').fetchall()
-    return render_template("communaute.html", polls=[dict(p) for p in polls])
+    me = current_user()
+    return render_template("communaute.html", feed=_community_feed(me))
+
+
+@app.route("/communaute/publier", methods=["POST"])
+def publier():
+    me = current_user()
+    if not me:
+        return redirect(url_for("connexion", next=url_for("communaute")))
+    body = (request.form.get("body") or "").strip()[:2000]
+    if body:
+        with closing(db()) as conn, conn:
+            conn.execute("INSERT INTO posts (user_id, body, created_at) VALUES (?,?,?)",
+                         (me["id"], body, int(time.time())))
+    return redirect(url_for("communaute"))
+
+
+@app.route("/communaute/post/<int:pid>/aimer", methods=["POST"])
+def aimer_post(pid):
+    me = current_user()
+    if not me:
+        return redirect(url_for("connexion", next=url_for("communaute")))
+    now = int(time.time())
+    with closing(db()) as conn, conn:
+        row = conn.execute("SELECT 1 FROM post_likes WHERE post_id = ? AND user_id = ?",
+                           (pid, me["id"])).fetchone()
+        if row:
+            conn.execute("DELETE FROM post_likes WHERE post_id = ? AND user_id = ?", (pid, me["id"]))
+        else:
+            try:
+                conn.execute("INSERT INTO post_likes (post_id, user_id, created_at) VALUES (?,?,?)",
+                             (pid, me["id"], now))
+            except Exception:
+                pass
+    return redirect(url_for("communaute") + f"#post-{pid}")
+
+
+@app.route("/communaute/post/<int:pid>/commenter", methods=["POST"])
+def commenter_post(pid):
+    me = current_user()
+    if not me:
+        return redirect(url_for("connexion", next=url_for("communaute")))
+    body = (request.form.get("body") or "").strip()[:1000]
+    if body:
+        with closing(db()) as conn, conn:
+            conn.execute("INSERT INTO post_comments (post_id, user_id, body, created_at) VALUES (?,?,?,?)",
+                         (pid, me["id"], body, int(time.time())))
+    return redirect(url_for("communaute") + f"#post-{pid}")
+
+
+@app.route("/vote/<poll_id>/aimer", methods=["POST"])
+def aimer_vote(poll_id):
+    me = current_user()
+    if not me:
+        return redirect(url_for("connexion", next=url_for("communaute")))
+    if not get_poll(poll_id):
+        abort(404)
+    now = int(time.time())
+    with closing(db()) as conn, conn:
+        row = conn.execute("SELECT 1 FROM reactions WHERE poll_id = ? AND user_id = ?",
+                           (poll_id, me["id"])).fetchone()
+        if row:
+            conn.execute("DELETE FROM reactions WHERE poll_id = ? AND user_id = ?", (poll_id, me["id"]))
+        else:
+            try:
+                conn.execute("INSERT INTO reactions (poll_id, user_id, created_at) VALUES (?,?,?)",
+                             (poll_id, me["id"], now))
+            except Exception:
+                pass
+    return redirect(url_for("communaute") + f"#poll-{poll_id}")
 
 
 # --- Commentaires ------------------------------------------------------------
