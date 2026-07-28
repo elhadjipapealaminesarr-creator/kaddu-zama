@@ -1,39 +1,55 @@
-# Kaddu — Confidential voting for African communities
+# Kaddu — Confidential, verifiable civic tools for communities
 
-**Truly secret, verifiable votes for associations, cooperatives, tontines, unions and community groups — powered by Zama's Fully Homomorphic Encryption (FHE).**
+[![Live demo](https://img.shields.io/badge/demo-live-brightgreen)](https://kaddu-zama.onrender.com)
+[![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-0E5A4A.svg)](./LICENSE)
+[![Built with Zama FHE](https://img.shields.io/badge/Built%20with-Zama%20FHE-6E56CF)](https://www.zama.ai/)
+[![On-chain: Sepolia](https://img.shields.io/badge/on--chain-fhEVM%20%C2%B7%20Sepolia-2e53C3)](https://sepolia.etherscan.io/address/0x15a12f29b69dc65Bc9d6206f0Ebcb8e624549768)
+[![Made in](https://img.shields.io/badge/Made%20in-Dakar%20%F0%9F%87%B8%F0%9F%87%B3-E4A24C)](#)
 
-Each ballot is encrypted; the tally is computed **directly on the encrypted ballots** (homomorphic addition), and only the final total is ever decrypted. Nobody — not the server, not the organizer, not an attacker — can read an individual vote.
+**Truly secret, verifiable voting — plus tamper-proof tontines, sealed-bid tenders and a threshold whistleblower vault — for associations, cooperatives, unions, tontines and community groups. Powered by Zama's Fully Homomorphic Encryption (FHE).**
+
+Every sensitive value (ballot, amount, report) is **encrypted**; computation runs **directly on the encrypted data** (homomorphic aggregation); and **only the final result is revealed**. Nobody — not the server, not the organizer, not the publisher — can read an individual value.
 
 - 🌍 **Live demo:** https://kaddu-zama.onrender.com
 - ▶️ **3-min video:** https://youtu.be/RUnryaEYGJM
-- ⛓️ **On-chain (fhEVM) contract, deployed on Sepolia:** [`0x10cE529aA8Da56420C3A69fa535AaCBFEe20f8d5`](https://sepolia.etherscan.io/address/0x10cE529aA8Da56420C3A69fa535AaCBFEe20f8d5) — source in [`/fhevm`](./fhevm)
+- 💬 **Zama forum thread:** community.zama.org — topic *“Kaddu”*
 
 ---
 
 ## The problem
 
-In West Africa, communities decide together constantly — but almost never in secret. Votes happen by show of hands, on paper, or on WhatsApp, where the organizer sees every choice. This enables intimidation, vote-buying and disputed results. Kaddu brings mathematically-guaranteed ballot secrecy to these everyday decisions, in French, on low-end phones, for free.
+In West Africa, communities decide together and manage money together constantly — but almost never in secret. Votes happen by show of hands or on social apps where the organizer sees every choice; tontine managers can divert funds; tenders get rigged; corruption is hard to report without exposing yourself. Kaddu brings **mathematically-guaranteed confidentiality and record-integrity** to these everyday situations — in French, on low-end phones, for free.
+
+## Two layers, one idea: *compute on encrypted data, reveal only the public result*
+
+1. **Live web app (this repo)** — a phone-first app (Flask) running a **real FHE tally in production** with Zama's **Concrete**. Ballots and sensitive data are encrypted, aggregated homomorphically, and only totals are decrypted.
+2. **On-chain contracts** ([`/fhevm`](./fhevm)) — built on Zama's **fhEVM** (`@fhevm/solidity`), **deployed on the Sepolia testnet**. Computation happens on ciphertexts on-chain, making results *trustless* — even the operator cannot decrypt an individual value.
+
+## On-chain contracts (fhEVM · Sepolia)
+
+| Contract | Role | Address |
+|---|---|---|
+| ⭐ **KadduTender** | Tamper-proof public tender: sealed bids, winner computed on encrypted data, **ERC-7984** confidential-token escrow released only when N citizens confirm delivery, self-slashing confidential caution, encrypted collusion tripwire. | [`0x15a1…9768`](https://sepolia.etherscan.io/address/0x15a12f29b69dc65Bc9d6206f0Ebcb8e624549768) |
+| **KadduBudgetVote** | Community-approved budget ceiling. | [`0x68B6…c80f`](https://sepolia.etherscan.io/address/0x68B6cc4949E514930773507FB60781e0Ec1ec80f) |
+| **KadduVote** | Confidential on-chain voting. | [`0x2e53…F94c7`](https://sepolia.etherscan.io/address/0x2e53C38af76aeEE1902C6FA2A1F7AdDc269F94c7) |
+| **KadduTontine** | Tamper-proof rotating savings + internal confidential member vote. | [`0x23E3…e311`](https://sepolia.etherscan.io/address/0x23E30319EfB8B19d22201778A95A0B3eC50ee311) |
+
+> **Why KadduTender matters:** Zama's Confidential RFQ proved sealed-bid auctions for *finance*. KadduTender makes them tamper-proof for the **public good** — the first tender where the budget is set by the community, the winner is computed by encryption, and payment is released by citizens, never by the official.
 
 ## How it uses Zama FHE
 
-Kaddu ships **two complementary implementations** of the same idea — *compute on encrypted data, reveal only the public total*:
+`KadduVote.sol` is built on `@fhevm/solidity` 0.11.1: `vote()` takes an encrypted `externalEuint8` choice (`FHE.fromExternal`), tallies homomorphically (`FHE.eq` → `FHE.asEuint64` → `FHE.add`), and `closePoll()` calls `FHE.makePubliclyDecryptable()` to produce a public, verifiable result **without revealing any ballot**. KadduTender computes the winning sealed bid entirely on encrypted values and settles through an ERC-7984 confidential token.
 
-1. **Live app (this repo)** — a phone-first web app (Flask) that runs a **real FHE tally in production** with Zama's **Concrete**. Ballots are encrypted, stored as ciphertext, summed homomorphically, and only the final per-option totals are decrypted.
-2. **On-chain version** ([`/fhevm`](./fhevm)) — `KadduVote.sol`, built on Zama's **fhEVM** (`@fhevm/solidity`), **deployed on the Sepolia testnet**. Votes are tallied on ciphertexts on-chain (`FHE.eq` → `FHE.add`); on close, only the totals are made publicly decryptable (`FHE.makePubliclyDecryptable`). This makes the result *trustless* — even the operator cannot decrypt a ballot.
+## The confidential toolkit — what's live
 
-## Security model (two independent guarantees)
-
-- **Ballot secrecy — via FHE (strong).** A ballot is encrypted the instant it is cast and is never decrypted; only the aggregate total is. This holds against the server, the organizer and outside attackers.
-- **One person = one vote — via unique member links (for serious votes).** For any vote that matters, the organizer generates **one unique link per member** from the dashboard; each link can vote exactly once. For casual/open polls, a browser cookie provides a light guard only — so **for real elections, always use member links**. (Secrecy and integrity are separate concerns: FHE guarantees the first; unique links guarantee the second.)
-
-## Beyond voting — one confidential toolkit
-
-Secret voting is the first module of a broader confidential-civic toolkit, each solving a trust problem the same way:
-
-- **Confidential voting** — live today.
-- **Tamper-proof tontines** — rotating savings recorded immutably, amounts kept private; safe even from a dishonest manager.
-- **Sealed-bid procurement** — offers stay encrypted until opening (anti-corruption).
-- **Protected pooling & private comparison** — pool funds or compare sensitive figures without exposing individual values.
+- **Confidential voting** — secret, verifiable community votes, with downloadable **vote receipts** and tamper-proof **result certificates** (PDF) + a verification page.
+- **Restricted votes** — one unique, single-use member link per person (anonymous tokens); secrecy and one-person-one-vote are handled as separate guarantees.
+- **Tamper-proof tontines** — hash-chain ledger, two-sided P2P validation (payer *“I paid”* + receiver *“I received”*), secret member votes to reorder or dissolve. **Kaddu never moves money** — it is only the impartial referee.
+- **Sealed-bid tenders** — bids sealed at submission, revealed only after close + verification (anti-corruption).
+- **Protected pooling & private comparator** — pool funds or compare sensitive figures via homomorphic aggregation without exposing individual values.
+- **Threshold whistleblower vault** — a report only surfaces if enough people independently flag the same target; a lone whistleblower stays mathematically invisible.
+- **Community space** — social-style feed, comments, likes, idea wall, per-vote discussion, forum.
+- **Bilingual FR/EN**, mobile-first, visitor counter, optional accounts, free.
 
 ## Run it locally
 
@@ -50,23 +66,27 @@ Then open http://localhost:7860.
 
 Notes:
 - The FHE engine (Concrete) compiles **lazily on first vote** and is cached, so the server boots instantly (works on small free tiers).
-- `KADDU_CAPACITY` (default 30) sets the max voters per poll.
 - Works with **SQLite** locally or **PostgreSQL** in production (set `DATABASE_URL`).
+
+The on-chain contracts live in [`/fhevm`](./fhevm) (Hardhat project); deployment addresses are in [`fhevm/DEPLOYED-SEPOLIA.md`](./fhevm/DEPLOYED-SEPOLIA.md).
 
 ## Repository structure
 
 ```
-app.py            Flask app (routes, DB, community space)
-fhe_engine.py     Zama Concrete FHE tally (encrypt / sum / decrypt)
-templates/        HTML pages (mobile-first)
-static/           assets, service worker (PWA)
-fhevm/            on-chain version: KadduVote.sol (Zama fhEVM, deployed on Sepolia)
+app.py            Flask app (routes, DB, community space, SEO, legal pages)
+fhe_engine.py     Zama Concrete FHE engine (encrypt / aggregate / decrypt)
+templates/        HTML pages (mobile-first, bilingual FR/EN)
+static/           assets, service worker (PWA), social image
+fhevm/            on-chain contracts (Zama fhEVM, deployed on Sepolia):
+                    KadduTender · KadduBudgetVote · KadduVote · KadduTontine
 ```
 
 ## License
 
-MIT — see [LICENSE](./LICENSE). The on-chain contract in `/fhevm` is under **BSD-3-Clause-Clear** (Zama's license), as noted in its SPDX header.
+**AGPL-3.0** — see [LICENSE](./LICENSE). Reuse, including as a hosted service, must share source under the same terms. On-chain contracts in `/fhevm` carry their own SPDX headers following Zama's conventions.
 
 ---
 
-Built solo from Dakar, Senegal, by **El Hadji Pape Alamine Sarr** — elhadjipapealaminesarr@gmail.com
+Built solo from **Dakar, Senegal**, by **El Hadji Pape Alamine Sarr** — elhadjipapealaminesarr@gmail.com
+
+*Kaddu: confidentiality in the service of communities — accessible to everyone, and tamper-proof.*
