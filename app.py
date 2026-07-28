@@ -601,20 +601,56 @@ TRANSLATIONS = {
         "ml.host_p": "The application is hosted by <b>Render Services, Inc.</b> (render.com) and its "
                      "database by <b>Neon, Inc.</b> (neon.tech). The application servers are located "
                      "in the United States (Oregon region).",
+        "ml.lic_h": "License and source code",
+        "ml.lic_p": "Kaddu's code is released as <b>open source</b> under the <b>AGPL-3.0</b> license, "
+                    "so it can be inspected and verified publicly: "
+                    "<a href='https://github.com/elhadjipapealaminesarr-creator/kaddu-zama'>"
+                    "github.com/elhadjipapealaminesarr-creator/kaddu-zama</a>. Any reuse, including "
+                    "via an online service, must comply with this license (making the source code "
+                    "available under the same terms).",
         "ml.ip_h": "Intellectual property",
-        "ml.ip_p": "The name « Kaddu », the visual identity and the site content are the property of "
-                   "their publisher. Fully homomorphic encryption (FHE) is provided by <b>Zama</b>'s "
-                   "technology (Concrete library), under its own licenses.",
+        "ml.ip_p": "The name « Kaddu », the logo and the visual identity are the property of their "
+                   "publisher. The source code, however, is distributed under the free AGPL-3.0 "
+                   "license (see above). Fully homomorphic encryption (FHE) is provided by "
+                   "<b>Zama</b>'s technology (Concrete library), under its own licenses.",
+        "ml.nature_h": "Nature of the service",
+        "ml.nature_p": "Kaddu is a <b>neutral tool</b> for decision-making and coordination. "
+                       "<b>Kaddu never holds, transfers or manages money</b>: for tontines, the app "
+                       "only acts as a tamper-proof referee (a ledger of contributions <i>declared</i> "
+                       "by members), while money transfers happen elsewhere, directly between people. "
+                       "Kaddu provides no <b>legal, financial or tax advice</b>; the information "
+                       "shown does not replace a professional's opinion.",
+        "ml.chain_h": "Blockchain component (experimental)",
+        "ml.chain_p": "Some features rely on smart contracts deployed on the <b>Sepolia</b> test "
+                      "network (Zama Protocol / fhEVM). This is a <b>demonstration network</b>: its "
+                      "tokens have <b>no real monetary value</b> and these features are provided "
+                      "experimentally.",
+        "ml.alert_h": "Reports and alerts",
+        "ml.alert_p": "The alert vault is a tool intended for <b>lawful, good-faith use</b>. It does "
+                      "not replace official reporting channels (authorities, courts). As sensitive "
+                      "content is encrypted, <b>the publisher has no access to it</b> and does not "
+                      "moderate this data: each user remains responsible for what they publish.",
         "ml.resp_h": "Liability",
-        "ml.resp_p": "Kaddu is provided « as is », with no guarantee of continuous availability. The "
-                     "publisher strives to ensure the accuracy of information but cannot be held "
-                     "responsible for any use made of it by vote organizers.",
-        "ml.model_note": "This document is a basic template. For official use, have it adapted to "
-                         "your situation and applicable regulations.",
+        "ml.resp_p": "Kaddu is provided « as is », with no guarantee of continuous availability or "
+                     "freedom from errors. <b>The organizer of a vote, tontine or tender is solely "
+                     "responsible</b> for its use, the lawfulness of their approach and the resulting "
+                     "decisions. To the extent permitted by law, the publisher cannot be held liable "
+                     "for any direct or indirect damage related to use of the service.",
+        "ml.law_h": "Governing law and disputes",
+        "ml.law_p": "The service is governed by <b>Senegalese law</b>, in particular Law No. 2008-12 "
+                    "of 25 January 2008 on the protection of personal data. Users located in the "
+                    "European Union also benefit from the <b>GDPR</b>. In the event of a dispute, an "
+                    "amicable solution will be sought first; failing that, the competent courts of "
+                    "Dakar (Senegal) may be seized, subject to applicable consumer-protection rules.",
+        "ml.model_note": "This document aims to inform users clearly. For use by an official "
+                         "organization, have it reviewed by a lawyer in light of your situation and "
+                         "applicable regulations.",
         # --- Confidentialité ---
         "pc.title": "Privacy",
         "pc.intro": "Kaddu is built around a simple principle: <b>collect the strict minimum</b>. "
-                    "There is no account to create, no profile, no advertising, no commercial tracking.",
+                    "There is no mandatory account, no advertising profile, no commercial tracking.",
+        "pc.controller_h": "Data controller",
+        "pc.controller_p": "The data controller is <b>Pape Alamine Sarr</b> (Dakar, Senegal).",
         "pc.secret_h": "The secrecy of your vote",
         "pc.secret_p": "Each ballot is <b>encrypted on your device or on the server before "
                        "storage</b>, thanks to Zama's fully homomorphic encryption (FHE). The tally "
@@ -622,23 +658,54 @@ TRANSLATIONS = {
                        "the publisher can read an individual vote. Only the <b>total result</b> is "
                        "revealed, once the vote is closed.",
         "pc.data_h": "Data processed",
-        "pc.data_p": "To run a vote, Kaddu keeps: the <b>title, question and choices</b> you enter; "
-                     "the <b>encrypted ballots</b>; and, if you enable member links, <b>anonymous "
-                     "tokens</b> (no identity is associated). A small <b>technical cookie</b> is "
-                     "placed on the voter's device to prevent double voting — it contains no "
-                     "personal data. Like any site, the host may keep temporary <b>technical "
-                     "logs</b> (IP address, timestamp) for security.",
+        "pc.data_p": "To run the service, Kaddu keeps: the <b>title, question and choices</b> you "
+                     "enter; the <b>encrypted ballots</b>; the <b>anonymous tokens</b> of member "
+                     "links (no identity attached); for tontines and tenders, the <b>progress of "
+                     "the steps</b> (declared contributions, sealed bids), with sensitive amounts "
+                     "kept encrypted. If you <b>create an account</b> (optional), your email address "
+                     "and a <b>hashed</b> password (never stored in clear text) are kept. A small "
+                     "<b>technical cookie</b> prevents double voting. The host may keep temporary "
+                     "<b>technical logs</b> (IP address, timestamp) for security.",
+        "pc.basis_h": "Legal basis",
+        "pc.basis_p": "Processing is based on your <b>consent</b> (voluntary participation) and on "
+                      "the publisher's <b>legitimate interest</b> in providing a secure service and "
+                      "protecting it against abuse.",
+        "pc.cookies_h": "Cookies",
+        "pc.cookies_p": "Kaddu only uses <b>strictly necessary</b> cookies: an anti-double-vote "
+                        "cookie (also used for <i>anonymous</i> visitor counting), a <b>session</b> "
+                        "cookie if you log in, and remembering your <b>language</b>. <b>No "
+                        "advertising cookies or third-party trackers.</b>",
         "pc.not_h": "What Kaddu does not do",
         "pc.not_p": "No request for name, email or phone to vote. No selling of data. No advertising "
-                    "cookies or third-party trackers.",
+                    "cookies or third-party trackers. Kaddu never moves money.",
         "pc.keep_h": "Retention",
-        "pc.keep_p": "A vote's data is kept for the duration of its organization. You can request "
-                     "the deletion of a vote you created by writing to us.",
-        "pc.sub_h": "Technical subcontractors",
-        "pc.sub_p": "The application and its database are hosted by Render and Neon (see the",
-        "pc.sub_p2": "), which act only as hosting providers.",
+        "pc.keep_p": "The data of a vote, tontine or tender is kept for the duration of its "
+                     "organization. You can request the deletion of an item you created by writing "
+                     "to us.",
+        "pc.transfer_h": "Hosting and international transfers",
+        "pc.transfer_p": "The application (Render) and its database (Neon) are hosted on <b>servers "
+                         "located in the United States</b>; these providers act only as hosting "
+                         "subcontractors (see the",
+        "pc.transfer_p2": "). A transfer of data outside Senegal and the European Union may "
+                          "therefore occur; it is limited to the strict technical operation of the "
+                          "service.",
+        "pc.security_h": "Security",
+        "pc.security_p": "Traffic is encrypted over <b>HTTPS</b>. Ballots and sensitive data are "
+                         "protected by Zama's <b>homomorphic encryption (FHE)</b>. Account passwords "
+                         "are <b>hashed</b> (never readable). As no measure is infallible, avoid "
+                         "publishing information you would not want processed.",
+        "pc.minors_h": "Minors",
+        "pc.minors_p": "Kaddu is not intended for children and does not knowingly collect their "
+                       "personal data.",
         "pc.rights_h": "Your rights & contact",
-        "pc.rights_p": "You can request access, correction or deletion of data concerning you by writing to",
+        "pc.rights_p": "You can request <b>access</b>, <b>correction</b>, <b>deletion</b> of, or "
+                       "<b>object</b> to the processing of data concerning you by writing to",
+        "pc.rights_p2": "You may also refer the matter to the <b>CDP</b> (Personal Data Protection "
+                        "Commission, Senegal) or, in the European Union, your data protection "
+                        "authority (for example the CNIL in France).",
+        "pc.changes_h": "Changes",
+        "pc.changes_p": "This policy may change. The date of the last update appears at the top of "
+                        "the page; significant changes will be indicated on the site.",
         # --- Messages flash (serveur) ---
         "flash.1": "Give a title, a question and at least 2 choices.",
         "flash.2": "This vote has reached its maximum capacity.",
