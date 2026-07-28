@@ -284,6 +284,62 @@ footer .brand{color:#fff}footer .brand b{color:var(--gold)}
   </div>
 </div></section>
 
+<section id="onchain" style="background:#0A4638;color:#fff">
+  <style>
+    #onchain .oc-card{display:block;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);
+      border-radius:16px;padding:16px 16px 14px;text-decoration:none;color:#fff;transition:transform .12s, background .15s, border-color .15s}
+    #onchain .oc-card:hover{transform:translateY(-3px);background:rgba(255,255,255,.10);border-color:#E4A24C}
+    #onchain .oc-name{font-family:'Sora';font-weight:700;font-size:1.02rem}
+    #onchain .oc-addr{font-family:monospace;font-size:.8rem;color:#9fc7ba;margin-top:8px;word-break:break-all}
+    #onchain .oc-go{color:#E4A24C;font-weight:600;font-size:.85rem;margin-top:8px;display:inline-block}
+  </style>
+  <div class="wrap center" style="padding:56px 20px">
+    <div class="eyebrow" style="color:#E4A24C">{{ tr('two.eyebrow', 'Deux couches, une même confidentialité') }}</div>
+    <h2 class="h2" style="color:#fff;margin:0 auto">{{ tr('two.h2', 'Un Kaddu pour tous. Un Kaddu inviolable.') }}</h2>
+    <p style="max-width:660px;margin:14px auto 0;color:#cfe3db">{{ tr('two.sub', 'La même technologie de chiffrement Zama, sous deux formes complémentaires : une accessible à tous dès aujourd\'hui, une gravée sur la blockchain et vérifiable par le monde entier.') }}</p>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;max-width:860px;margin:32px auto 0;text-align:left">
+      <div style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);border-radius:20px;padding:24px">
+        <span style="display:inline-block;background:#E4A24C;color:#3a2606;font-weight:700;font-size:.75rem;padding:5px 11px;border-radius:999px">{{ tr('two.a.badge', '&#127760; En ligne, pour tous') }}</span>
+        <h3 style="font-family:'Sora';font-size:1.25rem;margin:14px 0 8px;color:#fff">{{ tr('two.a.h3', 'Kaddu accessible') }}</h3>
+        <p style="color:#cfe3db;font-size:.95rem">{{ tr('two.a.p', 'Utilisable tout de suite, sans wallet ni crypto. Le chiffrement FHE de Zama protège chaque vote côté serveur. Un simple lien ou QR code suffit — pensé pour les associations, tontines et coopératives.') }}</p>
+        <a href="{{ url_for('creer') }}" class="btn btn-gold" style="margin-top:8px;width:auto;display:inline-flex">{{ tr('two.a.cta', 'Ouvrir Kaddu gratuitement') }}</a>
+      </div>
+      <div style="background:rgba(255,255,255,.06);border:1px solid rgba(228,162,76,.4);border-radius:20px;padding:24px">
+        <span style="display:inline-block;background:#123f33;color:#7ee0c0;border:1px solid #2f6b57;font-weight:700;font-size:.75rem;padding:5px 11px;border-radius:999px">&#9939;&#65039; {{ tr('two.b.badge', 'Sur la blockchain') }}</span>
+        <h3 style="font-family:'Sora';font-size:1.25rem;margin:14px 0 8px;color:#fff">{{ tr('two.b.h3', 'Kaddu on-chain, inviolable') }}</h3>
+        <p style="color:#cfe3db;font-size:.95rem">{{ tr('two.b.p', 'La version inviolable : nos contrats confidentiels (fhEVM) tournent sur le Zama Protocol (Sepolia). Offres scellées, paiements libérés par les citoyens — tout est vérifiable publiquement, pour toujours.') }}</p>
+        <a href="https://sepolia.etherscan.io/address/0x15a12f29b69dc65Bc9d6206f0Ebcb8e624549768" target="_blank" rel="noopener" class="btn btn-ghost" style="margin-top:8px;width:auto;display:inline-flex">{{ tr('two.b.cta', 'Voir les contrats &#8594;') }}</a>
+      </div>
+    </div>
+
+    <div class="eyebrow" style="color:#E4A24C;margin-top:44px">{{ tr('oc.contracts_label', 'Les contrats, en direct sur Sepolia') }}</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;max-width:840px;margin:16px auto 0;text-align:left">
+      <a class="oc-card" target="_blank" rel="noopener" href="https://sepolia.etherscan.io/address/0x15a12f29b69dc65Bc9d6206f0Ebcb8e624549768">
+        <div class="oc-name">&#128273; KadduTender</div>
+        <div style="color:#cfe3db;font-size:.9rem;margin-top:4px">{{ tr('oc.tender', 'Appel d\'offres inviolable : offres scellées, gagnant calculé, paiement libéré par les citoyens.') }}</div>
+        <div class="oc-addr">0x15a12f29…624549768</div><span class="oc-go">{{ tr('oc.view', 'Voir sur Etherscan &#8594;') }}</span>
+      </a>
+      <a class="oc-card" target="_blank" rel="noopener" href="https://sepolia.etherscan.io/address/0x68B6cc4949E514930773507FB60781e0Ec1ec80f">
+        <div class="oc-name">&#128202; KadduBudgetVote</div>
+        <div style="color:#cfe3db;font-size:.9rem;margin-top:4px">{{ tr('oc.budget', 'Le budget plafond est approuvé par un vote communautaire confidentiel.') }}</div>
+        <div class="oc-addr">0x68B6cc49…0Ec1ec80f</div><span class="oc-go">{{ tr('oc.view', 'Voir sur Etherscan &#8594;') }}</span>
+      </a>
+      <a class="oc-card" target="_blank" rel="noopener" href="https://sepolia.etherscan.io/address/0x2e53C38af76aeEE1902C6FA2A1F7AdDc269F94c7">
+        <div class="oc-name">&#128499;&#65039; KadduVote</div>
+        <div style="color:#cfe3db;font-size:.9rem;margin-top:4px">{{ tr('oc.vote', 'Vote confidentiel on-chain : bulletins chiffrés, seul le total est révélé.') }}</div>
+        <div class="oc-addr">0x2e53C38a…269F94c7</div><span class="oc-go">{{ tr('oc.view', 'Voir sur Etherscan &#8594;') }}</span>
+      </a>
+      <a class="oc-card" target="_blank" rel="noopener" href="https://sepolia.etherscan.io/address/0x23E30319EfB8B19d22201778A95A0B3eC50ee311">
+        <div class="oc-name">&#129309; KadduTontine</div>
+        <div style="color:#cfe3db;font-size:.9rem;margin-top:4px">{{ tr('oc.tontine', 'Tontine inviolable avec vote confidentiel interne, gouvernée on-chain.') }}</div>
+        <div class="oc-addr">0x23E30319…C50ee311</div><span class="oc-go">{{ tr('oc.view', 'Voir sur Etherscan &#8594;') }}</span>
+      </a>
+    </div>
+    <p style="margin:24px auto 0;color:#9fc7ba;font-size:.85rem">{{ tr('oc.note', 'Réseau de test Sepolia · Protocole Zama (fhEVM) · déployé le 28/07/2026') }}</p>
+  </div>
+</section>
+
 <section class="final"><div class="wrap"><div class="box">
   <div class="eyebrow">{{ tr('final.eyebrow', 'Commencez maintenant') }}</div>
   <h2>{{ tr('final.h2b', 'Votre première décision protégée, en 2 minutes') }}</h2>
