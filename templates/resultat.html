@@ -1,5 +1,8 @@
 {% extends "base.html" %}
 {% block title %}{{ tr('res.title', 'Résultat') }} — {{ poll['title'] }}{% endblock %}
+{% block head %}
+{% if ready %}<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>{% endif %}
+{% endblock %}
 {% block content %}
 <div class="card pad-lg">
   <h1 style="font-size:1.4rem">{{ poll['title'] }}</h1>
@@ -28,8 +31,72 @@
         &#9733; {{ win }} {{ tr('res.wins', "l'emporte") }}</p>
       {% endif %}
     {% endif %}
+
+    <div class="divider">{{ tr('res.cert', 'certificat officiel') }}</div>
+    <button type="button" class="btn btn-primary" onclick="dlCert()">&#128229; {{ tr('res.dl_cert', 'Télécharger le certificat (PDF)') }}</button>
+    <p class="muted small center" style="margin-top:10px">
+      {{ tr('res.hash_label', 'Empreinte anti-falsification') }} :<br>
+      <span style="font-family:monospace;letter-spacing:.05em;color:var(--primary-d)">{{ cert_hash }}</span></p>
+
     <div class="divider">{{ tr('res.proof', 'preuve de confidentialité') }}</div>
     <p class="muted small center">{{ tr('res.proof2', "Ces totaux ont été obtenus en additionnant les bulletins <b>chiffrés</b>, puis en déchiffrant uniquement la somme. Aucun vote individuel n'a été lu.") }}</p>
+
+    <script>
+      var CERT = {
+        title: {{ poll['title']|tojson }}, question: {{ poll['question']|tojson }},
+        total: {{ total }}, win: {{ (win or '')|tojson }}, hash: {{ cert_hash|tojson }},
+        rows: [{% for r in rows_sorted %}{l: {{ r.label|tojson }}, n: {{ r.n }}, p: {{ r.pct }}}{{ ',' if not loop.last }}{% endfor %}],
+        L: {
+          heading: {{ tr('res.cert_heading', 'Certificat de résultat de vote')|tojson }},
+          poll: {{ tr('res.cert_poll', 'Vote')|tojson }},
+          question: {{ tr('res.cert_question', 'Question')|tojson }},
+          date: {{ tr('res.cert_date', 'Émis le')|tojson }},
+          total: {{ tr('res.cert_total', 'Total des votes')|tojson }},
+          results: {{ tr('res.cert_results', 'Résultats')|tojson }},
+          winner: {{ tr('res.cert_winner', 'Option en tête')|tojson }},
+          votes: {{ tr('res.cert_votes', 'vote(s)')|tojson }},
+          hash: {{ tr('res.cert_hashlbl', 'Empreinte anti-falsification')|tojson }},
+          cond: {{ tr('res.cert_cond', "Conditions : ce certificat atteste le résultat d'un scrutin dont chaque bulletin a été chiffré (chiffrement homomorphe FHE de Zama) puis additionné sans jamais être déchiffré individuellement. Seul le total a été révélé. L'empreinte ci-dessus permet à quiconque de vérifier que ce document n'a pas été modifié, en la recalculant à partir des résultats publics. Document généré automatiquement par Kaddu, sans valeur juridique sauf accord des parties.")|tojson }}
+        }
+      };
+      function dlCert(){
+        var doc = new window.jspdf.jsPDF();
+        doc.setDrawColor(14,90,74); doc.setLineWidth(1.5); doc.rect(10,10,190,277);
+        doc.setLineWidth(0.4); doc.setDrawColor(200,170,110); doc.rect(13,13,184,271);
+        doc.setFont('helvetica','bold'); doc.setFontSize(24); doc.setTextColor(14,90,74);
+        doc.text('Kaddu', 105, 30, {align:'center'});
+        doc.setFontSize(15); doc.setTextColor(40,40,40);
+        doc.text(CERT.L.heading, 105, 42, {align:'center'});
+        doc.setDrawColor(220,205,180); doc.line(25,48,185,48);
+        doc.setFont('helvetica','normal'); doc.setFontSize(11); doc.setTextColor(55,55,55);
+        var y=62;
+        function line(lbl,val,bold){ doc.setFont('helvetica','bold'); doc.text(lbl,22,y);
+          doc.setFont('helvetica', bold?'bold':'normal');
+          doc.text(doc.splitTextToSize(String(val),120), 70, y); y+=9; }
+        line(CERT.L.poll+' :', CERT.title);
+        line(CERT.L.question+' :', CERT.question);
+        line(CERT.L.date+' :', new Date().toLocaleString());
+        line(CERT.L.total+' :', CERT.total+' '+CERT.L.votes);
+        y+=3; doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(14,90,74);
+        doc.text(CERT.L.results, 22, y); y+=8;
+        doc.setFontSize(11); doc.setTextColor(55,55,55);
+        CERT.rows.forEach(function(r){
+          var star = (r.l===CERT.win && r.n>0) ? '  *' : '';
+          doc.setFont('helvetica', (r.l===CERT.win)?'bold':'normal');
+          doc.text('- '+r.l+star, 24, y);
+          doc.text(r.n+' '+CERT.L.votes+'  ('+r.p+'%)', 150, y, {align:'right'}); y+=8;
+        });
+        if(CERT.win){ y+=2; doc.setFont('helvetica','bold'); doc.setTextColor(184,122,40);
+          doc.text('* '+CERT.L.winner+' : '+CERT.win, 22, y); y+=10; }
+        doc.setDrawColor(220,205,180); doc.line(22,y,188,y); y+=8;
+        doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(14,90,74);
+        doc.text(CERT.L.hash+' :', 22, y); y+=6;
+        doc.setFont('courier','normal'); doc.setFontSize(12); doc.text(CERT.hash, 22, y); y+=10;
+        doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(120,120,120);
+        doc.text(doc.splitTextToSize(CERT.L.cond, 166), 22, y);
+        doc.save('certificat-kaddu.pdf');
+      }
+    </script>
   {% endif %}
 </div>
 <a href="{{ url_for('index') }}" class="btn btn-ghost">{{ tr('nav.home', 'Accueil') }}</a>

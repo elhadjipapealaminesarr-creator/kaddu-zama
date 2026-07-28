@@ -181,6 +181,7 @@ footer .lock{color:var(--primary)}
   <span class="lock">&#128274;</span> {{ tr('foot.chiffres', 'Vos votes sont chiffrés de bout en bout.') }}<br>
   <a href="{{ url_for('creer') }}" style="color:var(--primary-d);font-weight:600">{{ tr('foot.cree', 'Créé avec Kaddu — créez votre propre vote &#8594;') }}</a><br>
   <span style="opacity:.8">{{ tr('foot.edition', 'édition Zama · propulsé par le chiffrement FHE de Zama ·') }} {{ ANNEE }}</span><br>
+  <span style="opacity:.8">&#128065;&#65039; <b>{{ '{:,}'.format(SITE_VISITORS).replace(',', ' ') }}</b> {{ tr('foot.visitors', 'visiteurs') }} · {{ '{:,}'.format(SITE_VIEWS).replace(',', ' ') }} {{ tr('foot.views', 'pages vues') }}</span><br>
   <span style="opacity:.8">
     <a href="{{ url_for('mentions') }}" style="color:var(--muted)">{{ tr('foot.mentions', 'Mentions légales') }}</a> ·
     <a href="{{ url_for('confidentialite') }}" style="color:var(--muted)">{{ tr('foot.confidentialite', 'Confidentialité') }}</a> ·

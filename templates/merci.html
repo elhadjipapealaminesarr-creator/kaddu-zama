@@ -1,5 +1,16 @@
 {% extends "base.html" %}
 {% block title %}{{ tr('merci.title', 'Vote enregistré') }} — Kaddu{% endblock %}
+{% block head %}
+{% if receipt %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  .receipt{background:#fbf7ef;border:1px dashed #d9cdb8;border-radius:var(--r-sm);padding:16px;margin:16px 0}
+  .rcode{font-family:'Sora';font-weight:700;font-size:1.25rem;letter-spacing:.06em;color:var(--primary-d);
+    background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px;text-align:center;margin:8px 0}
+  .dlrow{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+  @media(max-width:420px){.dlrow{grid-template-columns:1fr}}
+</style>
+{% endif %}{% endblock %}
 {% block content %}
 <div class="card pad-lg center">
   <div class="seal-lock">
@@ -14,6 +25,55 @@
     <span class="pill pill-green">&#10004; {{ tr('merci.b1', 'Bulletin chiffré') }}</span>
     <span class="pill pill-gold" style="margin-left:6px">{{ tr('merci.b2', 'Anonyme') }}</span>
   </div>
+
+  {% if receipt %}
+  <div class="receipt">
+    <div style="font-weight:700">&#129534; {{ tr('merci.receipt_h', 'Votre preuve de vote') }}</div>
+    <p class="muted small" style="margin:6px 0">{{ tr('merci.receipt_p', 'Gardez ce code : il prouve que votre bulletin est enregistré et sera compté. Il ne révèle jamais votre choix.') }}</p>
+    <div class="rcode" id="rcode">{{ receipt.code }}</div>
+    <div class="dlrow">
+      <button type="button" class="btn btn-ghost" onclick="dlReceipt(false)">&#128229; {{ tr('merci.dl_neutral', 'Reçu (sans mon choix)') }}</button>
+      <button type="button" class="btn btn-ghost" onclick="dlReceipt(true)">&#128229; {{ tr('merci.dl_perso', 'Reçu (avec mon choix)') }}</button>
+    </div>
+    <p class="muted small" style="margin:10px 0 0">
+      {{ tr('merci.verify_pre', 'Vérifier un reçu :') }}
+      <a href="{{ url_for('preuve') }}?code={{ receipt.code }}">{{ base }}{{ url_for('preuve') }}?code={{ receipt.code }}</a></p>
+  </div>
+  <script>
+    var R = {code:{{ receipt.code|tojson }}, title:{{ receipt.title|tojson }},
+             choice:{{ receipt.choice|tojson }}, ts:{{ receipt.ts }},
+             verify:{{ (base ~ url_for('preuve') ~ '?code=' ~ receipt.code)|tojson }}};
+    function fmtDate(ts){var d=new Date(ts*1000);return d.toLocaleString();}
+    function dlReceipt(withChoice){
+      var jsPDF=window.jspdf.jsPDF, doc=new jsPDF();
+      doc.setDrawColor(14,90,74); doc.setLineWidth(1.2); doc.rect(12,12,186,120);
+      doc.setFont('helvetica','bold'); doc.setFontSize(20); doc.setTextColor(14,90,74);
+      doc.text('Kaddu', 20, 30);
+      doc.setFontSize(13); doc.setTextColor(40,40,40);
+      doc.text({{ tr('merci.pdf_title', 'Reçu de vote — preuve de participation')|tojson }}, 20, 42);
+      doc.setDrawColor(220,205,180); doc.line(20,47,190,47);
+      doc.setFont('helvetica','normal'); doc.setFontSize(11); doc.setTextColor(60,60,60);
+      var y=58;
+      doc.text({{ tr('merci.pdf_poll', 'Vote :')|tojson }}+' '+R.title, 20, y); y+=9;
+      doc.text({{ tr('merci.pdf_date', 'Date :')|tojson }}+' '+fmtDate(R.ts), 20, y); y+=9;
+      if(withChoice){ doc.setFont('helvetica','bold');
+        doc.text({{ tr('merci.pdf_choice', 'Votre choix :')|tojson }}+' '+R.choice, 20, y);
+        doc.setFont('helvetica','normal'); y+=9; }
+      doc.setFontSize(10); doc.setTextColor(120,120,120);
+      doc.text({{ tr('merci.pdf_code', 'Code de vérification :')|tojson }}, 20, y+4);
+      doc.setFontSize(15); doc.setTextColor(14,90,74); doc.setFont('helvetica','bold');
+      doc.text(R.code, 20, y+13);
+      doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(120,120,120);
+      var note = withChoice
+        ? {{ tr('merci.pdf_note_perso', 'Document personnel — à garder secret. Le code prouve la participation ; le choix ci-dessus est votre note privée.')|tojson }}
+        : {{ tr('merci.pdf_note_neutral', 'Ce reçu prouve que votre bulletin est enregistré et compté, sans révéler votre choix.')|tojson }};
+      doc.text(doc.splitTextToSize(note, 170), 20, y+24);
+      doc.text({{ tr('merci.pdf_verify', 'Vérifier :')|tojson }}+' '+R.verify, 20, 124);
+      doc.save('recu-kaddu-'+R.code+'.pdf');
+    }
+  </script>
+  {% endif %}
+
   <a href="{{ url_for('resultat', poll_id=poll['id']) }}" class="btn btn-ghost" style="margin-top:20px">{{ tr('merci.result', 'Voir la page du résultat') }}</a>
 </div>
 {% endblock %}

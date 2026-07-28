@@ -97,7 +97,7 @@
 {% if is_owner and mode == 'p2p' %}
 <div class="card">
   <h2 style="font-family:'Sora';font-size:1.2rem">&#128279; {{ tr('tdet.links_h', 'Liens privés des membres') }}</h2>
-  <p class="muted small">{{ tr('tdet.links_p', 'Envoie à chaque membre <b>son</b> lien (par WhatsApp). Chacun confirme lui-même ses cotisations — tu ne peux plus valider à sa place.') }}</p>
+  <p class="muted small">{{ tr('tdet.links_p', 'Envoie à chaque membre <b>son</b> lien (par WhatsApp, Telegram, SMS…). Chacun confirme lui-même ses cotisations — tu ne peux plus valider à sa place.') }}</p>
   {% for m in members %}
   <div class="small" style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,.07);word-break:break-all">
     <b>{{ m['name'] }}</b><br>

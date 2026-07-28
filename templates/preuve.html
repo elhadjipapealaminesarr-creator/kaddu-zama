@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}{{ tr('prv.title', 'Vérifier un reçu de vote') }} — Kaddu{% endblock %}
+{% block content %}
+<a href="{{ url_for('index') }}" class="back">&#8592; {{ tr('nav.home', 'Accueil') }}</a>
+<div class="card pad-lg">
+  <h1 style="font-size:1.4rem">&#129534; {{ tr('prv.h', 'Vérifier un reçu de vote') }}</h1>
+  <p class="muted small">{{ tr('prv.sub', 'Collez un code de reçu pour confirmer qu’un bulletin a bien été enregistré. Le choix du votant n’est jamais révélé.') }}</p>
+
+  <form method="get" action="{{ url_for('preuve') }}" class="copybox" style="margin-top:14px">
+    <input type="text" name="code" value="{{ code }}" placeholder="{{ tr('prv.placeholder', 'Code du reçu') }}" required>
+    <button type="submit">{{ tr('prv.check', 'Vérifier') }}</button>
+  </form>
+
+  {% if code %}
+    {% if rec %}
+    <div class="flash" style="background:#E4EFEA;color:#0A4638;border-color:#c6ddd3;margin-top:14px">
+      &#10004; {{ tr('prv.ok', 'Reçu valide.') }}
+    </div>
+    <p style="margin-top:10px">{{ tr('prv.ok_p', 'Ce code correspond à un bulletin bien enregistré') }}
+      {% if rec.title %}{{ tr('prv.ok_for', 'pour le vote') }} « <b>{{ rec.title }}</b> »{% endif %},
+      {{ tr('prv.ok_enc', 'chiffré et compté dans le total. Le choix reste secret.') }}</p>
+    <p class="muted small">{{ tr('prv.ok_date', 'Enregistré le') }} {{ rec.created_at|dateh }}.</p>
+    {% else %}
+    <div class="flash" style="margin-top:14px">
+      &#10006; {{ tr('prv.bad', 'Aucun reçu ne correspond à ce code.') }}
+    </div>
+    <p class="muted small">{{ tr('prv.bad_p', 'Vérifiez que le code est copié exactement (sans espace).') }}</p>
+    {% endif %}
+  {% endif %}
+</div>
+{% endblock %}
