@@ -17,13 +17,28 @@
   <h2 style="margin-top:20px">{{ tr('ml.host_h', 'Hébergement') }}</h2>
   <p>{{ tr('ml.host_p', "L'application est hébergée par <b>Render Services, Inc.</b> (render.com) et sa base de données par <b>Neon, Inc.</b> (neon.tech). Les serveurs applicatifs sont situés aux États-Unis (région Oregon).") }}</p>
 
+  <h2 style="margin-top:20px">{{ tr('ml.lic_h', 'Licence et code source') }}</h2>
+  <p>{{ tr('ml.lic_p', "Le code de Kaddu est publié en <b>open source</b> sous licence <b>AGPL-3.0</b>. Il est donc consultable et vérifiable publiquement : <a href='https://github.com/elhadjipapealaminesarr-creator/kaddu-zama'>github.com/elhadjipapealaminesarr-creator/kaddu-zama</a>. Toute réutilisation, y compris via un service en ligne, doit respecter cette licence (mise à disposition du code source aux mêmes conditions).") }}</p>
+
   <h2 style="margin-top:20px">{{ tr('ml.ip_h', 'Propriété intellectuelle') }}</h2>
-  <p>{{ tr('ml.ip_p', "Le nom « Kaddu », l'identité visuelle et le contenu du site sont la propriété de leur éditeur. Le chiffrement entièrement homomorphe (FHE) est fourni par la technologie <b>Zama</b> (bibliothèque Concrete), selon ses propres licences.") }}</p>
+  <p>{{ tr('ml.ip_p', "Le nom « Kaddu », le logo et l'identité visuelle sont la propriété de leur éditeur. Le code source, lui, est distribué sous licence libre AGPL-3.0 (voir ci-dessus). Le chiffrement entièrement homomorphe (FHE) est fourni par la technologie <b>Zama</b> (bibliothèque Concrete), selon ses propres licences.") }}</p>
+
+  <h2 style="margin-top:20px">{{ tr('ml.nature_h', 'Nature du service') }}</h2>
+  <p>{{ tr('ml.nature_p', "Kaddu est un <b>outil neutre</b> de décision et de coordination. <b>Kaddu ne détient, ne transfère et ne gère jamais d'argent</b> : pour les tontines, l'application sert uniquement d'arbitre inviolable (registre des versements <i>déclarés</i> par les membres), les transferts d'argent se faisant en dehors, directement entre les personnes. Kaddu ne fournit aucun <b>conseil juridique, financier ou fiscal</b> ; les informations affichées ne remplacent pas l'avis d'un professionnel.") }}</p>
+
+  <h2 style="margin-top:20px">{{ tr('ml.chain_h', 'Composant blockchain (expérimental)') }}</h2>
+  <p>{{ tr('ml.chain_p', "Certaines fonctions s'appuient sur des contrats intelligents déployés sur le réseau de test <b>Sepolia</b> (Zama Protocol / fhEVM). Il s'agit d'un <b>réseau de démonstration</b> : les jetons n'y ont <b>aucune valeur monétaire réelle</b> et ces fonctionnalités sont fournies à titre expérimental.") }}</p>
+
+  <h2 style="margin-top:20px">{{ tr('ml.alert_h', 'Signalements et alertes') }}</h2>
+  <p>{{ tr('ml.alert_p', "Le coffre-fort d'alertes est un outil destiné à un <b>usage licite et de bonne foi</b>. Il ne remplace pas les canaux officiels de signalement (autorités, justice). Les contenus sensibles étant chiffrés, <b>l'éditeur n'y a pas accès</b> et n'exerce pas de modération sur ces données : chaque utilisateur reste responsable de ce qu'il publie.") }}</p>
 
   <h2 style="margin-top:20px">{{ tr('ml.resp_h', 'Responsabilité') }}</h2>
-  <p>{{ tr('ml.resp_p', "Kaddu est fourni « en l'état », sans garantie de disponibilité continue. L'éditeur s'efforce d'assurer l'exactitude des informations mais ne saurait être tenu responsable d'un usage qui en serait fait par les organisateurs de votes.") }}</p>
+  <p>{{ tr('ml.resp_p', "Kaddu est fourni « en l'état », sans garantie de disponibilité continue ni d'absence d'erreur. <b>L'organisateur d'un vote, d'une tontine ou d'un appel d'offres est seul responsable</b> de son usage, de la licéité de sa démarche et des décisions qui en découlent. Dans les limites permises par la loi, l'éditeur ne saurait être tenu responsable des dommages directs ou indirects liés à l'utilisation du service.") }}</p>
 
-  <p class="muted small" style="margin-top:18px">{{ tr('ml.model_note', 'Ce document est un modèle de base. Pour un usage officiel, faites-le adapter à votre situation et à la réglementation applicable.') }}</p>
+  <h2 style="margin-top:20px">{{ tr('ml.law_h', 'Droit applicable et litiges') }}</h2>
+  <p>{{ tr('ml.law_p', "Le service est régi par le <b>droit sénégalais</b>, notamment la loi n° 2008-12 du 25 janvier 2008 sur la protection des données à caractère personnel. Les utilisateurs situés dans l'Union européenne bénéficient également du <b>RGPD</b>. En cas de différend, une solution amiable sera recherchée en priorité ; à défaut, les tribunaux compétents de Dakar (Sénégal) pourront être saisis, sous réserve des règles protectrices applicables aux consommateurs.") }}</p>
+
+  <p class="muted small" style="margin-top:18px">{{ tr('ml.model_note', 'Ce document vise à informer clairement les utilisateurs. Pour un usage par une structure officielle, faites-le valider par un juriste au regard de votre situation et de la réglementation applicable.') }}</p>
 </div>
 <a href="{{ url_for('confidentialite') }}" class="btn btn-ghost">{{ tr('foot.confidentialite', 'Politique de confidentialité') }}</a>
 {% endblock %}

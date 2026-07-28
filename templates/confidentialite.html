@@ -6,28 +6,47 @@
   <h1 style="font-size:1.5rem">{{ tr('foot.confidentialite', 'Politique de confidentialité') }}</h1>
   <p class="muted small">{{ tr('ml.updated', 'Dernière mise à jour') }} : {{ ANNEE }}</p>
 
-  <p>{{ tr('pc.intro', "Kaddu est conçu autour d'un principe simple : <b>collecter le strict minimum</b>. Il n'y a ni compte à créer, ni profil, ni publicité, ni traçage à des fins commerciales.") }}</p>
+  <p>{{ tr('pc.intro', "Kaddu est conçu autour d'un principe simple : <b>collecter le strict minimum</b>. Il n'y a ni compte obligatoire, ni profil publicitaire, ni traçage à des fins commerciales.") }}</p>
+
+  <h2 style="margin-top:20px">{{ tr('pc.controller_h', 'Responsable du traitement') }}</h2>
+  <p>{{ tr('pc.controller_p', "Le responsable du traitement des données est <b>Pape Alamine Sarr</b> (Dakar, Sénégal).") }} <a href="mailto:elhadjipapealaminesarr@gmail.com">elhadjipapealaminesarr@gmail.com</a></p>
 
   <h2 style="margin-top:20px">{{ tr('pc.secret_h', 'Le secret de votre vote') }}</h2>
   <p>{{ tr('pc.secret_p', "Chaque bulletin est <b>chiffré sur votre appareil ou sur le serveur avant enregistrement</b>, grâce au chiffrement entièrement homomorphe (FHE) de Zama. Le décompte est calculé sur des données chiffrées : ni le serveur, ni l'organisateur, ni l'éditeur ne peut lire un vote individuel. Seul le <b>résultat total</b> est révélé, une fois le vote clôturé.") }}</p>
 
   <h2 style="margin-top:20px">{{ tr('pc.data_h', 'Données traitées') }}</h2>
-  <p>{{ tr('pc.data_p', "Pour faire fonctionner un vote, Kaddu conserve : le <b>titre, la question et les choix</b> que vous saisissez ; les <b>bulletins chiffrés</b> ; et, si vous activez les liens membres, des <b>jetons anonymes</b> (aucune identité n'y est associée). Un petit <b>cookie technique</b> est déposé sur l'appareil du votant pour éviter le double vote — il ne contient aucune donnée personnelle. Comme tout site, l'hébergeur peut conserver des <b>journaux techniques</b> temporaires (adresse IP, horodatage) à des fins de sécurité.") }}</p>
+  <p>{{ tr('pc.data_p', "Pour faire fonctionner le service, Kaddu conserve : le <b>titre, la question et les choix</b> que vous saisissez ; les <b>bulletins chiffrés</b> ; les <b>jetons anonymes</b> des liens membres (aucune identité n'y est associée) ; pour les tontines et appels d'offres, le <b>suivi des étapes</b> (versements déclarés, offres scellées), les montants sensibles restant chiffrés. Si vous <b>créez un compte</b> (facultatif), votre adresse e-mail et un mot de passe <b>haché</b> (jamais stocké en clair) sont conservés. Un petit <b>cookie technique</b> évite le double vote. L'hébergeur peut conserver des <b>journaux techniques</b> temporaires (adresse IP, horodatage) à des fins de sécurité.") }}</p>
+
+  <h2 style="margin-top:20px">{{ tr('pc.basis_h', 'Base légale') }}</h2>
+  <p>{{ tr('pc.basis_p', "Le traitement repose sur votre <b>consentement</b> (participation volontaire) et sur l'<b>intérêt légitime</b> de l'éditeur à fournir un service sécurisé et à le protéger contre les abus.") }}</p>
+
+  <h2 style="margin-top:20px">{{ tr('pc.cookies_h', 'Cookies') }}</h2>
+  <p>{{ tr('pc.cookies_p', "Kaddu n'utilise que des cookies <b>strictement nécessaires</b> : un cookie anti-double-vote (qui sert aussi au comptage <i>anonyme</i> des visiteurs), un cookie de <b>session</b> si vous vous connectez, et la mémorisation de votre <b>langue</b>. <b>Aucun cookie publicitaire ni traceur tiers.</b>") }}</p>
 
   <h2 style="margin-top:20px">{{ tr('pc.not_h', 'Ce que Kaddu ne fait pas') }}</h2>
-  <p>{{ tr('pc.not_p', "Pas de demande de nom, d'e-mail ou de téléphone pour voter. Pas de revente de données. Pas de cookies publicitaires ni de pisteurs tiers.") }}</p>
+  <p>{{ tr('pc.not_p', "Pas de demande de nom, d'e-mail ou de téléphone pour voter. Pas de revente de données. Pas de cookies publicitaires ni de pisteurs tiers. Kaddu ne déplace jamais d'argent.") }}</p>
 
   <h2 style="margin-top:20px">{{ tr('pc.keep_h', 'Conservation') }}</h2>
-  <p>{{ tr('pc.keep_p', "Les données d'un vote sont conservées le temps de son organisation. Vous pouvez demander la suppression d'un vote que vous avez créé en nous écrivant.") }}</p>
+  <p>{{ tr('pc.keep_p', "Les données d'un vote, d'une tontine ou d'un appel d'offres sont conservées le temps de son organisation. Vous pouvez demander la suppression d'un élément que vous avez créé en nous écrivant.") }}</p>
 
-  <h2 style="margin-top:20px">{{ tr('pc.sub_h', 'Sous-traitants techniques') }}</h2>
-  <p>{{ tr('pc.sub_p', "L'application et sa base de données sont hébergées par Render et Neon (voir les") }}
-  <a href="{{ url_for('mentions') }}">{{ tr('foot.mentions', 'mentions légales') }}</a>{{ tr('pc.sub_p2', "), qui agissent uniquement comme prestataires d'hébergement.") }}</p>
+  <h2 style="margin-top:20px">{{ tr('pc.transfer_h', 'Hébergement et transferts internationaux') }}</h2>
+  <p>{{ tr('pc.transfer_p', "L'application (Render) et sa base de données (Neon) sont hébergées sur des <b>serveurs situés aux États-Unis</b> ; ces prestataires agissent uniquement comme sous-traitants d'hébergement (voir les") }}
+  <a href="{{ url_for('mentions') }}">{{ tr('foot.mentions', 'mentions légales') }}</a>{{ tr('pc.transfer_p2', "). Un transfert de données hors du Sénégal et de l'Union européenne peut donc avoir lieu ; il est limité au strict fonctionnement technique du service.") }}</p>
+
+  <h2 style="margin-top:20px">{{ tr('pc.security_h', 'Sécurité') }}</h2>
+  <p>{{ tr('pc.security_p', "Les échanges se font en <b>HTTPS</b>. Les bulletins et données sensibles sont protégés par le <b>chiffrement homomorphe (FHE)</b> de Zama. Les mots de passe des comptes sont <b>hachés</b> (jamais lisibles). Aucune mesure n'étant infaillible, évitez de publier des informations que vous ne souhaiteriez pas voir traitées.") }}</p>
+
+  <h2 style="margin-top:20px">{{ tr('pc.minors_h', 'Mineurs') }}</h2>
+  <p>{{ tr('pc.minors_p', "Kaddu n'est pas destiné aux enfants et ne collecte pas sciemment leurs données personnelles.") }}</p>
 
   <h2 style="margin-top:20px">{{ tr('pc.rights_h', 'Vos droits & contact') }}</h2>
-  <p>{{ tr('pc.rights_p', "Vous pouvez demander l'accès, la rectification ou la suppression des données vous concernant en écrivant à") }} <a href="mailto:elhadjipapealaminesarr@gmail.com">elhadjipapealaminesarr@gmail.com</a>.</p>
+  <p>{{ tr('pc.rights_p', "Vous pouvez demander l'<b>accès</b>, la <b>rectification</b>, la <b>suppression</b> ou l'<b>opposition</b> au traitement des données vous concernant en écrivant à") }} <a href="mailto:elhadjipapealaminesarr@gmail.com">elhadjipapealaminesarr@gmail.com</a>.
+  {{ tr('pc.rights_p2', "Vous pouvez aussi saisir la <b>CDP</b> (Commission de Protection des Données Personnelles, Sénégal) ou, dans l'Union européenne, votre autorité de protection des données (par exemple la CNIL en France).") }}</p>
 
-  <p class="muted small" style="margin-top:18px">{{ tr('ml.model_note', 'Ce document est un modèle de base. Pour un usage officiel, faites-le adapter à votre situation et à la réglementation applicable.') }}</p>
+  <h2 style="margin-top:20px">{{ tr('pc.changes_h', 'Modifications') }}</h2>
+  <p>{{ tr('pc.changes_p', "Cette politique peut évoluer. La date de dernière mise à jour figure en haut de page ; les changements importants seront signalés sur le site.") }}</p>
+
+  <p class="muted small" style="margin-top:18px">{{ tr('ml.model_note', 'Ce document vise à informer clairement les utilisateurs. Pour un usage par une structure officielle, faites-le valider par un juriste au regard de votre situation et de la réglementation applicable.') }}</p>
 </div>
 <a href="{{ url_for('mentions') }}" class="btn btn-ghost">{{ tr('foot.mentions', 'Mentions légales') }}</a>
 {% endblock %}
