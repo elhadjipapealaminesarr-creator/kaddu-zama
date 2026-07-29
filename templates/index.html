@@ -136,7 +136,7 @@ footer .brand{color:#fff}footer .brand b{color:var(--gold)}
   <div>
     <span class="kick">{{ tr('hero.kick', '&#128274; Protégé par le chiffrement FHE de Zama') }}</span>
     <h1>{{ tr('hero.title_pre', 'La confiance collective, garantie par les ') }}<span class="hl">{{ tr('hero.title_hl', 'mathématiques') }}</span></h1>
-    <p class="lead">{{ tr('hero.lead2', "Kaddu outille les communautés du monde entier — associations, coopératives, tontines et groupes d'épargne, syndicats — pour décider, épargner et s'organiser sans que personne, pas même l'organisateur, ne puisse voir ou trafiquer les choix.") }}</p>
+    <p class="lead">{{ tr('hero.lead2', "Kaddu outille les communautés du monde entier — associations, coopératives, tontines et groupes d'épargne, syndicats — pour décider, épargner et s'organiser. Les bulletins sont chiffrés et le décompte se fait sur les données chiffrées : l'organisateur ne voit que le résultat, jamais les choix individuels.") }}</p>
     <div class="cta">
       <a href="#outils" class="btn btn-gold">{{ tr('hero.cta_tools', 'Découvrir nos outils') }}</a>
       <a href="{{ url_for('rejoindre') }}" class="btn btn-light">{{ tr('hero.cta_code', "J'ai un code pour participer") }}</a>
@@ -272,7 +272,7 @@ footer .brand{color:#fff}footer .brand b{color:var(--gold)}
   <h2 class="h2" style="margin:0 auto">{{ tr('how.h2', 'Trois étapes, aucune compétence technique') }}</h2>
   <div class="tools" style="text-align:left;grid-template-columns:repeat(3,1fr)">
     <div class="tool" style="border:none;background:transparent"><div class="bd" style="padding:8px 4px"><div style="width:44px;height:44px;border-radius:13px;background:var(--soft);color:var(--green-d);font-family:'Sora';font-weight:700;display:flex;align-items:center;justify-content:center;margin-bottom:12px">1</div><h3>{{ tr('how.s1.h3', 'Vous créez') }}</h3><p>{{ tr('how.s1.p', 'Une question, des choix, et un lien + QR code à partager à vos membres sur WhatsApp, Telegram, Facebook et plus.') }}</p></div></div>
-    <div class="tool" style="border:none;background:transparent"><div class="bd" style="padding:8px 4px"><div style="width:44px;height:44px;border-radius:13px;background:var(--soft);color:var(--green-d);font-family:'Sora';font-weight:700;display:flex;align-items:center;justify-content:center;margin-bottom:12px">2</div><h3>{{ tr('how.s2.h3', 'Chacun participe en secret') }}</h3><p>{{ tr('how.s2.p', "Le choix est chiffré sur-le-champ. Ni le serveur, ni l'organisateur ne peut le lire.") }}</p></div></div>
+    <div class="tool" style="border:none;background:transparent"><div class="bd" style="padding:8px 4px"><div style="width:44px;height:44px;border-radius:13px;background:var(--soft);color:var(--green-d);font-family:'Sora';font-weight:700;display:flex;align-items:center;justify-content:center;margin-bottom:12px">2</div><h3>{{ tr('how.s2.h3', 'Chacun participe en secret') }}</h3><p>{{ tr('how.s2.p', "Le choix est chiffré, puis agrégé de façon homomorphe. L'organisateur ne voit que le total — jamais les votes individuels.") }}</p></div></div>
     <div class="tool" style="border:none;background:transparent"><div class="bd" style="padding:8px 4px"><div style="width:44px;height:44px;border-radius:13px;background:var(--soft);color:var(--green-d);font-family:'Sora';font-weight:700;display:flex;align-items:center;justify-content:center;margin-bottom:12px">3</div><h3>{{ tr('how.s3.h3', 'Le résultat, vérifiable') }}</h3><p>{{ tr('how.s3.p', "Le total est calculé sur les données chiffrées. Aucune réponse individuelle n'est dévoilée.") }}</p></div></div>
   </div>
 </div></section>
@@ -281,7 +281,7 @@ footer .brand{color:#fff}footer .brand b{color:var(--gold)}
   <div class="center"><div class="eyebrow">{{ tr('faq.eyebrow', 'Questions fréquentes') }}</div>
     <h2 class="h2" style="margin:0 auto">{{ tr('faq.h2', 'Vos questions, nos réponses') }}</h2></div>
   <div style="max-width:760px;margin:40px auto 0;display:flex;flex-direction:column;gap:12px">
-    <details><summary>{{ tr('faq.q1', "L'organisateur peut-il voir mon vote ?") }}</summary><p style="color:var(--muted);margin-top:10px">{{ tr('faq.a1', 'Non. Votre bulletin est chiffré sur-le-champ. Même la personne qui a créé le vote ne voit que le résultat final, jamais les choix individuels.') }}</p></details>
+    <details><summary>{{ tr('faq.q1', "L'organisateur peut-il voir mon vote ?") }}</summary><p style="color:var(--muted);margin-top:10px">{{ tr('faq.a1', 'Non. Le décompte se fait sur des bulletins chiffrés : la personne qui a créé le vote ne voit que le résultat final, jamais les choix individuels. Pour une garantie où même le serveur ne peut rien lire, la version on-chain (fhEVM) va plus loin.') }}</p></details>
     <details><summary>{{ tr('faq.q4', 'Est-ce vraiment sécurisé ?') }}</summary><p style="color:var(--muted);margin-top:10px">{{ tr('faq.a4', "Oui. Kaddu s'appuie sur le chiffrement homomorphe (FHE) de Zama : on calcule sur des données chiffrées sans jamais les déchiffrer. Le secret est garanti par les mathématiques.") }}</p></details>
     <details><summary>{{ tr('faq.q5', 'Pour qui est fait Kaddu ?') }}</summary><p style="color:var(--muted);margin-top:10px">{{ tr('faq.a5', "Pour les associations, coopératives, tontines, groupes d'épargne, syndicats, amicales et bureaux d'étudiants — sur tous les continents, partout où l'on décide à plusieurs et où la confiance compte.") }}</p></details>
     <details><summary>{{ tr('faq.q3', "Est-ce que c'est payant ?") }}</summary><p style="color:var(--muted);margin-top:10px">{{ tr('faq.a3', "Non, c'est gratuit. Kaddu est pensé pour être accessible à toutes les communautés.") }}</p></details>
@@ -380,7 +380,6 @@ footer .brand{color:#fff}footer .brand b{color:var(--gold)}
       </div>
     </div>
     <div style="border-top:1px solid rgba(255,255,255,.12);padding-top:16px;font-size:.85rem;opacity:.8">
-      <div style="margin-bottom:6px">&#128065;&#65039; <b>{{ '{:,}'.format(SITE_VISITORS).replace(',', ' ') }}</b> {{ tr('foot.visitors', 'visiteurs') }} · {{ '{:,}'.format(SITE_VIEWS).replace(',', ' ') }} {{ tr('foot.views', 'pages vues') }}</div>
       © <span id="yr"></span> {{ tr('foot.copyright', "Kaddu · Fait pour l'Afrique francophone.") }}
       <script>document.getElementById('yr').textContent=new Date().getFullYear();</script>
     </div>
