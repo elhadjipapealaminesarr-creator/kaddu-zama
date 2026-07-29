@@ -34,6 +34,8 @@ In West Africa, communities decide together and manage money together constantly
 | **KadduVote** | Confidential on-chain voting. | [`0x2e53…F94c7`](https://sepolia.etherscan.io/address/0x2e53C38af76aeEE1902C6FA2A1F7AdDc269F94c7) |
 | **KadduTontine** | Tamper-proof rotating savings + internal confidential member vote. | [`0x23E3…e311`](https://sepolia.etherscan.io/address/0x23E30319EfB8B19d22201778A95A0B3eC50ee311) |
 
+**✓ All four contracts are source-verified on Etherscan** (readable Solidity, exact-match).
+
 > **Why KadduTender matters:** Zama's Confidential RFQ proved sealed-bid auctions for *finance*. KadduTender makes them tamper-proof for the **public good** — the first tender where the budget is set by the community, the winner is computed by encryption, and payment is released by citizens, never by the official.
 
 ## How it uses Zama FHE
