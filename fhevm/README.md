@@ -20,6 +20,7 @@ Confidential smart contracts powering Kaddu's *trustless* layer, built on **Zama
 ## Deployment (Sepolia testnet)
 
 Deployed on the **Sepolia** testnet (Zama Protocol / fhEVM). Test tokens have no real value.
+**All four contracts are source-verified on Etherscan** ✓ (readable Solidity, exact-match).
 
 | Contract | Address |
 |---|---|
