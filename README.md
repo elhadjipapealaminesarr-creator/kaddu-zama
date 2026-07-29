@@ -8,7 +8,7 @@
 
 **Truly secret, verifiable voting — plus tamper-proof tontines, sealed-bid tenders and a threshold whistleblower vault — for associations, cooperatives, unions, tontines and community groups. Powered by Zama's Fully Homomorphic Encryption (FHE).**
 
-Every sensitive value (ballot, amount, report) is **encrypted**; computation runs **directly on the encrypted data** (homomorphic aggregation); and **only the final result is revealed**. Nobody — not the server, not the organizer, not the publisher — can read an individual value.
+Every sensitive value (ballot, amount, report) is **encrypted**; computation runs **directly on the encrypted data** (homomorphic aggregation); and **only the final result is revealed** — the organizer only ever sees the total, never an individual value. The strongest guarantee — where *not even the operator* can decrypt — is provided by the **on-chain (fhEVM)** layer, where data is encrypted client-side before it ever reaches a server.
 
 - 🌍 **Live demo:** https://kaddu-zama.onrender.com
 - ▶️ **3-min video:** https://youtu.be/RUnryaEYGJM

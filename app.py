@@ -111,8 +111,9 @@ TRANSLATIONS = {
         # --- Accueil international : héros, piliers, monde, mission, final ---
         "index.tagline": "Confidentiality in service of communities",
         "hero.lead2": "Kaddu gives communities everywhere — associations, cooperatives, savings "
-                      "circles and unions — the tools to decide, save and organize, so no one, "
-                      "not even the organizer, can see or tamper with the choices.",
+                      "circles and unions — the tools to decide, save and organize. Ballots are "
+                      "encrypted and tallied on the encrypted data: the organizer only ever sees "
+                      "the result, never the individual choices.",
         "hero.cta_tools": "Discover our tools",
         "hero.cap": "Every voice protected",
         "hero.img_alt": "Communities everywhere, coming together to decide",
@@ -652,11 +653,13 @@ TRANSLATIONS = {
         "pc.controller_h": "Data controller",
         "pc.controller_p": "The data controller is <b>Pape Alamine Sarr</b> (Dakar, Senegal).",
         "pc.secret_h": "The secrecy of your vote",
-        "pc.secret_p": "Each ballot is <b>encrypted on your device or on the server before "
-                       "storage</b>, thanks to Zama's fully homomorphic encryption (FHE). The tally "
-                       "is computed on encrypted data: neither the server, nor the organizer, nor "
-                       "the publisher can read an individual vote. Only the <b>total result</b> is "
-                       "revealed, once the vote is closed.",
+        "pc.secret_p": "Each ballot is <b>encrypted</b>, then the tally is computed <b>directly on "
+                       "the encrypted data</b> using Zama's fully homomorphic encryption (FHE). "
+                       "<b>The organizer never sees an individual vote</b>: only the <b>total "
+                       "result</b> is revealed once the vote is closed. Honest note: in the web "
+                       "version the server performs the encryption; the guarantee where <b>not even "
+                       "the operator can decrypt anything</b> comes from the <b>on-chain (fhEVM)</b> "
+                       "version.",
         "pc.data_h": "Data processed",
         "pc.data_p": "To run the service, Kaddu keeps: the <b>title, question and choices</b> you "
                      "enter; the <b>encrypted ballots</b>; the <b>anonymous tokens</b> of member "
@@ -775,7 +778,7 @@ TRANSLATIONS = {
         "how.s1.h3": "You create",
         "how.s1.p": "A question, some choices, and a link + QR code to share with your members on WhatsApp, Telegram, Facebook and more.",
         "how.s2.h3": "Everyone takes part in secret",
-        "how.s2.p": "The choice is encrypted on the spot. Neither the server nor the organizer can read it.",
+        "how.s2.p": "The choice is encrypted, then aggregated homomorphically. The organizer only sees the total — never the individual votes.",
         "how.s3.h3": "The result, verifiable",
         "how.s3.p": "The total is computed on the encrypted data. No individual answer is revealed.",
         "img.caption": "United communities, every voice protected.",
@@ -802,8 +805,9 @@ TRANSLATIONS = {
         # Accueil — FAQ
         "faq.eyebrow": "Frequently asked questions", "faq.h2": "Your questions, our answers",
         "faq.q1": "Can the organizer see my vote?",
-        "faq.a1": "No. Your ballot is encrypted on the spot. Even the person who created the vote only "
-                  "sees the final result, never the individual choices.",
+        "faq.a1": "No. The tally runs on encrypted ballots: the person who created the vote only sees "
+                  "the final result, never the individual choices. For a guarantee where not even the "
+                  "server can read anything, the on-chain (fhEVM) version goes further.",
         "faq.q2": "Do I need to install an app?",
         "faq.a2": "No. A simple link (or a QR code) is enough to vote. If you wish, you can still "
                   "“install” Kaddu on your home screen.",
