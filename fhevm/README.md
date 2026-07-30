@@ -43,10 +43,12 @@ npx hardhat compile          # solc 0.8.27, viaIR + optimizer, evmVersion cancun
 npx hardhat test             # runs the suite on the fhEVM mock
 ```
 
-Status: contracts **compile without error** against `@fhevm/solidity` 0.11.1. A Hardhat test
-suite is included under `test/` — `KadduVote`, `KadduTender`, `KadduTontine` — exercising the
-encrypted cycle on the fhEVM mock (encrypted inputs → homomorphic aggregation → public decryption
-of the aggregate only). Run `npx hardhat test` to reproduce.
+Status: contracts **compile without error** against `@fhevm/solidity` 0.11.1, and all four are
+**source-verified on Etherscan**. A Hardhat test suite is included under `test/` — `KadduVote`,
+`KadduTender`, `KadduTontine` — exercising the encrypted cycle on the fhEVM mock (encrypted inputs
+→ homomorphic aggregation → public decryption of the aggregate only). A test-only
+`MockConfidentialToken` (in `contracts/`) provides the ERC-7984 token KadduTender's escrow needs.
+**Run `npx hardhat test` locally to execute the suite** (it requires a local `solc` download).
 
 ## Deploy your own
 
