@@ -1,8 +1,9 @@
 """
 Kaddu — édition Zama. Vote confidentiel propulsé par le VRAI chiffrement FHE de Zama
 (bibliothèque Concrete). Chaque bulletin est chiffré ; le décompte est calculé sur les
-bulletins chiffrés (addition homomorphe FHE) et seul le total est déchiffré. Personne —
-ni le serveur, ni l'organisateur — ne voit un vote individuel.
+bulletins chiffrés (addition homomorphe FHE) et seul le total est déchiffré : l'organisateur
+ne voit jamais un vote individuel. NB : côté web, c'est le serveur qui réalise le chiffrement ;
+la garantie « même pas l'opérateur » est apportée par la couche on-chain (fhEVM).
 """
 import os
 import json
@@ -74,9 +75,9 @@ TRANSLATIONS = {
         # Accueil — héros
         "hero.kick": "&#128274; Protected by Zama's FHE encryption",
         "hero.title_pre": "Confidentiality in service of the ", "hero.title_hl": "community",
-        "hero.lead": "Secret votes, tamper-proof tontines and collective decisions — where no one, "
-                     "not even the organizer, can see your choices. Built for associations, "
-                     "cooperatives, tontines and unions across French-speaking Africa.",
+        "hero.lead": "Secret votes, tamper-proof tontines and collective decisions — where the "
+                     "organizer only ever sees the result, never your individual choices. Built for "
+                     "associations, cooperatives, tontines and unions across French-speaking Africa.",
         "hero.cta_create": "&#10133;&nbsp; Create a free vote",
         "hero.cta_code": "I have a code to vote",
         "hero.trust1": "&#10004; Free, no account", "hero.trust2": "&#128241; Installs like an app",
@@ -297,7 +298,7 @@ TRANSLATIONS = {
         "vote.token_bad": "This vote is members-only. Use the <b>personal link</b> that was sent to "
                           "you — it works only once. If it doesn't work, it has <b>already been used to vote</b>.",
         "vote.seal": "Seal my vote",
-        "vote.seal_note": "Your choice will be encrypted before being stored. No one will be able to read it.",
+        "vote.seal_note": "Your choice is encrypted and the tally runs on the encrypted data: the organizer only sees the result, never the individual choices.",
         "vote.discussion": "Discussion",
         "vote.no_comments": "No comments yet. Start the discussion!",
         "vote.comment_ph": "Your comment…", "vote.comment_btn": "Comment",
@@ -312,8 +313,8 @@ TRANSLATIONS = {
         "res.proof2": "These totals were obtained by adding up the <b>encrypted</b> ballots, then "
                       "decrypting only the sum. No individual vote was read.",
         "merci.title": "Vote recorded", "merci.h": "Your vote is sealed",
-        "merci.p": "It has been encrypted and recorded. No one — not even the organizer — can know "
-                   "what you chose.",
+        "merci.p": "It has been encrypted and recorded. The organizer only ever sees the final "
+                   "result, never your individual choice.",
         "merci.b1": "Encrypted ballot", "merci.b2": "Anonymous", "merci.result": "See the result page",
         "join.h": "Join a vote", "join.sub": "Paste the link you received, or enter the vote code.",
         "join.field": "Link or code", "join.ph": "e.g. https://…/v/aB3xY  or  aB3xY",
@@ -432,8 +433,8 @@ TRANSLATIONS = {
                        "(the organizer doesn't vote).",
         "tmem.your_req": "This is your request — awaiting the other members' vote.",
         "tmem.yes": "Yes, grant", "tmem.no": "No",
-        "tmem.vote_note": "Your vote is <b>encrypted</b>: no one will know what you chose, only the "
-                          "total will be revealed.",
+        "tmem.vote_note": "Your vote is <b>encrypted</b>: the organizer only sees the total, never "
+                          "your individual choice.",
         "tmem.voted": "You voted (secret)",
         "tmem.request_p": "Urgent need? You can ask to take the pot this round — the other members "
                           "will vote (secret vote).",
@@ -558,8 +559,8 @@ TRANSLATIONS = {
         "gd.t3d": "Each operation is sealed in a chain of fingerprints: impossible to rewrite "
                   "history. The money flows <b>outside the app</b> — Kaddu is only the referee.",
         "gd.t4t": "Priority decided in secret",
-        "gd.t4d": "A member asks to go earlier? The others decide by an <b>encrypted vote</b> — no "
-                  "one sees who voted what.",
+        "gd.t4d": "A member asks to go earlier? The others decide by an <b>encrypted vote</b> — only "
+                  "the total is revealed, never who voted what.",
         "gd.tont_btn": "Open tontines",
         "gd.off_h": "Award without corruption",
         "gd.o1t": "Create the tender",
@@ -578,10 +579,10 @@ TRANSLATIONS = {
         "gd.place_p": "Browse votes open to the public, take part and exchange with the Kaddu community.",
         "gd.place_btn": "See the public square",
         "gd.why_h": "Why it's truly secret",
-        "gd.why_p": "Your data is <b>encrypted</b> the moment you click. Kaddu computes (counts "
-                    "votes, determines a winner…) <b>without ever opening it</b>, thanks to Zama's "
-                    "FHE encryption. Neither the organizer, nor the server, nor a hacker can read an "
-                    "individual piece of data — only the final result is revealed.",
+        "gd.why_p": "Your data is <b>encrypted</b> and Kaddu computes <b>on the encrypted data</b> "
+                    "(counting votes, picking a winner…) thanks to Zama's FHE: the organizer only "
+                    "sees the final result, never an individual piece of data. For a guarantee where "
+                    "not even the operator can decrypt, the <b>on-chain (fhEVM)</b> version goes further.",
         "gd.faq_h": "Frequently asked questions",
         "gd.a1": "No. The ballot is encrypted on the spot; the organizer only sees the final result.",
         "gd.q2": "Does Kaddu touch the tontine money?",
@@ -747,13 +748,13 @@ TRANSLATIONS = {
         "flash.35": "The amount exceeds the allowed maximum (%d).",
         "flash.36": "You have already contributed to this pool.",
         "flash.37": "Maximum number of participants reached for this pool.",
-        "flash.38": "Your figure has been encrypted and added. No one can read it — only the total will be revealed.",
+        "flash.38": "Your figure has been encrypted and added. Only the total will be revealed, never your individual figure.",
         "flash.39": "Give a title and a valid range (max greater than min).",
         "flash.40": "This comparator is closed.",
         "flash.41": "Enter your figure.",
         "flash.42": "You have already answered this comparator.",
         "flash.43": "Maximum number of participants reached.",
-        "flash.44": "Your answer is encrypted. Your bracket: %s–%s %s. No one sees your exact figure.",
+        "flash.44": "Your answer is encrypted. Your bracket: %s–%s %s. Only the bracket is shared, never your exact figure.",
         "flash.45": "Comparator closed: the distribution was computed on the encrypted data.",
         "flash.46": "Give a title and at least 2 targets (one per line).",
         "flash.47": "This register is closed: you can no longer report.",
@@ -768,8 +769,8 @@ TRANSLATIONS = {
                     "Keep your amount + secret word to prove your win. ",
         "flash.55": "Pool closed: the total was computed on the encrypted data, without any individual "
                     "figure ever being decrypted.",
-        "flash.56": "Your alert is encrypted. Until the threshold is reached, no one — not even the "
-                    "organizer — can see it. You are never the lone reporter.",
+        "flash.56": "Your alert is encrypted. Until the threshold is reached, it stays hidden from "
+                    "the target and the community. You are never the lone reporter.",
         "mod.idea.h3": "An idea for your community?",
         "mod.idea.p": "Post it on the idea wall: the community votes, the best ones rise.",
         "mod.idea.go": "Open the idea wall &#8594;",
@@ -3170,7 +3171,7 @@ def commun_ajouter(pid):
                      (pid, slot, contributor, blob))
         conn.execute("INSERT INTO pool_participants (pool_id, user_id) VALUES (?,?)", (pid, me["id"]))
         conn.execute("UPDATE pools SET n_contrib=? WHERE id=?", (n + 1, pid))
-    flash(t_srv("flash.38", "Ton chiffre a été chiffré et ajouté. Personne ne peut le lire — seul le total sera révélé."))
+    flash(t_srv("flash.38", "Ton chiffre a été chiffré et ajouté. Seul le total sera révélé, jamais ton chiffre individuel."))
     return redirect(url_for("commun_voir", pid=pid))
 
 
@@ -3334,7 +3335,7 @@ def comparer_ajouter(cid):
         conn.execute("INSERT INTO compare_participants (compare_id, user_id) VALUES (?,?)",
                      (cid, me["id"]))
     lo, hi = _level_bounds(c)[level]
-    flash(t_srv("flash.44", "Ta réponse est chiffrée. Ta tranche : %s–%s %s. Personne ne voit ton chiffre exact.")% ("{:,}".format(lo).replace(",", " "), "{:,}".format(hi).replace(",", " "), c["unit"]))
+    flash(t_srv("flash.44", "Ta réponse est chiffrée. Ta tranche : %s–%s %s. Seule la tranche est partagée, jamais ton chiffre exact.")% ("{:,}".format(lo).replace(",", " "), "{:,}".format(hi).replace(",", " "), c["unit"]))
     return redirect(url_for("comparer_voir", cid=cid))
 
 
@@ -3498,8 +3499,8 @@ def alerte_signaler(rid):
                      (rid, target_pos, slot, blob))
         conn.execute("INSERT INTO register_participants (register_id, user_id) VALUES (?,?)",
                      (rid, me["id"]))
-    flash(t_srv("flash.56", "Ton alerte est chiffrée. Tant que le seuil n'est pas atteint, personne — pas même "
-          "l'organisateur — ne peut la voir. Tu n'es jamais le signaleur isolé."))
+    flash(t_srv("flash.56", "Ton alerte est chiffrée. Tant que le seuil n'est pas atteint, elle reste cachée "
+          "de la cible et de la communauté. Tu n'es jamais le signaleur isolé."))
     return redirect(url_for("alerte_voir", rid=rid))
 
 
