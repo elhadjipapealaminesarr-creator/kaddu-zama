@@ -44,7 +44,7 @@
     <li><span class="n">3</span><div><div class="t">{{ tr('gd.t3t', 'Registre infalsifiable') }}</div>
       <div class="d">{{ tr('gd.t3d', "Chaque opération est scellée dans une chaîne d'empreintes : impossible de réécrire l'histoire. L'argent circule <b>hors de l'app</b> — Kaddu n'est que l'arbitre.") }}</div></div></li>
     <li><span class="n">4</span><div><div class="t">{{ tr('gd.t4t', 'Priorité décidée en secret') }}</div>
-      <div class="d">{{ tr('gd.t4d', 'Un membre demande à passer plus tôt ? Les autres tranchent par un <b>vote chiffré</b> — personne ne voit qui a voté quoi.') }}</div></div></li>
+      <div class="d">{{ tr('gd.t4d', 'Un membre demande à passer plus tôt ? Les autres tranchent par un <b>vote chiffré</b> — seul le total est révélé, jamais qui a voté quoi.') }}</div></div></li>
   </ul>
   <a href="{{ url_for('tontines') }}" class="btn btn-primary">{{ tr('gd.tont_btn', 'Ouvrir les tontines') }}</a>
 </div>
@@ -90,7 +90,7 @@
     </svg>
   </div>
   <h2 class="center">{{ tr('gd.why_h', "Pourquoi c'est vraiment secret") }}</h2>
-  <p class="muted small center">{{ tr('gd.why_p', "Vos données sont <b>chiffrées</b> dès que vous cliquez. Kaddu calcule (compte les votes, détermine un gagnant…) <b>sans jamais les ouvrir</b>, grâce au chiffrement FHE de Zama. Ni l'organisateur, ni le serveur, ni un pirate ne peut lire une donnée individuelle — seul le résultat final est révélé.") }}</p>
+  <p class="muted small center">{{ tr('gd.why_p', "Vos données sont <b>chiffrées</b> et Kaddu calcule <b>sur les données chiffrées</b> (comptage des votes, gagnant…) grâce au chiffrement FHE de Zama : l'organisateur ne voit que le résultat final, jamais une donnée individuelle. Pour la garantie où même l'opérateur ne peut rien déchiffrer, la version <b>on-chain (fhEVM)</b> va plus loin.") }}</p>
 </div>
 
 <!-- FAQ -->

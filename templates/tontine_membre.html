@@ -29,7 +29,7 @@
           <button class="btn" type="submit" style="width:100%">{{ tr('tmem.no', 'Non') }}</button>
         </form>
       </div>
-      <p class="muted small" style="margin-top:8px">{{ tr('tmem.vote_note', 'Ton vote est <b>chiffré</b> : personne ne saura ce que tu as choisi, seul le total sera révélé.') }}</p>
+      <p class="muted small" style="margin-top:8px">{{ tr('tmem.vote_note', "Ton vote est <b>chiffré</b> : l'organisateur ne verra que le total, jamais ton choix individuel.") }}</p>
     {% elif req['i_voted'] %}
       <span class="pill pill-green">&#9989; {{ tr('tmem.voted', 'Tu as voté (secret)') }}</span>
     {% endif %}
