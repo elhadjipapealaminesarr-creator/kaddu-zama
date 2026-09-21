@@ -6,6 +6,7 @@
   <h1 style="font-size:1.5rem">{{ tr('creer.h', 'Créer un vote') }}</h1>
   <p class="muted small" style="margin-top:-4px">{{ tr('creer.sub', 'Une clé de chiffrement unique sera générée pour ce vote.') }}</p>
   <form method="post">
+<input type="hidden" name="_csrf" value="{{ csrf_token() }}">
     <label class="fld" for="title">{{ tr('creer.title', 'Titre du vote') }}</label>
     <input type="text" id="title" name="title" value="{{ title }}"
            placeholder="{{ tr('creer.title.ph', 'Ex. Assemblée de l&#39;amicale 2026') }}" required>

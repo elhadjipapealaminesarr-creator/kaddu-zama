@@ -27,6 +27,74 @@ DB_PATH = os.environ.get("KADDU_DB", os.path.join(BASE_DIR, "kaddu_zama.db"))
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("APP_SECRET", secrets.token_hex(16))
+
+# ---------------------------------------------------------------------------
+# COOKIES DE SESSION — durcissement.
+# HttpOnly : le cookie devient invisible au JavaScript (vol par XSS).
+# SameSite=Lax : le navigateur ne l'envoie pas sur une requête POST venue d'un
+#   autre site — c'est la première ligne de défense contre le CSRF.
+# Secure : cookie transmis uniquement en HTTPS. Activé dès qu'une base
+#   PostgreSQL est configurée (= déploiement réel, toujours en HTTPS) ; laissé
+#   inactif en local (SQLite, http://localhost) pour que le développement marche.
+# ---------------------------------------------------------------------------
+app.config.update(
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE="Lax",
+    SESSION_COOKIE_SECURE=bool(os.environ.get("DATABASE_URL")),
+    PERMANENT_SESSION_LIFETIME=60 * 60 * 24 * 30,   # 30 jours
+)
+
+# ---------------------------------------------------------------------------
+# PROTECTION CSRF (jeton synchroniseur).
+#
+# Sans elle, un site tiers peut faire soumettre à ta place n'importe quel
+# formulaire de Kaddu pendant que tu es connecté : publier, clore un scrutin,
+# valider une cotisation de tontine, déposer une offre. SameSite=Lax bloque
+# déjà l'essentiel, mais ce n'est pas une garantie (anciens navigateurs,
+# navigation de premier niveau) — d'où le jeton.
+#
+# Implémentation volontairement autonome, sans Flask-WTF : le déploiement se
+# fait par upload manuel de fichiers, et une dépendance oubliée dans le
+# Dockerfile ferait tomber TOUT le site au démarrage. C'est le motif standard
+# du jeton synchroniseur : un secret aléatoire par session, comparé en temps
+# constant. Aucune cryptographie maison n'est inventée ici.
+# ---------------------------------------------------------------------------
+CSRF_FIELD = "_csrf"
+
+
+def csrf_token():
+    """Jeton de la session courante, créé à la première utilisation."""
+    tok = session.get("_csrf_token")
+    if not tok:
+        tok = secrets.token_urlsafe(32)
+        session["_csrf_token"] = tok
+        session.permanent = True
+    return tok
+
+
+@app.context_processor
+def inject_csrf():
+    return {"csrf_token": csrf_token}
+
+
+@app.before_request
+def _csrf_protect():
+    """Refuse toute écriture sans jeton valide. Couvre AUTOMATIQUEMENT chaque
+    route POST, présente ou future — rien à penser en ajoutant une vue."""
+    if request.method not in ("POST", "PUT", "PATCH", "DELETE"):
+        return None
+    sent = (request.form.get(CSRF_FIELD)
+            or request.headers.get("X-CSRF-Token")
+            or "")
+    expected = session.get("_csrf_token") or ""
+    if not expected or not sent or not secrets.compare_digest(str(sent), str(expected)):
+        app.logger.warning("CSRF refusé sur %s", request.path)
+        msg = t_srv("err.csrf",
+                    "Session expirée ou requête non authentifiée. Reviens à la page "
+                    "précédente, recharge-la, et renvoie le formulaire.")
+        return render_template("erreur.html", code=400, msg=msg), 400
+    return None
+
 app.jinja_env.globals["ANNEE"] = time.strftime("%Y")
 app.jinja_env.globals["ZAMA"] = True
 app.jinja_env.filters["dateh"] = lambda ts: time.strftime("%d/%m/%Y", time.localtime(int(ts)))
@@ -921,6 +989,9 @@ TRANSLATIONS = {
         "two.b.p": "The tamper-proof version: our confidential contracts (fhEVM) run on the Zama Protocol "
                    "(Sepolia). Sealed bids, payments released by citizens — all publicly verifiable, forever.",
         "two.b.cta": "View the contracts &#8594;",
+        # Erreurs
+        "err.csrf": "Session expired or unauthenticated request. Go back to the "
+                    "previous page, reload it, and submit the form again.",
     }
 }
 
@@ -1533,7 +1604,8 @@ def _count_visit(resp):
             _stat_incr("views")
             if not request.cookies.get("kvid"):
                 _stat_incr("visitors")
-                resp.set_cookie("kvid", "1", max_age=60 * 60 * 24 * 365, samesite="Lax")
+                resp.set_cookie("kvid", "1", max_age=60 * 60 * 24 * 365,
+                                samesite="Lax", httponly=True, secure=bool(os.environ.get("DATABASE_URL")))
     except Exception:
         pass
     return resp
@@ -1805,7 +1877,8 @@ def voter(poll_id):
                               "ts": int(time.time())}
         resp = make_response(redirect(url_for("merci", poll_id=poll_id)))
         if not restricted:
-            resp.set_cookie(f"kv_{poll_id}", "1", max_age=60*60*24*365, samesite="Lax")
+            resp.set_cookie(f"kv_{poll_id}", "1", max_age=60*60*24*365,
+                            samesite="Lax", httponly=True, secure=bool(os.environ.get("DATABASE_URL")))
         return resp
 
     return page()
@@ -1888,6 +1961,10 @@ def clore(poll_id):
         abort(404)
     if request.form.get("t", "") != poll["admin_token"]:
         abort(403)
+    # Clôture IRRÉVERSIBLE : un scrutin déjà clos ne doit jamais être redépouillé,
+    # sinon le résultat publié (et son empreinte de certificat) peut être écrasé.
+    if poll["closed"]:
+        return redirect(url_for("resultat", poll_id=poll_id))
     options = json.loads(poll["options"])
     results = []
     with closing(db()) as conn:
@@ -2951,6 +3028,15 @@ def offre_soumettre(tid):
         if r["c"] > 0:
             flash(t_srv("flash.18", "Ce nom a déjà soumis une offre."))
             return redirect(url_for("offre", tid=tid))
+        # Mode chiffré : une offre occupe un emplacement du circuit FHE. Au-delà de
+        # la capacité, le dépouillement passerait plus d'entrées que le circuit n'en
+        # accepte -> exception -> la page de l'offre resterait bloquée en 503.
+        n_bids = conn.execute("SELECT COUNT(*) c FROM bids WHERE tender_id=?",
+                              (tid,)).fetchone()["c"]
+        if t["mode"] == "fhe" and n_bids >= fhe.capacity():
+            flash(t_srv("flash.57", "Cet appel d'offres chiffré a atteint sa capacité "
+                        "maximale (%d offres).") % fhe.capacity())
+            return redirect(url_for("offre", tid=tid))
         last = conn.execute("SELECT hash FROM bids WHERE tender_id=? ORDER BY id DESC LIMIT 1",
                             (tid,)).fetchone()
         prev = last["hash"] if last else ""
@@ -2964,7 +3050,11 @@ def offre_soumettre(tid):
         if t["mode"] == "fhe":
             # Thermomètre chiffré : bit(j) = 1 si (mon prix <= prix du palier j), sinon 0.
             # Le montant en clair n'est JAMAIS stocké : seuls ces bits chiffrés le sont.
-            slot = min(bid_id % fhe.capacity(), fhe.capacity() - 1)
+            # L'emplacement doit être la POSITION de l'offre dans cet appel :
+            # _level_blobs() relit les chiffrés triés par id et les repasse dans
+            # cet ordre au circuit. Un id global modulo la capacité ne correspond
+            # à aucune position et peut entrer en collision.
+            slot = n_bids
             for j in range(t["n_levels"]):
                 bit = 1 if level <= j else 0
                 blob = fhe.encrypt_ballot(slot, bit)

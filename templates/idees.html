@@ -10,6 +10,7 @@
 {% if me %}
 <div class="card">
   <form method="post">
+<input type="hidden" name="_csrf" value="{{ csrf_token() }}">
     <label class="fld" for="title">{{ tr('idea.your', 'Votre idée') }}</label>
     <input type="text" id="title" name="title" maxlength="140" placeholder="{{ tr('idea.your.ph', 'Ex. Une tontine numérique pour notre coopérative') }}" required>
     <label class="fld" for="body">{{ tr('idea.body', 'Détails (facultatif)') }}</label>
@@ -30,11 +31,13 @@
 <div class="card" style="display:flex;gap:14px;align-items:flex-start">
   <div style="flex:none;text-align:center;min-width:58px">
     <form method="post" action="{{ url_for('idea_vote', idea_id=it['id']) }}" style="margin:0">
+<input type="hidden" name="_csrf" value="{{ csrf_token() }}">
       <input type="hidden" name="v" value="1">
       <button type="submit" class="opt-del" style="width:44px;height:34px;color:var(--primary-d)" aria-label="{{ tr('idea.for', 'Pour') }}">&#9650;</button>
     </form>
     <div style="font-family:'Sora';font-weight:700;font-size:1.15rem;margin:4px 0;color:var(--primary-d)">{{ it['score'] }}</div>
     <form method="post" action="{{ url_for('idea_vote', idea_id=it['id']) }}" style="margin:0">
+<input type="hidden" name="_csrf" value="{{ csrf_token() }}">
       <input type="hidden" name="v" value="-1">
       <button type="submit" class="opt-del" style="width:44px;height:34px" aria-label="{{ tr('idea.against', 'Contre') }}">&#9660;</button>
     </form>

@@ -41,6 +41,7 @@
   {% endif %}
   {% if not poll['closed'] and (tokens|length) < capacity %}
   <form method="post" action="{{ url_for('gen_tokens', poll_id=poll['id']) }}" style="display:flex;gap:8px;margin-top:8px">
+<input type="hidden" name="_csrf" value="{{ csrf_token() }}">
     <input type="hidden" name="t" value="{{ token }}">
     <input type="number" name="n" min="1" max="{{ capacity - (tokens|length) }}" value="10" placeholder="{{ tr('adm.howmany', 'Combien ?') }}">
     <button type="submit" class="btn btn-ghost" style="width:auto;white-space:nowrap">{{ tr('adm.generate', 'Générer') }}</button>
@@ -51,6 +52,7 @@
   {% if not poll['closed'] %}
   <form method="post" action="{{ url_for('clore', poll_id=poll['id']) }}"
         onsubmit="return confirm('{{ tr('adm.close_confirm', 'Clore le vote et révéler le résultat ? Cette action est définitive.') }}');">
+<input type="hidden" name="_csrf" value="{{ csrf_token() }}">
     <input type="hidden" name="t" value="{{ token }}">
     <button type="submit" class="btn btn-gold" style="margin-top:8px">{{ tr('adm.close_btn', 'Clore le vote et révéler le résultat') }}</button>
   </form>

@@ -48,6 +48,7 @@
 
 {% if me %}
 <form method="post" action="{{ url_for('publier') }}" class="fcard composer">
+<input type="hidden" name="_csrf" value="{{ csrf_token() }}">
   <div class="fhead" style="margin-bottom:8px">
     <div class="avatar" style="background:{{ pal[ me['display_name']|length % 7 ] }}">{{ me['display_name'][0]|upper }}</div>
     <div class="fmeta"><span class="who">{{ me['display_name'] }}</span>
@@ -84,6 +85,7 @@
       <div class="fbody">{{ it.body }}</div>
       <div class="factions">
         <form method="post" action="{{ url_for('aimer_post', pid=it.id) }}" style="flex:1;margin:0">
+<input type="hidden" name="_csrf" value="{{ csrf_token() }}">
           <button type="submit" class="fbtn {{ 'on' if it.liked }}">{{ '&#10084;&#65039;'|safe if it.liked else '&#9825;'|safe }} {{ it.likes }} {{ tr('com.like', "j'aime") }}</button>
         </form>
         <span class="fbtn">&#128172; {{ it.ncom }} {{ tr('com.comments', 'commentaires') }}</span>
@@ -97,6 +99,7 @@
       {% endif %}
       {% if me %}
       <form method="post" action="{{ url_for('commenter_post', pid=it.id) }}" class="cinput">
+<input type="hidden" name="_csrf" value="{{ csrf_token() }}">
         <input type="text" name="body" maxlength="1000" placeholder="{{ tr('com.write_comment', 'Écrire un commentaire…') }}" required>
         <button type="submit">{{ tr('com.send', 'Envoyer') }}</button>
       </form>
@@ -116,6 +119,7 @@
       </div>
       <div class="factions">
         <form method="post" action="{{ url_for('aimer_vote', poll_id=it.id) }}" style="flex:1;margin:0">
+<input type="hidden" name="_csrf" value="{{ csrf_token() }}">
           <button type="submit" class="fbtn {{ 'on' if it.liked }}">{{ '&#10084;&#65039;'|safe if it.liked else '&#9825;'|safe }} {{ it.likes }}</button>
         </form>
         <a class="fbtn" href="{{ url_for('voter', poll_id=it.id) }}#discussion">&#128172; {{ it.ncom }}</a>

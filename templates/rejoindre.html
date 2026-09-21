@@ -6,6 +6,7 @@
   <h1 style="font-size:1.5rem">{{ tr('join.h', 'Rejoindre un vote') }}</h1>
   <p class="muted small" style="margin-top:-4px">{{ tr('join.sub', 'Collez le lien reçu, ou saisissez le code du vote.') }}</p>
   <form method="post">
+<input type="hidden" name="_csrf" value="{{ csrf_token() }}">
     <label class="fld" for="code">{{ tr('join.field', 'Lien ou code') }}</label>
     <input type="text" id="code" name="code" placeholder="{{ tr('join.ph', 'ex. https://…/v/aB3xY  ou  aB3xY') }}" required>
     <div style="margin-top:18px"></div>

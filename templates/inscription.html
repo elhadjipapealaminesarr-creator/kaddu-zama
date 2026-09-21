@@ -7,6 +7,7 @@
   <h1 style="font-size:1.4rem;margin-top:14px">{{ tr('auth.join_h', 'Rejoindre la communauté') }}</h1>
   <p class="muted small">{{ tr('auth.join_p', 'Un compte permet de participer à la place publique, de commenter et de proposer des idées. Gratuit, et votre vote reste toujours secret.') }}</p>
   <form method="post">
+<input type="hidden" name="_csrf" value="{{ csrf_token() }}">
     <label class="fld" for="name">{{ tr('auth.name', 'Nom affiché') }}</label>
     <input type="text" id="name" name="name" value="{{ name }}" placeholder="{{ tr('auth.name.ph', 'Ex. Awa D.') }}" required>
     <label class="fld" for="email">{{ tr('auth.email', 'E-mail') }}</label>

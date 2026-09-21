@@ -28,6 +28,7 @@
       <p class="muted small">{{ tr('oinv.classic_note', "Votre montant n'est <b>pas</b> enregistré : seule une empreinte l'est. Notez bien votre <b>montant</b> et votre <b>mot secret</b> pour la révélation.") }}</p>
     {% endif %}
     <form method="post" action="{{ url_for('offre_soumettre', tid=t['id']) }}">
+<input type="hidden" name="_csrf" value="{{ csrf_token() }}">
       <input type="hidden" name="token" value="{{ token }}">
       <label class="fld">{{ tr('oinv.company', 'Société') }}</label>
       <input type="text" value="{{ invite['name'] }}" readonly>

@@ -54,6 +54,7 @@
   <p class="muted small">{{ req['votes_cast'] }} {{ tr('tdet.votes_cast', 'vote(s) exprimé(s).') }}</p>
   {% if is_owner %}
   <form method="post" action="{{ url_for('tontine_demande_clore', tid=t['id'], rid=req['id']) }}" style="margin-top:8px">
+<input type="hidden" name="_csrf" value="{{ csrf_token() }}">
     <button class="btn btn-gold" type="submit" onclick="return confirm('{{ tr('tdet.close_confirm', 'Clore le vote et dépouiller (décompte FHE) ?') }}')">{{ tr('tdet.close_btn', 'Clore le vote & dépouiller') }}</button>
   </form>
   {% endif %}
@@ -75,6 +76,7 @@
         <span class="muted small">{% if m['member_paid'] %}{{ tr('tdet.member', 'membre') }} &#10003;{% else %}{{ tr('tdet.member', 'membre') }} &#8943;{% endif %} / {% if m['benef_received'] %}{{ tr('tdet.benef_short', 'bénéf') }} &#10003;{% else %}{{ tr('tdet.benef_short', 'bénéf') }} &#8943;{% endif %}</span>
       {% elif is_owner and not t['closed'] %}
         <form method="post" action="{{ url_for('tontine_payer', tid=t['id']) }}" style="margin:0">
+<input type="hidden" name="_csrf" value="{{ csrf_token() }}">
           <input type="hidden" name="member_id" value="{{ m['id'] }}">
           <button class="btn" style="width:auto;padding:5px 12px" type="submit">{{ tr('tdet.mark_paid', 'Marquer cotisé') }}</button>
         </form>
@@ -87,6 +89,7 @@
 
   {% if is_owner and not t['closed'] %}
   <form method="post" action="{{ url_for('tontine_cycle', tid=t['id']) }}" style="margin-top:16px">
+<input type="hidden" name="_csrf" value="{{ csrf_token() }}">
     <button class="btn btn-primary" type="submit"{% if not all_paid %} onclick="return confirm('{{ tr('tdet.next_confirm', 'Tous les membres ne sont pas encore validés. Passer au tour suivant quand même ?') }}')"{% endif %}>
       {% if all_paid %}{{ tr('tdet.close_round', 'Clore ce tour & passer au suivant') }}{% else %}{{ tr('tdet.next_round', 'Passer au tour suivant') }}{% endif %}
     </button>
@@ -115,12 +118,14 @@
   <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.07)">
     <span>{{ m['position'] }}. {{ m['name'] }}</span>
     <form method="post" action="{{ url_for('tontine_retirer', tid=t['id'], mid=m['id']) }}" onsubmit="return confirm('{{ tr('tdet.remove_confirm', 'Retirer ce membre de la tontine ?') }}')" style="margin:0">
+<input type="hidden" name="_csrf" value="{{ csrf_token() }}">
       <button class="btn" type="submit" style="width:auto;padding:4px 10px;background:#7a2e2e;color:#fff">{{ tr('tdet.remove', 'Retirer') }}</button>
     </form>
   </div>
   {% endfor %}
   {% if not req %}
   <form method="post" action="{{ url_for('tontine_dissoudre', tid=t['id']) }}" onsubmit="return confirm('{{ tr('tdet.dissolve_confirm', 'Arrêter la tontine ? Les membres voteront en secret.') }}')" style="margin-top:14px">
+<input type="hidden" name="_csrf" value="{{ csrf_token() }}">
     <button class="btn btn-gold" type="submit">{{ tr('tdet.dissolve_btn', "Proposer d'arrêter la tontine (vote des membres)") }}</button>
   </form>
   {% endif %}

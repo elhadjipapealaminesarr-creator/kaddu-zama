@@ -15,6 +15,53 @@ import types
 # Nombre max de votants par vote (ajustable sans toucher au code).
 K = int(os.environ.get("KADDU_CAPACITY", "30"))
 
+# ---------------------------------------------------------------------------
+# GRAINE DES CLÉS FHE — corrige le bug des décomptes faux après redémarrage.
+#
+# Concrete régénère des clés neuves à chaque appel de keygen(). Comme le serveur
+# redémarre (veille Render, redéploiement), les bulletins déjà en base avaient été
+# chiffrés sous les clés du processus PRÉCÉDENT : le décompte renvoyait alors un
+# entier arbitraire, SANS lever d'erreur.
+#
+# En semant la clé secrète, chaque processus régénère EXACTEMENT les mêmes clés.
+# On ne sème PAS `encryption_seed` : le bruit de chiffrement doit rester aléatoire,
+# sinon deux bulletins identiques donneraient deux chiffrés identiques en base.
+#
+# Priorité : KADDU_FHE_SEED explicite > dérivation depuis APP_SECRET (stable sur
+# Render) > graine aléatoire (développement local, avec avertissement).
+#
+# ATTENTION : cette graine est un SECRET de longue durée. Qui la détient peut
+#   déchiffrer tous les bulletins, passés et futurs. La changer rend illisibles
+#   les scrutins en cours. Le modèle de confiance reste celui d'avant ce
+#   correctif : c'est la couche on-chain (fhEVM) qui apporte la garantie
+#   « pas même l'operateur ».
+def _fhe_seed():
+    import hashlib
+    raw = os.environ.get("KADDU_FHE_SEED")
+    if not raw:
+        raw = os.environ.get("APP_SECRET")
+        if raw:
+            print("[fhe] KADDU_FHE_SEED absent : graine derivee d'APP_SECRET.", flush=True)
+    if not raw:
+        print("[fhe] ATTENTION : ni KADDU_FHE_SEED ni APP_SECRET - cles aleatoires. "
+              "Tout decompte effectue apres un redemarrage sera FAUX.", flush=True)
+        return None
+    try:
+        return int(raw)
+    except ValueError:
+        return int.from_bytes(hashlib.sha256(raw.encode("utf-8")).digest()[:16], "big") >> 1
+
+
+SEED = _fhe_seed()
+
+
+def _keygen(circuit):
+    """keygen reproductible : memes cles a chaque demarrage, bruit toujours aleatoire."""
+    if SEED is None:
+        circuit.keygen()
+    else:
+        circuit.keygen(seed=SEED)
+
 _circuit = None      # circuit FHE compilé (construit à la demande)
 _zero = {}           # cache des zéros chiffrés par slot
 
@@ -53,7 +100,7 @@ def _ensure():
     circuit = fhe.Compiler(
         g["_t"], {n: "encrypted" for n in names}
     ).compile([tuple([0] * K), tuple([1] * K)])
-    circuit.keygen()
+    _keygen(circuit)
     _circuit = circuit
     return _circuit
 
@@ -80,6 +127,7 @@ def encrypt_ballot(slot, bit):
 
 
 def tally(blobs):
+    _stub_torch()          # doit preceder l'import de concrete
     from concrete import fhe
     c = _ensure()
     cts = [fhe.Value.deserialize(b) for b in blobs]
@@ -116,7 +164,7 @@ def _ensure_pool():
     circuit = fhe.Compiler(
         g["_s"], {n: "encrypted" for n in names}
     ).compile([tuple([0] * K), tuple([POOL_MAX] * K)])
-    circuit.keygen()
+    _keygen(circuit)
     _pool_circuit = circuit
     return _pool_circuit
 
@@ -147,6 +195,7 @@ def encrypt_value(slot, value):
 
 def pool_sum(blobs):
     """Additionne les valeurs chiffrées et ne révèle QUE le total."""
+    _stub_torch()          # doit preceder l'import de concrete
     from concrete import fhe
     c = _ensure_pool()
     cts = [fhe.Value.deserialize(b) for b in blobs]
@@ -198,7 +247,7 @@ def _ensure_thr(threshold):
     circuit = fhe.Compiler(
         g["_f"], {n: "encrypted" for n in names}
     ).compile([tuple([0] * K), tuple([1] * K)])
-    circuit.keygen()
+    _keygen(circuit)
     _thr_circuits[t] = circuit
     return circuit
 
@@ -224,6 +273,7 @@ def encrypt_alert(threshold, slot, bit):
 def alert_reveal(threshold, blobs):
     """Renvoie le nombre d'alertes concordantes SI le seuil est atteint, sinon 0.
     Le calcul (somme + seuil) se fait entièrement sur les chiffrés."""
+    _stub_torch()          # doit preceder l'import de concrete
     from concrete import fhe
     c = _ensure_thr(threshold)
     cts = [fhe.Value.deserialize(b) for b in blobs]

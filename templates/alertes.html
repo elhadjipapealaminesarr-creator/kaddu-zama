@@ -47,6 +47,7 @@
         <div class="muted small" style="margin-bottom:6px">{{ tr('alr.deposited', 'Alertes déposées (contenu invisible)') }} : <b>{{ register['n_alerts'] }}</b></div>
         <form method="post" action="{{ url_for('alerte_evaluer', rid=register['id']) }}"
               onsubmit="return confirm('{{ tr('alr.eval.confirm', 'Évaluer le registre ? Seules les cibles atteignant le seuil seront révélées.') }}');">
+<input type="hidden" name="_csrf" value="{{ csrf_token() }}">
           <button type="submit" class="btn btn-gold">&#128273; {{ tr('alr.eval.btn', 'Évaluer (révéler ce qui dépasse le seuil)') }}</button>
         </form>
         <p class="muted small" style="margin-top:10px">{{ tr('alr.eval.note', 'Même toi, l\'organisateur, tu ne vois rien avant l\'évaluation — et rien des cibles sous le seuil.') }}</p>
@@ -64,6 +65,7 @@
         <p class="muted">{{ tr('alr.full', "Nombre maximum d'alertes atteint.") }}</p>
       {% else %}
         <form method="post" action="{{ url_for('alerte_signaler', rid=register['id']) }}">
+<input type="hidden" name="_csrf" value="{{ csrf_token() }}">
           <label class="fld">{{ tr('alr.whom', 'Qui signales-tu ?') }}</label>
           {% for tg in target_list %}
             <label class="choice"><input type="radio" name="target_pos" value="{{ tg['position'] }}" required>
@@ -118,6 +120,7 @@
     <div class="card pad-lg">
       <h2 style="font-family:'Sora';font-size:1.25rem">&#10133; {{ tr('alr.open.h', 'Ouvrir un registre') }}</h2>
       <form method="post">
+<input type="hidden" name="_csrf" value="{{ csrf_token() }}">
         <label class="fld" for="title">{{ tr('alr.field.title', 'Intitulé') }}</label>
         <input type="text" id="title" name="title" value="{{ title }}" placeholder="{{ tr('alr.field.title.ph', 'Ex. Signalement anti-corruption — mairie de X') }}" required>
 

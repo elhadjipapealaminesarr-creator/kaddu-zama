@@ -69,6 +69,7 @@
       <h2 style="font-family:'Sora';font-size:1.2rem">{{ tr('odet.deposit_fhe_h', 'Déposer une offre chiffrée') }}</h2>
       <p class="muted small">{{ tr('odet.deposit_fhe_p', "Ton prix est <b>chiffré</b> (FHE) : personne, pas même l'organisateur, ne le voit. Si tu ne gagnes pas, il restera <b>secret à vie</b>. ⚠️ Note bien ton <b>montant</b> et ton <b>mot secret</b> pour prouver ta victoire.") }}</p>
       <form method="post" action="{{ url_for('offre_soumettre', tid=t['id']) }}">
+<input type="hidden" name="_csrf" value="{{ csrf_token() }}">
         <label class="fld" for="name">{{ tr('odet.your_name', 'Ton nom / ta société') }}</label>
         <input type="text" id="name" name="name" required placeholder="{{ tr('odet.your_name.ph', 'Ex. Entreprise Diallo') }}">
         <label class="fld" for="amount">{{ tr('odet.your_price', 'Ton prix (choisis une valeur de la grille)') }}</label>
@@ -96,6 +97,7 @@
 
     {% if is_owner %}
     <form method="post" action="{{ url_for('offre_clore', tid=t['id']) }}" class="center" style="margin-top:6px">
+<input type="hidden" name="_csrf" value="{{ csrf_token() }}">
       <button class="btn btn-gold" type="submit" onclick="return confirm('{{ tr('odet.close_fhe_confirm', 'Clore et dépouiller (calcul FHE du prix gagnant) ?') }}')">{{ tr('odet.close_fhe_btn', 'Clore & dépouiller (FHE)') }}</button>
     </form>
     {% endif %}
@@ -122,6 +124,7 @@
       <h2 style="font-family:'Sora';font-size:1.2rem">{{ tr('odet.prove_h', 'Es-tu le gagnant ? Prouve-le') }}</h2>
       <p class="muted small">{{ tr('odet.prove_p', "Si tu as proposé le prix gagnant, entre-le avec ton mot secret. Le système vérifie ton empreinte. Les perdants n'ont rien à faire — leur prix reste secret.") }}</p>
       <form method="post" action="{{ url_for('offre_reveler', tid=t['id']) }}">
+<input type="hidden" name="_csrf" value="{{ csrf_token() }}">
         <label class="fld" for="rname">{{ tr('odet.your_name', 'Ton nom / ta société') }}</label>
         <input type="text" id="rname" name="name" required placeholder="{{ tr('odet.your_name.ph', 'Ex. Entreprise Diallo') }}">
         <label class="fld" for="ramount">{{ tr('odet.the_winning_price', 'Le prix gagnant') }}</label>
@@ -145,6 +148,7 @@
       <h2 style="font-family:'Sora';font-size:1.2rem">{{ tr('odet.deposit_sealed_h', 'Soumettre une offre scellée') }}</h2>
       <p class="muted small">{{ tr('odet.deposit_sealed_p', "Ton montant n'est <b>pas</b> enregistré : seule une empreinte l'est. ⚠️ Note bien ton <b>montant</b> et ton <b>mot secret</b> — ils te serviront à révéler après la clôture.") }}</p>
       <form method="post" action="{{ url_for('offre_soumettre', tid=t['id']) }}">
+<input type="hidden" name="_csrf" value="{{ csrf_token() }}">
         <label class="fld" for="name">{{ tr('odet.your_name', 'Ton nom / ta société') }}</label>
         <input type="text" id="name" name="name" required placeholder="{{ tr('odet.your_name.ph', 'Ex. Entreprise Diallo') }}">
         <label class="fld" for="amount">{{ tr('odet.your_amount', 'Ton montant (FCFA, entier)') }}</label>
@@ -171,6 +175,7 @@
 
     {% if is_owner %}
     <form method="post" action="{{ url_for('offre_clore', tid=t['id']) }}" class="center" style="margin-top:6px">
+<input type="hidden" name="_csrf" value="{{ csrf_token() }}">
       <button class="btn btn-gold" type="submit" onclick="return confirm('{{ tr('odet.close_sealed_confirm', 'Clore les soumissions et ouvrir la révélation ?') }}')">{{ tr('odet.close_sealed_btn', 'Clore les soumissions') }}</button>
     </form>
     {% endif %}
@@ -180,6 +185,7 @@
       <h2 style="font-family:'Sora';font-size:1.2rem">{{ tr('odet.reveal_h', 'Révéler ton offre') }}</h2>
       <p class="muted small">{{ tr('odet.reveal_p', "Entre exactement le même montant et mot secret qu'à la soumission. Le système vérifie l'empreinte : impossible de tricher.") }}</p>
       <form method="post" action="{{ url_for('offre_reveler', tid=t['id']) }}">
+<input type="hidden" name="_csrf" value="{{ csrf_token() }}">
         <label class="fld" for="rname">{{ tr('odet.your_name', 'Ton nom / ta société') }}</label>
         <input type="text" id="rname" name="name" required placeholder="{{ tr('odet.your_name.ph', 'Ex. Entreprise Diallo') }}">
         <label class="fld" for="ramount">{{ tr('odet.reveal_amount', 'Ton montant (FCFA)') }}</label>

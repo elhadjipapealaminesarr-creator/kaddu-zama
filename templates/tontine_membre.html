@@ -21,10 +21,12 @@
     {% elif req['can_vote'] %}
       <div style="display:flex;gap:10px;margin-top:8px">
         <form method="post" action="{{ url_for('tontine_voter_tour', tid=t['id'], token=token) }}" style="margin:0;flex:1">
+<input type="hidden" name="_csrf" value="{{ csrf_token() }}">
           <input type="hidden" name="choice" value="oui">
           <button class="btn btn-primary" type="submit" style="width:100%">{{ tr('tmem.yes', 'Oui, accorder') }}</button>
         </form>
         <form method="post" action="{{ url_for('tontine_voter_tour', tid=t['id'], token=token) }}" style="margin:0;flex:1">
+<input type="hidden" name="_csrf" value="{{ csrf_token() }}">
           <input type="hidden" name="choice" value="non">
           <button class="btn" type="submit" style="width:100%">{{ tr('tmem.no', 'Non') }}</button>
         </form>
@@ -38,6 +40,7 @@
   <div class="card center">
     <p class="muted small">{{ tr('tmem.request_p', 'Besoin urgent ? Tu peux demander à prendre la cagnotte ce tour — les autres membres voteront (vote secret).') }}</p>
     <form method="post" action="{{ url_for('tontine_demander', tid=t['id'], token=token) }}" style="margin-top:6px">
+<input type="hidden" name="_csrf" value="{{ csrf_token() }}">
       <button class="btn btn-gold" type="submit">{{ tr('tmem.request_btn', 'Demander à prendre ce tour') }}</button>
     </form>
   </div>
@@ -59,6 +62,7 @@
             <span class="pill pill-green">{{ tr('tmem.received', 'reçu') }} &#9989;</span>
           {% else %}
             <form method="post" action="{{ url_for('tontine_recu', tid=t['id'], token=token) }}" style="margin:0">
+<input type="hidden" name="_csrf" value="{{ csrf_token() }}">
               <input type="hidden" name="payer_id" value="{{ p['id'] }}">
               <button class="btn" style="width:auto;padding:5px 12px" type="submit">{{ tr('tmem.i_received', "J'ai reçu") }}</button>
             </form>
@@ -75,6 +79,7 @@
       {% else %}
         <p>{{ tr('tmem.did_you_pay', 'As-tu versé ta cotisation à') }} <b>{{ beneficiary['name'] if beneficiary else tr('tmem.the_benef', 'le bénéficiaire') }}</b> {{ tr('tmem.this_round', 'pour ce tour ?') }}</p>
         <form method="post" action="{{ url_for('tontine_verse', tid=t['id'], token=token) }}" style="margin-top:10px">
+<input type="hidden" name="_csrf" value="{{ csrf_token() }}">
           <button class="btn btn-primary" type="submit">{{ tr('tmem.i_paid', "J'ai versé ma cotisation") }} &#128274;</button>
         </form>
         <p class="muted small" style="margin-top:8px">{{ tr('tmem.money_note', "L'argent se verse hors de l'app (mobile money). Ici tu confirmes seulement.") }}</p>
@@ -88,6 +93,7 @@
 {% if not t['closed'] %}
 <div class="card center">
   <form method="post" action="{{ url_for('tontine_quitter', tid=t['id'], token=token) }}" onsubmit="return confirm('{{ tr('tmem.leave_confirm', 'Quitter la tontine ? Ton règlement sera calculé et scellé dans le registre.') }}')">
+<input type="hidden" name="_csrf" value="{{ csrf_token() }}">
     <button class="btn" type="submit" style="width:auto;background:#7a2e2e;color:#fff">{{ tr('tmem.leave', 'Quitter la tontine') }}</button>
   </form>
 </div>
