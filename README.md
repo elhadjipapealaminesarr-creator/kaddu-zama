@@ -3,7 +3,7 @@
 [![Live demo](https://img.shields.io/badge/demo-live-brightgreen)](https://kaddu-zama.onrender.com)
 [![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-0E5A4A.svg)](./LICENSE)
 [![Built with Zama FHE](https://img.shields.io/badge/Built%20with-Zama%20FHE-6E56CF)](https://www.zama.ai/)
-[![On-chain: Sepolia](https://img.shields.io/badge/on--chain-fhEVM%20%C2%B7%20Sepolia-2e53C3)](https://sepolia.etherscan.io/address/0x15a12f29b69dc65Bc9d6206f0Ebcb8e624549768)
+[![On-chain: Sepolia](https://img.shields.io/badge/on--chain-fhEVM%20%C2%B7%20Sepolia-2e53C3)](https://sepolia.etherscan.io/address/0x5A8f32748280e46c500daD8878a6ED1f3203FB9a)
 [![Made in](https://img.shields.io/badge/Made%20in-Dakar%20%F0%9F%87%B8%F0%9F%87%B3-E4A24C)](#)
 
 **Truly secret, verifiable voting — plus tamper-proof tontines, sealed-bid tenders and a threshold whistleblower vault — for associations, cooperatives, unions, tontines and community groups. Powered by Zama's Fully Homomorphic Encryption (FHE).**
@@ -29,7 +29,7 @@ In West Africa, communities decide together and manage money together constantly
 
 | Contract | Role | Address |
 |---|---|---|
-| ⭐ **KadduTender** | Tamper-proof public tender: sealed bids, winner computed on encrypted data, **ERC-7984** confidential-token escrow released only when N citizens confirm delivery, self-slashing confidential caution, encrypted collusion tripwire. | [`0x15a1…9768`](https://sepolia.etherscan.io/address/0x15a12f29b69dc65Bc9d6206f0Ebcb8e624549768) |
+| ⭐ **KadduTender** | Tamper-proof public tender: sealed bids, winner computed on encrypted data, **ERC-7984** confidential-token escrow released only when N citizens confirm delivery, self-slashing confidential caution, encrypted collusion tripwire. | [`0x5A8f…FB9a`](https://sepolia.etherscan.io/address/0x5A8f32748280e46c500daD8878a6ED1f3203FB9a) |
 | **KadduBudgetVote** | Community-approved budget ceiling. | [`0x68B6…c80f`](https://sepolia.etherscan.io/address/0x68B6cc4949E514930773507FB60781e0Ec1ec80f) |
 | **KadduVote** | Confidential on-chain voting. | [`0x2e53…F94c7`](https://sepolia.etherscan.io/address/0x2e53C38af76aeEE1902C6FA2A1F7AdDc269F94c7) |
 | **KadduTontine** | Tamper-proof rotating savings + internal confidential member vote. | [`0x23E3…e311`](https://sepolia.etherscan.io/address/0x23E30319EfB8B19d22201778A95A0B3eC50ee311) |
