@@ -34,6 +34,16 @@
         </span></span>
     </label>
 
+    <label class="fld" style="margin-top:18px" for="n_membres">{{ tr('creer.membres', 'Une personne = une voix <span class="muted small">(recommandé)</span>') }}</label>
+    <input type="number" id="n_membres" name="n_membres" min="0" max="{{ capacity }}" value="0"
+           placeholder="{{ tr('creer.membres.ph', 'Nombre de participants') }}">
+    <p class="muted small" style="margin-top:6px">{{ tr('creer.membres.note',
+      "Indique le nombre de participants et Kaddu génère un <b>lien personnel à usage unique</b> pour chacun : "
+      "chaque personne ne peut voter qu'une fois. Le lien est consommé <i>avant</i> l'enregistrement du bulletin — "
+      "il n'est jamais associé au choix, le secret reste entier.<br>"
+      "Laisse à <b>0</b> pour un lien unique partagé à tous : plus simple, mais rien n'empêche alors "
+      "quelqu'un de voter deux fois depuis un autre navigateur.") }}</p>
+
     <div style="margin-top:14px"></div>
     <button type="submit" class="btn btn-primary">{{ tr('creer.generate', 'Générer le vote') }} &#128274;</button>
   </form>

@@ -1,6 +1,14 @@
 {% extends "base.html" %}
 {% block title %}{{ poll['title'] }} — Kaddu{% endblock %}
 {% block content %}
+{% if not restricted and not closed %}
+<p class="muted small" style="margin:10px 0 0;padding:10px 12px;border:1px solid var(--line);border-radius:10px">
+  {{ tr('voter.lien_ouvert', "Ce vote se fait par <b>lien partagé</b> : ton choix est chiffré et personne ne peut le lire, "
+        "mais rien ne garantit techniquement qu'une personne ne vote qu'une fois. Pour un scrutin qui engage, "
+        "l'organisateur peut générer un <b>lien personnel par participant</b>.") }}
+</p>
+{% endif %}
+
 <div class="card pad-lg">
   <span class="pill pill-green">&#128274; {{ tr('mod.vote.h3', 'Vote confidentiel') }}</span>
   <h1 style="font-size:1.4rem;margin-top:14px">{{ poll['title'] }}</h1>

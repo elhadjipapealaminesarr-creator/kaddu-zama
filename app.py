@@ -61,6 +61,61 @@ app.config.update(
 # ---------------------------------------------------------------------------
 CSRF_FIELD = "_csrf"
 
+# ---------------------------------------------------------------------------
+# LIMITATION DE DEBIT.
+#
+# Volontairement PAS appliquee au vote : une assemblee d'association vote
+# souvent depuis un meme wifi, et au Senegal beaucoup d'abonnes mobiles
+# partagent une IP. Limiter les votes par IP bloquerait de vrais votants.
+# Le bourrage automatise est deja borne par la capacite du scrutin
+# (KADDU_CAPACITY) et par les liens membres a usage unique.
+#
+# Ce qui est limite, c'est ce qui n'a aucun usage legitime a haut volume :
+# connexion (force brute), inscription (comptes jetables) et creation de
+# contenu (spam).
+#
+# Fenetre glissante en memoire : le Dockerfile fixe --workers 1, donc un seul
+# processus voit tout le trafic. Avec plusieurs workers il faudrait Redis.
+# ---------------------------------------------------------------------------
+_DEBIT = {}   # (ip, categorie) -> [horodatages]
+
+_DEBIT_REGLES = {
+    "auth":    (10, 600),    # 10 tentatives par 10 min
+    "creer":   (20, 600),    # 20 creations par 10 min
+    "publier": (30, 600),    # 30 publications/commentaires par 10 min
+}
+
+_DEBIT_ROUTES = {
+    "connexion": "auth", "inscription": "auth",
+    "creer": "creer", "tontines": "creer", "offres": "creer",
+    "commun": "creer", "comparer": "creer", "alertes": "creer",
+    "publier": "publier", "commenter": "publier",
+    "commenter_post": "publier", "idees": "publier",
+}
+
+
+def _ip_client():
+    """IP reelle derriere le proxy de Render (X-Forwarded-For)."""
+    xff = request.headers.get("X-Forwarded-For", "")
+    return (xff.split(",")[0].strip() if xff else request.remote_addr) or "?"
+
+
+def _debit_depasse(categorie):
+    plafond, fenetre = _DEBIT_REGLES[categorie]
+    cle = (_ip_client(), categorie)
+    maintenant = time.time()
+    passages = [t for t in _DEBIT.get(cle, []) if maintenant - t < fenetre]
+    if len(passages) >= plafond:
+        _DEBIT[cle] = passages
+        return True
+    passages.append(maintenant)
+    _DEBIT[cle] = passages
+    if len(_DEBIT) > 5000:          # borne memoire : purge des entrees expirees
+        for k in [k for k, v in _DEBIT.items() if not v or maintenant - v[-1] > 3600]:
+            _DEBIT.pop(k, None)
+    return False
+
+
 
 def csrf_token():
     """Jeton de la session courante, créé à la première utilisation."""
@@ -83,6 +138,13 @@ def _csrf_protect():
     route POST, présente ou future — rien à penser en ajoutant une vue."""
     if request.method not in ("POST", "PUT", "PATCH", "DELETE"):
         return None
+    categorie = _DEBIT_ROUTES.get(request.endpoint or "")
+    if categorie and _debit_depasse(categorie):
+        app.logger.warning("Debit depasse (%s) sur %s", categorie, request.path)
+        return render_template(
+            "erreur.html", code=429,
+            msg=t_srv("err.debit", "Trop de tentatives depuis cette connexion. "
+                      "Patiente quelques minutes avant de reessayer.")), 429
     sent = (request.form.get(CSRF_FIELD)
             or request.headers.get("X-CSRF-Token")
             or "")
@@ -992,6 +1054,18 @@ TRANSLATIONS = {
         # Erreurs
         "err.csrf": "Session expired or unauthenticated request. Go back to the "
                     "previous page, reload it, and submit the form again.",
+        "err.debit": "Too many attempts from this connection. Wait a few minutes "
+                     "before trying again.",
+        "creer.membres": "One person = one vote <span class=\"muted small\">(recommended)</span>",
+        "creer.membres.ph": "Number of participants",
+        "creer.membres.note": "Enter the number of participants and Kaddu generates a "
+            "<b>single-use personal link</b> for each one: nobody can vote twice. The link is "
+            "consumed <i>before</i> the ballot is stored \u2014 it is never tied to the choice, "
+            "so ballot secrecy is untouched.<br>Leave at <b>0</b> for one shared link: simpler, "
+            "but nothing then stops someone voting twice from another browser.",
+        "voter.lien_ouvert": "This poll uses a <b>shared link</b>: your choice is encrypted and "
+            "nobody can read it, but nothing technically guarantees one vote per person. For a "
+            "binding vote, the organizer can generate a <b>personal link per participant</b>.",
     }
 }
 
@@ -1792,8 +1866,26 @@ def creer():
                          'created_at, closed, "public", owner_user_id) VALUES (?,?,?,?,?,?,0,?,?)',
                          (poll_id, admin_token, title, question, json.dumps(options),
                           int(time.time()), pub, owner))
+            # Liens membres demandes des la creation : c'est le SEUL mode qui
+            # garantit reellement "une personne = une voix". Le jeton est
+            # consomme avant l'enregistrement du bulletin et n'est jamais stocke
+            # avec lui : le secret du vote reste entier.
+            try:
+                n_membres = int(request.form.get("n_membres") or "0")
+            except ValueError:
+                n_membres = 0
+            n_membres = max(0, min(n_membres, fhe.capacity()))
+            if n_membres:
+                conn.executemany(
+                    "INSERT INTO tokens (poll_id, token, used) VALUES (?,?,0)",
+                    [(poll_id, secrets.token_urlsafe(6)) for _ in range(n_membres)])
+        if n_membres:
+            session["adm_" + poll_id] = admin_token
+            session.permanent = True
+            return redirect(url_for("admin", poll_id=poll_id))
         return redirect(url_for("partage", poll_id=poll_id, t=admin_token))
-    return render_template("creer.html", title="", question="", options=["", ""])
+    return render_template("creer.html", title="", question="", options=["", ""],
+                           capacity=fhe.capacity())
 
 
 @app.route("/partage/<poll_id>")
@@ -1936,13 +2028,27 @@ def resultat(poll_id):
                            cert_hash=cert_hash, base=base_url())
 
 
+def _admin_autorise(poll, poll_id):
+    """Jeton fourni dans l'URL, ou memorise en session lors d'une visite precedente."""
+    fourni = request.values.get("t", "") or session.get("adm_" + poll_id, "")
+    return bool(poll["admin_token"]) and secrets.compare_digest(
+        str(fourni), str(poll["admin_token"]))
+
+
 @app.route("/admin/<poll_id>")
 def admin(poll_id):
     poll = get_poll(poll_id)
     if not poll:
         abort(404)
-    if request.args.get("t", "") != poll["admin_token"]:
+    if not _admin_autorise(poll, poll_id):
         abort(403)
+    # Le jeton passe dans l'URL finit dans l'historique du navigateur, dans les
+    # en-tetes Referer et sur l'epaule du voisin. On le memorise en session puis
+    # on renvoie vers une URL propre. Les anciens liens continuent de marcher.
+    if request.args.get("t"):
+        session["adm_" + poll_id] = poll["admin_token"]
+        session.permanent = True
+        return redirect(url_for("admin", poll_id=poll_id))
     options = json.loads(poll["options"])
     vote_url = f"{base_url()}{url_for('voter', poll_id=poll_id)}"
     with closing(db()) as conn:
@@ -1959,7 +2065,7 @@ def clore(poll_id):
     poll = get_poll(poll_id)
     if not poll:
         abort(404)
-    if request.form.get("t", "") != poll["admin_token"]:
+    if not _admin_autorise(poll, poll_id):
         abort(403)
     # Clôture IRRÉVERSIBLE : un scrutin déjà clos ne doit jamais être redépouillé,
     # sinon le résultat publié (et son empreinte de certificat) peut être écrasé.
@@ -1985,7 +2091,7 @@ def gen_tokens(poll_id):
     poll = get_poll(poll_id)
     if not poll:
         abort(404)
-    if request.form.get("t", "") != poll["admin_token"]:
+    if not _admin_autorise(poll, poll_id):
         abort(403)
     try:
         n = int(request.form.get("n", "0"))
@@ -3277,7 +3383,7 @@ def commun_cloturer(pid):
         return redirect(url_for("commun_voir", pid=pid))
     with closing(db()) as conn, conn:
         rows = conn.execute("SELECT blob FROM pool_items WHERE pool_id=? ORDER BY slot", (pid,)).fetchall()
-        blobs = [r["blob"] for r in rows]
+        blobs = [bytes(r["blob"]) for r in rows]
         total = fhe.pool_sum(blobs) if blobs else 0   # somme calculée sur les chiffrés
         conn.execute("UPDATE pools SET closed=1, total=?, n_contrib=? WHERE id=?",
                      (total, len(blobs), pid))
@@ -3446,7 +3552,7 @@ def comparer_cloturer(cid):
         for j in range(c["n_levels"]):
             rows = conn.execute("SELECT blob FROM compare_items WHERE compare_id=? AND level=?",
                                (cid, j)).fetchall()
-            blobs = [r["blob"] for r in rows]
+            blobs = [bytes(r["blob"]) for r in rows]
             histo.append(fhe.tally(blobs) if blobs else 0)   # décompte par tranche sur les chiffrés
         conn.execute("UPDATE compares SET closed=1, results=? WHERE id=?",
                      (json.dumps(histo), cid))
@@ -3612,7 +3718,7 @@ def alerte_evaluer(rid):
         for tg in targets:
             rows = conn.execute("SELECT blob FROM register_alerts WHERE register_id=? AND target_pos=?",
                                (rid, tg["position"])).fetchall()
-            blobs = [row["blob"] for row in rows]
+            blobs = [bytes(row["blob"]) for row in rows]
             # révélation à seuil : renvoie le compte SI >= seuil, sinon 0
             counts.append(fhe.alert_reveal(r["threshold"], blobs) if blobs else 0)
         conn.execute("UPDATE registers SET closed=1, results=? WHERE id=?", (json.dumps(counts), rid))
