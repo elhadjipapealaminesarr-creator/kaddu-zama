@@ -1056,6 +1056,32 @@ TRANSLATIONS = {
                     "previous page, reload it, and submit the form again.",
         "err.debit": "Too many attempts from this connection. Wait a few minutes "
                      "before trying again.",
+        "creer.condorcet": "<b>Ranked</b> ballot (Condorcet)",
+        "creer.condorcet.note": "Instead of picking one option, everyone <b>ranks</b> them. "
+            "The winner is the one who beats every other head-to-head \u2014 not the one with the "
+            "most first places while a majority rejects them. Maximum 5 choices.",
+        "vote.rank_p": "Rank the choices: <b>1</b> for your favourite, then 2, 3\u2026 Two choices "
+            "may share a rank if you don't separate them. The winner will be the one who "
+            "<b>beats every other head-to-head</b>, not merely the one with most first places.",
+        "res.cond": "ranked ballot", "res.cond_wins": "wins",
+        "res.cond_why": "This choice beats <b>every</b> other head-to-head \u2014 the most demanding "
+            "criterion a vote can meet: no other option is preferred to it by a majority.",
+        "res.schulze_why": "No option beats all the others: preferences form a cycle (A beats B, "
+            "B beats C, C beats A). The tie is broken by the <b>Schulze method</b>, comparing path "
+            "strengths \u2014 deterministic, and reproducible by anyone from the table below.",
+        "res.cond_diff_a": "Under simple majority the winner would have been",
+        "res.cond_diff_b": "first places out of", 
+        "res.cond_diff_c": "The ranked ballot gives a different answer \u2014 which is exactly what it is for.",
+        "res.duel_p": "Each cell shows how many voters placed the <b>row</b> option above the "
+            "<b>column</b> one. These counts were computed on encrypted ballots: no individual "
+            "ranking was ever decrypted.",
+        "res.duel_vs": "prefers\u2026 over\u2026", "res.duel_leg": "Green cells are won duels.",
+        "res.cond_rank": "Final ranking",
+        "res.reg": "verifiable result", "res.reg_sealed": "ballot(s) sealed",
+        "res.reg_counted": "counted",
+        "res.reg_p": "No ballot was added, removed or altered \u2014 and that is checkable without "
+            "decrypting a single vote.",
+        "res.reg_btn": "Open the ballot register &#8594;",
         "creer.membres": "One person = one vote <span class=\"muted small\">(recommended)</span>",
         "creer.membres.ph": "Number of participants",
         "creer.membres.note": "Enter the number of participants and Kaddu generates a "
@@ -1478,6 +1504,32 @@ def init_db():
                 value BIGINT NOT NULL DEFAULT 0
             )
         """)
+        # --- Registre vérifiable des bulletins (chaîne d'empreintes) ---
+        # Une entrée par votant. Chaque entrée engage la précédente : retirer,
+        # ajouter, réordonner ou altérer un bulletin casse la chaîne, et cela se
+        # constate SANS jamais déchiffrer quoi que ce soit.
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS ballot_chain (
+                poll_id    TEXT NOT NULL,
+                voter      INTEGER NOT NULL,
+                digest     TEXT NOT NULL,
+                prev_hash  TEXT NOT NULL DEFAULT '',
+                hash       TEXT NOT NULL,
+                created_at INTEGER NOT NULL
+            )
+        """)
+        conn.execute("CREATE INDEX IF NOT EXISTS ix_chain ON ballot_chain(poll_id, voter)")
+        # --- Duels du scrutin de Condorcet (un bit chiffré par paire ordonnée) ---
+        conn.execute(f"""
+            CREATE TABLE IF NOT EXISTS pair_ballots (
+                poll_id TEXT NOT NULL,
+                voter   INTEGER NOT NULL,
+                i       INTEGER NOT NULL,
+                j       INTEGER NOT NULL,
+                blob    {BLOB_TYPE} NOT NULL
+            )
+        """)
+        conn.execute("CREATE INDEX IF NOT EXISTS ix_pairs ON pair_ballots(poll_id, i, j, voter)")
         # --- Reçus de vote : preuve SANS le choix (secret préservé) ---
         conn.execute("""
             CREATE TABLE IF NOT EXISTS receipts (
@@ -1538,6 +1590,8 @@ def init_db():
     _migrations = [
         ('polls',           '"public"',      "INTEGER NOT NULL DEFAULT 0"),
         ('polls',           'owner_user_id', "INTEGER"),
+        ('polls',           'methode',       "TEXT NOT NULL DEFAULT 'majorite'"),
+        ('polls',           'duels',         "TEXT"),
         ('tontines',        'mode',          "TEXT NOT NULL DEFAULT 'simple'"),
         ('tontine_members', 'member_token',  "TEXT NOT NULL DEFAULT ''"),
         ('tontine_members', 'active',        "INTEGER NOT NULL DEFAULT 1"),
@@ -1736,6 +1790,160 @@ def inject_stats():
             "SEO_JSONLD": Markup(jsonld)}
 
 
+# ═══════════════════════════════════════════════════════════════════════════
+#  REGISTRE VÉRIFIABLE DES BULLETINS
+#
+#  Ce que ce registre PROUVE, à n'importe qui, sans révéler un seul choix :
+#    - aucun bulletin n'a été ajouté après coup ;
+#    - aucun bulletin n'a été retiré ;
+#    - aucun bulletin n'a été modifié ni réordonné ;
+#    - le total publié porte sur exactement le nombre de bulletins scellés.
+#  Un votant qui garde son reçu peut vérifier lui-même que son bulletin figure
+#  dans le registre et qu'il a été compté.
+#
+#  Ce que ce registre NE PROUVE PAS, et il faut le dire : que le déchiffrement
+#  final est honnête. Le serveur détient la clé FHE hors-chaîne ; seule la
+#  couche on-chain (fhEVM) apporte cette garantie-là.
+# ═══════════════════════════════════════════════════════════════════════════
+
+def _ballot_digest(blobs):
+    """Empreinte des chiffrés d'un bulletin, dans l'ordre des options."""
+    h = hashlib.sha256()
+    for b in blobs:
+        h.update(hashlib.sha256(bytes(b)).digest())
+    return h.hexdigest()
+
+
+def _chain_hash(prev, poll_id, voter, digest, ts):
+    payload = "%s|%s|%s|%s|%s" % (prev, poll_id, voter, digest, ts)
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def chain_entries(poll_id):
+    with closing(db()) as conn:
+        rows = conn.execute(
+            "SELECT voter, digest, prev_hash, hash, created_at FROM ballot_chain "
+            "WHERE poll_id = ? ORDER BY voter", (poll_id,)).fetchall()
+    return [dict(r) for r in rows]
+
+
+def chain_verify(poll_id, entries=None):
+    """Recalcule la chaîne, puis recalcule les empreintes depuis les chiffrés
+    réellement stockés. Renvoie un état détaillé, pas un simple booléen."""
+    entries = chain_entries(poll_id) if entries is None else entries
+    etat = {"n": len(entries), "chaine_ok": True, "empreintes_ok": True,
+            "racine": entries[-1]["hash"] if entries else "", "rupture": None}
+    prev = ""
+    for e in entries:
+        attendu = _chain_hash(prev, poll_id, e["voter"], e["digest"], e["created_at"])
+        if e["prev_hash"] != prev or e["hash"] != attendu:
+            etat["chaine_ok"] = False
+            etat["rupture"] = e["voter"]
+            break
+        prev = e["hash"]
+    # Les chiffrés eux-mêmes correspondent-ils toujours à leur empreinte ?
+    with closing(db()) as conn:
+        for e in entries:
+            blobs = [r["blob"] for r in conn.execute(
+                "SELECT blob FROM ballots WHERE poll_id=? AND voter=? ORDER BY option_idx",
+                (poll_id, e["voter"])).fetchall()]
+            blobs += [r["blob"] for r in conn.execute(
+                "SELECT blob FROM pair_ballots WHERE poll_id=? AND voter=? ORDER BY i, j",
+                (poll_id, e["voter"])).fetchall()]
+            if not blobs or _ballot_digest(blobs) != e["digest"]:
+                etat["empreintes_ok"] = False
+                if etat["rupture"] is None:
+                    etat["rupture"] = e["voter"]
+                break
+    return etat
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  SCRUTIN DE CONDORCET — « qui bat tous les autres en duel ? »
+#
+#  Le problème : à la majorité d'un tour, avec 5 candidats, quelqu'un peut
+#  l'emporter avec 24 % pendant que 76 % des votants le rejettent. Ce n'est pas
+#  un cas d'école : c'est la façon la plus courante de désigner un bureau
+#  d'association.
+#
+#  Le principe : chaque votant CLASSE les options. Pour chaque paire ordonnée
+#  (i, j), on compte combien de personnes placent i avant j — un bit chiffré par
+#  paire et par votant, additionné en homomorphe comme un vote ordinaire.
+#  Aucun classement individuel n'est jamais déchiffré : seule la matrice des
+#  duels, agrégée, est révélée.
+#
+#  Le gagnant de Condorcet est celui qui bat tous les autres en duel. Il
+#  n'existe pas toujours (les préférences collectives peuvent tourner en rond :
+#  A bat B, B bat C, C bat A). Dans ce cas on applique la méthode de Schulze,
+#  qui départage par les « chemins les plus forts » et donne toujours un
+#  résultat déterministe et reproductible.
+#
+#  Plafonné à 5 options : chaque option supplémentaire ajoute n(n-1) décomptes
+#  FHE à la clôture, et l'hébergement gratuit a ses limites.
+# ═══════════════════════════════════════════════════════════════════════════
+
+CONDORCET_MAX_OPTIONS = 5
+
+
+def _paires(n):
+    return [(i, j) for i in range(n) for j in range(n) if i != j]
+
+
+def _matrice_duels(poll_id, n):
+    """d[i][j] = nombre de votants plaçant i avant j, calculé sur les chiffrés."""
+    d = [[0] * n for _ in range(n)]
+    with closing(db()) as conn:
+        for i, j in _paires(n):
+            blobs = [bytes(r["blob"]) for r in conn.execute(
+                "SELECT blob FROM pair_ballots WHERE poll_id=? AND i=? AND j=? "
+                "ORDER BY voter", (poll_id, i, j)).fetchall()]
+            d[i][j] = fhe.tally(blobs) if blobs else 0
+    return d
+
+
+def _gagnant_condorcet(d, n):
+    """Celui qui bat tous les autres en duel, s'il existe."""
+    for i in range(n):
+        if all(d[i][j] > d[j][i] for j in range(n) if j != i):
+            return i
+    return None
+
+
+def _schulze(d, n):
+    """Départage par chemins les plus forts (Schulze). Déterministe."""
+    p = [[0] * n for _ in range(n)]
+    for i in range(n):
+        for j in range(n):
+            if i != j:
+                p[i][j] = d[i][j] if d[i][j] > d[j][i] else 0
+    for i in range(n):
+        for j in range(n):
+            if i == j:
+                continue
+            for k in range(n):
+                if i == k or j == k:
+                    continue
+                p[j][k] = max(p[j][k], min(p[j][i], p[i][k]))
+    classement = sorted(
+        range(n),
+        key=lambda a: (-sum(1 for b in range(n) if b != a and p[a][b] > p[b][a]), a))
+    return classement, p
+
+
+def depouiller_condorcet(poll_id, n):
+    """Renvoie la matrice des duels, le gagnant et comment il a été désigné."""
+    d = _matrice_duels(poll_id, n)
+    gagnant = _gagnant_condorcet(d, n)
+    if gagnant is not None:
+        return {"duels": d, "gagnant": gagnant, "methode": "condorcet",
+                "classement": sorted(range(n),
+                                     key=lambda a: (-sum(1 for b in range(n)
+                                                         if b != a and d[a][b] > d[b][a]), a))}
+    classement, _ = _schulze(d, n)
+    return {"duels": d, "gagnant": classement[0], "methode": "schulze",
+            "classement": classement}
+
+
 def get_poll(poll_id):
     with closing(db()) as conn:
         return conn.execute("SELECT * FROM polls WHERE id = ?", (poll_id,)).fetchone()
@@ -1855,6 +2063,12 @@ def creer():
             flash(t_srv("flash.1", "Donne un titre, une question et au moins 2 choix."))
             return render_template("creer.html", title=title, question=question,
                                    options=options or ["", ""])
+        methode = "condorcet" if request.form.get("methode") == "condorcet" else "majorite"
+        if methode == "condorcet" and len(options) > CONDORCET_MAX_OPTIONS:
+            flash(t_srv("flash.58", "Le scrutin par classement accepte au maximum %d choix.")
+                  % CONDORCET_MAX_OPTIONS)
+            return render_template("creer.html", title=title, question=question,
+                                   options=options, capacity=fhe.capacity())
         options = options[:8]
         poll_id = secrets.token_urlsafe(5).replace("-", "a").replace("_", "b")
         admin_token = secrets.token_urlsafe(16)
@@ -1863,9 +2077,10 @@ def creer():
         owner = me["id"] if me else None
         with closing(db()) as conn, conn:
             conn.execute("INSERT INTO polls (id, admin_token, title, question, options, "
-                         'created_at, closed, "public", owner_user_id) VALUES (?,?,?,?,?,?,0,?,?)',
+                         'created_at, closed, "public", owner_user_id, methode) '
+                         "VALUES (?,?,?,?,?,?,0,?,?,?)",
                          (poll_id, admin_token, title, question, json.dumps(options),
-                          int(time.time()), pub, owner))
+                          int(time.time()), pub, owner, methode))
             # Liens membres demandes des la creation : c'est le SEUL mode qui
             # garantit reellement "une personne = une voix". Le jeton est
             # consomme avant l'enregistrement du bulletin et n'est jamais stocke
@@ -1917,7 +2132,7 @@ def voter(poll_id):
     def page(**kw):
         base = dict(poll=poll, options=options, closed=False, already=already,
                     full=full, restricted=restricted, token=tok, token_bad=False,
-                    comments=comments)
+                    comments=comments, condorcet=(poll["methode"] == "condorcet"))
         base.update(kw)
         return render_template("voter.html", **base)
 
@@ -1938,16 +2153,42 @@ def voter(poll_id):
         if full:
             flash(t_srv("flash.2", "Ce vote a atteint sa capacité maximale."))
             return page()
-        try:
-            choice = int(request.form.get("choice", "-1"))
-        except ValueError:
-            choice = -1
-        if choice < 0 or choice >= len(options):
-            flash(t_srv("flash.3", "Choisis une option pour voter."))
-            return page()
+        condorcet = (poll["methode"] == "condorcet")
+        rangs = None
+        if condorcet:
+            # Classement : un rang par option. Les ex aequo sont acceptés — deux
+            # options au même rang ne se battent simplement pas.
+            rangs = []
+            for m in range(len(options)):
+                try:
+                    rangs.append(int(request.form.get("rang_%d" % m, "0")))
+                except ValueError:
+                    rangs.append(0)
+            if any(r < 1 or r > len(options) for r in rangs):
+                flash(t_srv("flash.59", "Donne un rang entre 1 et %d à chaque choix.")
+                      % len(options))
+                return page()
+            choice = min(range(len(options)), key=lambda m: rangs[m])
+        else:
+            try:
+                choice = int(request.form.get("choice", "-1"))
+            except ValueError:
+                choice = -1
+            if choice < 0 or choice >= len(options):
+                flash(t_srv("flash.3", "Choisis une option pour voter."))
+                return page()
         n = voter_count(poll_id)
+        # Dans les deux modes on enregistre la préférence de tête : cela garde le
+        # décompte à la majorité disponible, et permet de MONTRER l'écart entre
+        # « celui qui a le plus de premières places » et « celui qui bat tout le
+        # monde en duel ». C'est tout l'intérêt du scrutin par classement.
         rows = [(poll_id, n, m, fhe.encrypt_ballot(n, 1 if m == choice else 0))
                 for m in range(len(options))]
+        paires = []
+        if condorcet:
+            for i, j in _paires(len(options)):
+                bit = 1 if rangs[i] < rangs[j] else 0
+                paires.append((poll_id, n, i, j, fhe.encrypt_ballot(n, bit)))
         with closing(db()) as conn, conn:
             if restricted:
                 cur = conn.execute(
@@ -1958,10 +2199,25 @@ def voter(poll_id):
                     return page(token_bad=True)
             conn.executemany("INSERT INTO ballots (poll_id, voter, option_idx, blob) "
                              "VALUES (?,?,?,?)", rows)
-            # Reçu de vote : preuve vérifiable SANS le choix (le secret est préservé).
-            receipt_code = secrets.token_urlsafe(6)
+            # Scellement dans le registre vérifiable. L'empreinte précédente est
+            # relue DANS la transaction pour que la chaîne reste continue.
+            if paires:
+                conn.executemany("INSERT INTO pair_ballots (poll_id, voter, i, j, blob) "
+                                 "VALUES (?,?,?,?,?)", paires)
+            ts = int(time.time())
+            # L'empreinte engage TOUT le bulletin : préférence de tête et duels.
+            digest = _ballot_digest([r[3] for r in rows] + [q[4] for q in paires])
+            last = conn.execute("SELECT hash FROM ballot_chain WHERE poll_id=? "
+                                "ORDER BY voter DESC LIMIT 1", (poll_id,)).fetchone()
+            prev = last["hash"] if last else ""
+            receipt_code = _chain_hash(prev, poll_id, n, digest, ts)
+            conn.execute("INSERT INTO ballot_chain (poll_id, voter, digest, prev_hash, "
+                         "hash, created_at) VALUES (?,?,?,?,?,?)",
+                         (poll_id, n, digest, prev, receipt_code, ts))
+            # Le reçu EST l'empreinte de l'entrée : le votant peut la retrouver
+            # lui-même dans le registre public, sans rien révéler de son choix.
             conn.execute("INSERT INTO receipts (code, poll_id, created_at) VALUES (?,?,?)",
-                         (receipt_code, poll_id, int(time.time())))
+                         (receipt_code, poll_id, ts))
         # On passe le reçu par la session (jamais stocké en base avec le choix) :
         # le votant pourra télécharger une version neutre ou personnelle.
         session["receipt"] = {"code": receipt_code, "poll": poll_id,
@@ -1997,7 +2253,15 @@ def preuve():
             rec = conn.execute(
                 "SELECT r.code, r.created_at, p.title FROM receipts r "
                 "LEFT JOIN polls p ON p.id = r.poll_id WHERE r.code = ?", (code,)).fetchone()
-    return render_template("preuve.html", code=code, rec=(dict(rec) if rec else None))
+    place = None
+    if rec:
+        with closing(db()) as conn:
+            e = conn.execute("SELECT poll_id, voter FROM ballot_chain WHERE hash = ?",
+                             (code,)).fetchone()
+        if e:
+            place = {"poll_id": e["poll_id"], "rang": e["voter"] + 1}
+    return render_template("preuve.html", code=code, rec=(dict(rec) if rec else None),
+                           place=place)
 
 
 @app.route("/r/<poll_id>")
@@ -2023,9 +2287,12 @@ def resultat(poll_id):
     cert_hash = hashlib.sha256(
         (str(poll_id) + "|" + poll["options"] + "|" + (poll["results"] or "")).encode("utf-8")
     ).hexdigest()[:16].upper()
+    cond = json.loads(poll["duels"]) if poll["duels"] else None
+    reg = chain_verify(poll_id)
+    reg["totaux_concordent"] = (reg["n"] == total)
     return render_template("resultat.html", poll=poll, options=options, ready=True,
                            rows=rows, rows_sorted=rows_sorted, total=total, win=win,
-                           cert_hash=cert_hash, base=base_url())
+                           cert_hash=cert_hash, base=base_url(), reg=reg, cond=cond)
 
 
 def _admin_autorise(poll, poll_id):
@@ -2033,6 +2300,67 @@ def _admin_autorise(poll, poll_id):
     fourni = request.values.get("t", "") or session.get("adm_" + poll_id, "")
     return bool(poll["admin_token"]) and secrets.compare_digest(
         str(fourni), str(poll["admin_token"]))
+
+
+@app.route("/r/<poll_id>/registre")
+def registre(poll_id):
+    """Registre public des bulletins. Consultable par n'importe qui, y compris
+    les personnes qui n'ont pas voté : il ne contient aucun choix, seulement des
+    empreintes."""
+    poll = get_poll(poll_id)
+    if not poll:
+        abort(404)
+    entrees = chain_entries(poll_id)
+    etat = chain_verify(poll_id, entrees)
+    resultats = json.loads(poll["results"] or "[]")
+    total = sum(resultats) if resultats else 0
+    etat["totaux_concordent"] = (etat["n"] == total) if poll["closed"] else None
+    cherche = (request.args.get("recu") or "").strip().lower()
+    trouve = None
+    if cherche:
+        for e in entrees:
+            if e["hash"].lower() == cherche or e["hash"].lower().startswith(cherche):
+                trouve = e
+                break
+    return render_template("registre.html", poll=poll, entrees=entrees, etat=etat,
+                           resultats=resultats, total=total, cherche=cherche,
+                           trouve=trouve, options=json.loads(poll["options"]),
+                           base=base_url())
+
+
+@app.route("/r/<poll_id>/registre.json")
+def registre_json(poll_id):
+    """Export brut, pour vérification INDÉPENDANTE de Kaddu. Le script
+    verifier-registre.py (fourni dans le dépôt) recalcule la chaîne à partir de
+    ce seul fichier — personne n'a besoin de nous faire confiance."""
+    poll = get_poll(poll_id)
+    if not poll:
+        abort(404)
+    entrees = chain_entries(poll_id)
+    resultats = json.loads(poll["results"] or "[]")
+    corps = json.dumps({
+        "format": "kaddu-registre-bulletins-v1",
+        "poll_id": poll_id,
+        "titre": poll["title"],
+        "question": poll["question"],
+        "options": json.loads(poll["options"]),
+        "clos": bool(poll["closed"]),
+        "resultats": resultats,
+        "total_compte": sum(resultats) if resultats else 0,
+        "nb_bulletins_scelles": len(entrees),
+        "racine": entrees[-1]["hash"] if entrees else "",
+        "entrees": entrees,
+        "regle_de_calcul":
+            "hash = sha256(prev_hash + '|' + poll_id + '|' + voter + '|' + digest "
+            "+ '|' + created_at), en UTF-8, hexadecimal minuscule. La premiere "
+            "entree a prev_hash vide. digest = sha256 de la concatenation des "
+            "sha256 de chaque bulletin chiffre, dans l'ordre des options.",
+    }, ensure_ascii=False, indent=1)
+    resp = make_response(corps)
+    resp.headers["Content-Type"] = "application/json; charset=utf-8"
+    resp.headers["Content-Disposition"] = \
+        'attachment; filename="registre-%s.json"' % poll_id
+    return resp
 
 
 @app.route("/admin/<poll_id>")
@@ -2079,9 +2407,12 @@ def clore(poll_id):
                 "SELECT blob FROM ballots WHERE poll_id=? AND option_idx=? ORDER BY voter",
                 (poll_id, m)).fetchall()]
             results.append(fhe.tally(blobs) if blobs else 0)
+    duels = None
+    if poll["methode"] == "condorcet":
+        duels = json.dumps(depouiller_condorcet(poll_id, len(options)))
     with closing(db()) as conn, conn:
-        conn.execute("UPDATE polls SET closed=1, results=? WHERE id=?",
-                     (json.dumps(results), poll_id))
+        conn.execute("UPDATE polls SET closed=1, results=?, duels=? WHERE id=?",
+                     (json.dumps(results), duels, poll_id))
     return redirect(url_for("resultat", poll_id=poll_id))
 
 

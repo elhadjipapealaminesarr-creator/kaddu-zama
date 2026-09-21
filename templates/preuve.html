@@ -28,4 +28,9 @@
     {% endif %}
   {% endif %}
 </div>
+{% if place %}
+<p class="small" style="margin-top:10px">{{ tr('preuve.place', 'Ce bulletin occupe la position') }}
+  <b>{{ place.rang }}</b> {{ tr('preuve.place2', 'du registre.') }}
+  <a href="{{ url_for('registre', poll_id=place.poll_id) }}?recu={{ code }}">{{ tr('preuve.place3', 'Voir le registre &#8594;') }}</a></p>
+{% endif %}
 {% endblock %}

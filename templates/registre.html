@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}{{ tr('reg.h', 'Registre des bulletins') }} — {{ poll['title'] }}{% endblock %}
+{% block content %}
+<style>
+  .chk{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line-2)}
+  .chk:last-child{border-bottom:none}
+  .chk .m{font-size:1.1rem;line-height:1.3}
+  .ok{color:var(--primary)} .ko{color:var(--terra)}
+  .mono{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.82rem;word-break:break-all}
+  .reg-t{width:100%;border-collapse:collapse;margin-top:10px;font-size:.85rem}
+  .reg-t th,.reg-t td{text-align:left;padding:7px 6px;border-bottom:1px solid var(--line-2)}
+  .reg-t th{color:var(--muted);font-weight:600;font-size:.75rem;text-transform:uppercase;letter-spacing:.04em}
+  .hit{background:var(--primary-soft);border-radius:6px}
+</style>
+
+<a href="{{ url_for('resultat', poll_id=poll['id']) }}" class="back">&#8592; {{ tr('reg.back', 'Retour au résultat') }}</a>
+
+<div class="card pad-lg">
+  <h1 style="font-size:1.4rem">{{ tr('reg.h', 'Registre des bulletins') }}</h1>
+  <p class="muted small" style="margin-top:-4px">{{ poll['title'] }}</p>
+
+  <p class="muted small">{{ tr('reg.intro',
+    "Chaque bulletin est scellé à son arrivée dans une chaîne d'empreintes : chaque entrée engage la précédente. "
+    "Retirer, ajouter, réordonner ou modifier un bulletin casse la chaîne — et cela se constate ici, "
+    "<b>sans jamais déchiffrer un seul vote</b>. Ce registre ne contient aucun choix.") }}</p>
+
+  <div class="divider">{{ tr('reg.checks', 'contrôles automatiques') }}</div>
+
+  <div class="chk"><span class="m {{ 'ok' if etat.chaine_ok else 'ko' }}">{{ '✓' if etat.chaine_ok else '✕' }}</span>
+    <div><b>{{ tr('reg.c1', "Chaîne d'empreintes intacte") }}</b>
+      <div class="muted small">{% if etat.chaine_ok %}{{ tr('reg.c1ok', "Chaque entrée engage bien la précédente, de la première à la dernière.") }}{% else %}{{ tr('reg.c1ko', "Rupture détectée au bulletin nº") }} {{ etat.rupture + 1 }}.{% endif %}</div></div></div>
+
+  <div class="chk"><span class="m {{ 'ok' if etat.empreintes_ok else 'ko' }}">{{ '✓' if etat.empreintes_ok else '✕' }}</span>
+    <div><b>{{ tr('reg.c2', 'Bulletins chiffrés inchangés') }}</b>
+      <div class="muted small">{{ tr('reg.c2p', "L'empreinte recalculée depuis les bulletins chiffrés correspond toujours à celle scellée au dépôt.") }}</div></div></div>
+
+  {% if etat.totaux_concordent is not none %}
+  <div class="chk"><span class="m {{ 'ok' if etat.totaux_concordent else 'ko' }}">{{ '✓' if etat.totaux_concordent else '✕' }}</span>
+    <div><b>{{ tr('reg.c3', 'Le total porte sur tous les bulletins') }}</b>
+      <div class="muted small">{{ etat.n }} {{ tr('reg.c3a', 'bulletin(s) scellé(s)') }} · {{ total }} {{ tr('reg.c3b', 'compté(s) dans le résultat publié') }}</div></div></div>
+  {% endif %}
+
+  <div class="divider">{{ tr('reg.root', 'empreinte du registre') }}</div>
+  <p class="mono">{{ etat.racine or '—' }}</p>
+  <p class="muted small">{{ tr('reg.root_p', "Note-la avant la clôture : si elle change ensuite, c'est que le registre a été touché.") }}</p>
+</div>
+
+<div class="card pad-lg" style="margin-top:14px">
+  <h2 style="font-size:1.1rem">{{ tr('reg.find_h', 'Retrouver ton bulletin') }}</h2>
+  <p class="muted small">{{ tr('reg.find_p', "Colle le reçu reçu après ton vote. Il ne révèle pas ton choix : il prouve seulement que ton bulletin est bien dans le registre.") }}</p>
+  <form method="get" style="display:flex;gap:8px;flex-wrap:wrap">
+    <input type="text" name="recu" value="{{ cherche }}" placeholder="{{ tr('reg.find_ph', 'Ton reçu') }}" style="flex:1;min-width:220px">
+    <button type="submit" class="btn btn-primary" style="width:auto">{{ tr('reg.find_btn', 'Vérifier') }}</button>
+  </form>
+  {% if cherche %}
+    {% if trouve %}
+    <p style="margin-top:12px"><span class="ok" style="font-size:1.1rem">✓</span>
+      <b>{{ tr('reg.found', 'Bulletin trouvé') }}</b> — {{ tr('reg.found_p', 'position') }} {{ trouve.voter + 1 }} / {{ etat.n }}.
+      {% if poll['closed'] %}{{ tr('reg.found_counted', 'Il fait partie des bulletins comptés dans le résultat publié.') }}{% else %}{{ tr('reg.found_open', 'Le vote est encore ouvert : il sera compté à la clôture.') }}{% endif %}</p>
+    {% else %}
+    <p style="margin-top:12px"><span class="ko" style="font-size:1.1rem">✕</span>
+      <b>{{ tr('reg.notfound', 'Reçu introuvable dans ce registre.') }}</b>
+      <span class="muted small">{{ tr('reg.notfound_p', "Vérifie que tu es sur le bon scrutin et que le reçu est complet.") }}</span></p>
+    {% endif %}
+  {% endif %}
+</div>
+
+<div class="card pad-lg" style="margin-top:14px">
+  <h2 style="font-size:1.1rem">{{ tr('reg.indep_h', 'Vérifier sans nous faire confiance') }}</h2>
+  <p class="muted small">{{ tr('reg.indep_p',
+    "Télécharge le registre et recalcule la chaîne toi-même, avec le script <code>verifier-registre.py</code> fourni dans le dépôt. "
+    "Kaddu n'intervient pas dans ce calcul.") }}</p>
+  <a class="btn btn-ghost" style="width:auto;display:inline-flex" href="{{ url_for('registre_json', poll_id=poll['id']) }}">&#128229; {{ tr('reg.dl', 'Télécharger le registre (JSON)') }}</a>
+  <p class="muted small" style="margin-top:10px">{{ tr('reg.limit',
+    "<b>Ce que ce registre ne prouve pas :</b> que le déchiffrement final est honnête. Dans la version web, la clé FHE est détenue par le serveur. "
+    "Ce registre prouve l'intégrité des bulletins, pas celle du déchiffrement — cette garantie-là est apportée par la version on-chain (fhEVM).") }}</p>
+</div>
+
+<div class="card pad-lg" style="margin-top:14px">
+  <h2 style="font-size:1.1rem">{{ tr('reg.list_h', 'Les bulletins scellés') }} <span class="muted small">({{ etat.n }})</span></h2>
+  <div style="overflow-x:auto">
+  <table class="reg-t">
+    <tr><th>#</th><th>{{ tr('reg.th_hash', 'Empreinte de l’entrée') }}</th><th>{{ tr('reg.th_digest', 'Empreinte du bulletin') }}</th></tr>
+    {% for e in entrees %}
+    <tr {% if trouve and e.voter == trouve.voter %}class="hit"{% endif %}>
+      <td>{{ e.voter + 1 }}</td>
+      <td class="mono">{{ e.hash[:20] }}…</td>
+      <td class="mono">{{ e.digest[:20] }}…</td>
+    </tr>
+    {% endfor %}
+    {% if not entrees %}<tr><td colspan="3" class="muted small">{{ tr('reg.empty', 'Aucun bulletin pour le moment.') }}</td></tr>{% endif %}
+  </table>
+  </div>
+</div>
+{% endblock %}

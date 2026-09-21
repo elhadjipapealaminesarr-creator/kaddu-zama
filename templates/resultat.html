@@ -38,6 +38,64 @@
       {{ tr('res.hash_label', 'Empreinte anti-falsification') }} :<br>
       <span style="font-family:monospace;letter-spacing:.05em;color:var(--primary-d)">{{ cert_hash }}</span></p>
 
+{% if cond %}
+    <div class="divider">{{ tr('res.cond', 'scrutin par classement') }}</div>
+    <style>
+      .duel{width:100%;border-collapse:collapse;font-size:.82rem;margin-top:8px}
+      .duel th,.duel td{padding:6px 7px;border:1px solid var(--line-2);text-align:center}
+      .duel th{color:var(--muted);font-weight:600;font-size:.72rem}
+      .duel th.l{text-align:left} .duel td.l{text-align:left;font-weight:600}
+      .gagne{background:var(--primary-soft);color:var(--primary-d);font-weight:700}
+      .diag{background:var(--line-2)}
+    </style>
+
+    <p style="font-size:1.05rem;margin:0 0 6px"><b>{{ options[cond.gagnant] }}</b> {{ tr('res.cond_wins', "l'emporte") }}.</p>
+    <p class="muted small">
+      {% if cond.methode == 'condorcet' %}
+        {{ tr('res.cond_why', "Ce choix bat <b>tous</b> les autres en duel direct. C'est le critère le plus exigeant qu'un scrutin puisse satisfaire : aucune autre option n'est préférée à celle-ci par une majorité.") }}
+      {% else %}
+        {{ tr('res.schulze_why', "Aucune option ne bat toutes les autres : les préférences tournent en rond (A bat B, B bat C, C bat A). Le départage suit la <b>méthode de Schulze</b>, qui compare la force des chemins entre options — déterministe et reproductible par quiconque à partir du tableau ci-dessous.") }}
+      {% endif %}
+    </p>
+
+    {% if win and options[cond.gagnant] != win %}
+    <p class="small" style="margin-top:10px;padding:10px 12px;border-left:3px solid var(--gold);background:#fdf8ef">
+      {{ tr('res.cond_diff_a', "À la majorité simple, le gagnant aurait été") }} <b>{{ win }}</b>
+      ({{ rows_sorted[0].n }} {{ tr('res.cond_diff_b', 'premières places sur') }} {{ total }}).
+      {{ tr('res.cond_diff_c', "Le classement donne un autre résultat : c'est précisément ce que ce mode de scrutin sert à corriger.") }}
+    </p>
+    {% endif %}
+
+    <p class="muted small" style="margin-top:12px">{{ tr('res.duel_p', "Chaque case indique combien de votants ont placé l'option de la <b>ligne</b> avant celle de la <b>colonne</b>. Ces nombres ont été comptés sur les bulletins chiffrés : aucun classement individuel n'a été déchiffré.") }}</p>
+    <div style="overflow-x:auto">
+    <table class="duel">
+      <tr><th class="l">{{ tr('res.duel_vs', 'préfère… à…') }}</th>{% for o in options %}<th>{{ o }}</th>{% endfor %}</tr>
+      {% for o in options %}
+      {% set i = loop.index0 %}
+      <tr><td class="l">{{ o }}</td>
+        {% for p2 in options %}
+          {% set j = loop.index0 %}
+          {% if i == j %}<td class="diag">—</td>
+          {% else %}<td class="{{ 'gagne' if cond.duels[i][j] > cond.duels[j][i] else '' }}">{{ cond.duels[i][j] }}</td>{% endif %}
+        {% endfor %}
+      </tr>
+      {% endfor %}
+    </table>
+    </div>
+    <p class="muted small" style="margin-top:8px">{{ tr('res.duel_leg', 'Les cases en vert sont les duels gagnés.') }}</p>
+
+    <p class="small" style="margin-top:10px"><b>{{ tr('res.cond_rank', 'Classement final') }} :</b>
+      {% for k in cond.classement %}{{ loop.index }}. {{ options[k] }}{% if not loop.last %} · {% endif %}{% endfor %}</p>
+{% endif %}
+
+    <div class="divider">{{ tr('res.reg', 'résultat vérifiable') }}</div>
+    <p class="small" style="margin:0 0 8px">
+      <span style="color:{{ 'var(--primary)' if (reg.chaine_ok and reg.empreintes_ok and reg.totaux_concordent) else 'var(--terra)' }};font-size:1.05rem">{{ '✓' if (reg.chaine_ok and reg.empreintes_ok and reg.totaux_concordent) else '✕' }}</span>
+      {{ reg.n }} {{ tr('res.reg_sealed', 'bulletin(s) scellé(s)') }}, {{ total }} {{ tr('res.reg_counted', 'compté(s)') }}.
+      {{ tr('res.reg_p', "Aucun bulletin n'a été ajouté, retiré ni modifié — et cela se vérifie sans déchiffrer un seul vote.") }}
+    </p>
+    <a class="btn btn-ghost" style="width:auto;display:inline-flex" href="{{ url_for('registre', poll_id=poll['id']) }}">{{ tr('res.reg_btn', 'Ouvrir le registre des bulletins &#8594;') }}</a>
+
     <div class="divider">{{ tr('res.proof', 'preuve de confidentialité') }}</div>
     <p class="muted small center">{{ tr('res.proof2', "Ces totaux ont été obtenus en additionnant les bulletins <b>chiffrés</b>, puis en déchiffrant uniquement la somme. Aucun vote individuel n'a été lu.") }}</p>
 

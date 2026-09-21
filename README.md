@@ -42,6 +42,45 @@ In West Africa, communities decide together and manage money together constantly
 
 `KadduVote.sol` is built on `@fhevm/solidity` 0.11.1: `vote()` takes an encrypted `externalEuint8` choice (`FHE.fromExternal`), tallies homomorphically (`FHE.eq` → `FHE.asEuint64` → `FHE.add`), and `closePoll()` calls `FHE.makePubliclyDecryptable()` to produce a public, verifiable result **without revealing any ballot**. KadduTender computes the winning sealed bid entirely on encrypted values and settles through an ERC-7984 confidential token.
 
+## Verifiable results — not "trust us"
+
+Encrypting ballots is only half the problem. The other half is proving the published
+result actually corresponds to the ballots that were cast. Kaddu now seals every ballot
+into a **hash chain**: each entry commits to the one before it.
+
+- **Anyone** can check that no ballot was added, removed, reordered or altered — without
+  decrypting a single vote.
+- **Each voter** gets a receipt that *is* their entry's fingerprint, and can find it in the
+  public register, before and after closing.
+- **The published total** is checked against the number of sealed ballots, so an organizer
+  cannot announce a result covering more or fewer ballots than were received.
+- **[`verifier-registre.py`](./verifier-registre.py)** re-computes the whole chain from the
+  exported JSON, using only the Python standard library. No network, no Kaddu, no trust.
+
+```
+$ python3 verifier-registre.py registre-aXtMhpU.json --recu 9f3c...
+  [OK   ] chaine d'empreintes continue sur 500 bulletin(s)
+  [OK   ] le total publie porte sur les 500 bulletins scelles
+  [OK   ] votre recu figure au rang 217 / 500
+```
+
+**What it does not prove, stated plainly:** that the final decryption is honest. In the web
+version the FHE key is held by the server — this register proves ballot integrity, not
+decryption integrity. That guarantee comes from the on-chain (fhEVM) layer.
+
+## Ranked ballots — the winner beats everyone, head-to-head
+
+Under one-round plurality, with five candidates someone can win on 24% while 76% reject
+them. That is how most association boards get elected. Kaddu offers a **ranked ballot**:
+voters rank the options, and for every ordered pair Kaddu homomorphically counts how many
+placed one above the other. Only the aggregate pairwise matrix is ever revealed — no
+individual ranking is decrypted.
+
+The winner is the **Condorcet winner** (beats every other option head-to-head) when one
+exists, and the **Schulze** method resolves cycles deterministically otherwise. The result
+page shows the full pairwise matrix and, when the two differ, what plurality *would* have
+produced — which is usually the most persuasive thing on the page.
+
 ## The confidential toolkit — what's live
 
 - **Confidential voting** — secret, verifiable community votes, with downloadable **vote receipts** and tamper-proof **result certificates** (PDF) + a verification page.

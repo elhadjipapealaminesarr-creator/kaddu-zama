@@ -34,6 +34,17 @@
         </span></span>
     </label>
 
+    <label class="choice" style="margin-top:18px">
+      <input type="checkbox" name="methode" value="condorcet">
+      <span class="box"><span class="dot"></span>
+        <span>{{ tr('creer.condorcet', 'Scrutin <b>par classement</b> (Condorcet)') }}<br>
+          <span class="muted small">{{ tr('creer.condorcet.note',
+            "Au lieu de choisir une seule option, chacun les <b>classe</b>. Gagne celui qui bat tous les autres en duel — "
+            "pas celui qui rassemble le plus de premières places pendant que la majorité le rejette. "
+            "Maximum 5 choix.") }}</span>
+        </span></span>
+    </label>
+
     <label class="fld" style="margin-top:18px" for="n_membres">{{ tr('creer.membres', 'Une personne = une voix <span class="muted small">(recommandé)</span>') }}</label>
     <input type="number" id="n_membres" name="n_membres" min="0" max="{{ capacity }}" value="0"
            placeholder="{{ tr('creer.membres.ph', 'Nombre de participants') }}">

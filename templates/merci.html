@@ -31,6 +31,11 @@
     <div style="font-weight:700">&#129534; {{ tr('merci.receipt_h', 'Votre preuve de vote') }}</div>
     <p class="muted small" style="margin:6px 0">{{ tr('merci.receipt_p', 'Gardez ce code : il prouve que votre bulletin est enregistré et sera compté. Il ne révèle jamais votre choix.') }}</p>
     <div class="rcode" id="rcode">{{ receipt.code }}</div>
+    <p class="muted small" style="margin:10px 0 0">{{ tr('merci.reg_p',
+      "Ce reçu est l'empreinte de ton bulletin dans le registre public. Tu peux vérifier toi-même qu'il y figure, "
+      "maintenant et après la clôture.") }}</p>
+    <a class="btn btn-ghost" style="width:auto;display:inline-flex;margin-top:8px"
+       href="{{ url_for('registre', poll_id=poll['id']) }}?recu={{ receipt.code }}">{{ tr('merci.reg_btn', 'Vérifier mon bulletin dans le registre &#8594;') }}</a>
     <div class="dlrow">
       <button type="button" class="btn btn-ghost" onclick="dlReceipt(false)">&#128229; {{ tr('merci.dl_neutral', 'Reçu (sans mon choix)') }}</button>
       <button type="button" class="btn btn-ghost" onclick="dlReceipt(true)">&#128229; {{ tr('merci.dl_perso', 'Reçu (avec mon choix)') }}</button>
